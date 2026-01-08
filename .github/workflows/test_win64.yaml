@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
+    inputs:
+      git-ref:
+        description: OQ engine branch
+        default: master
+        required: true
 jobs:
   test:
     name: Windows Installation
@@ -25,14 +30,26 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Installation of GMT from standalone
         run: |
-          Invoke-WebRequest -Uri "https://github.com/GenericMappingTools/gmt/releases/download/6.4.0/gmt-6.4.0-win64.exe" -OutFile $HOME\gmt.exe
-          cd $HOME
+          curl -L -O "https://github.com/GenericMappingTools/gmt/releases/download/6.6.0/gmt-6.6.0-win64.exe"
+          Get-ChildItem -Filter gmt*.exe
           $Install = Get-ChildItem -Filter gmt*.exe
-          Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Wait
+          Start-Process -FilePath $Install.Fullname -ArgumentList "/S" -Verb RunAs
+          Start-Sleep -Seconds 180
+          Get-ChildItem -Path "C:\programs\gmt6\"
           $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host ${env:PATH}
-      - name: Run scripts to install on windows
+      - name: Test installation of GMT
         run: |
+          Start-Sleep -Seconds 60
+          Write-Host ${env:PATH}
+          $Env:PATH += ";C:\programs\gmt6\bin"
+          gmt.exe --version
+      - name: Run scripts to install on windows
+        env:
+          BRANCH: ${{ github.event.inputs.git-ref }}
+        run: |
+          Write-Host ${env:PATH}
+          $Env:PATH += ";C:\programs\gmt6\bin"
           Write-Host "Set LIBRARY PATH for GMT"
           $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
           Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
@@ -41,28 +58,33 @@ jobs:
           Write-Host "Current Working Directory: $curDir"
           Write-Host "Test python version"
           python -V
-          Write-Host "Install OQ form master and mbtk from branch ${{ github.ref_name }}"
+          Write-Host $Env:GITHUB_REF
+          set PIP_DEFAULT_TIMEOUT=100
           python -m pip install -U pip
-          git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-          python -m pip install -r oq-engine/requirements-py311-win64.txt
-          cd oq-engine
+          #
+          if ($Env:BRANCH)
+          {
+            Write-Host "Install with workflow_dispatch"
+            Write-Host "Install OQ from ${env:BRANCH} and mbtk from branch ${{ github.ref_name }}"
+            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
+            Write-Host "python install.py devel --version ${env:BRANCH}"
+            cd oq-engine
+            python install.py devel --version ${env:BRANCH}
+            cd ..
+          }
+          else
+          {
+            Write-Host "Install on on scheduled task"
+            Write-Host "Install OQ from master and mbtk from branch ${{ github.ref_name }}"
+            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
+            Write-Host "python install.py devel --version master"
+            cd oq-engine
+            python install.py devel --version master
+            cd ..
+          }
+          C:\Users\runneradmin\openquake\Scripts\activate.ps1
+          python -m pip install -r requirements-py311-win64.txt
           python -m pip install -e .
-          cd ..
-          python -m pip install -r requirements_win64.txt
-          python -m pip install -e .
-          #.\windows\install_oqmbtk.ps1 -mbtk_branch ${{ github.ref_name }}
-          # do not use powershell scripts but install with devel installation
-          #$MYPATH = $HOME + "\mbtk"
-          #Write-Host "Print USERPROFILE folder: $env:USERPROFILE"
-          #Write-Host "Print MYPATH folder: $MYPATH"
-          #$Env:PATH += ";$MYPATH"
-          #$Env:PATH += ";$MYPATH\python3\Scripts"
-          #Added to disable TCL
-          #$Env:PY_PIP=$MYPATH += '\Scripts'
-          #$Env:PY_PIP=$MYPATH += '\python3\Scripts'
-          #$Env:PY_HOME=$MYPATH
-          #$Env:PY_LIBS="$MYPATH\python3\Lib;$MYPATH\python3\Lib\site-package"
-          #Write-Host "MYPATH Directory: $MYPATH"
           $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
           Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
@@ -71,9 +93,6 @@ jobs:
           dir env:
           Write-Host "Print all pypip packages"
           pip list
-          #$MBTK = $HOME + "\mbtk"
-          #Write-Host "MBTK Directory: $MBTK"
-          #Set-Location -Path $MBTK
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
           cd openquake

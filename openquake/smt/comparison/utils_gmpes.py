@@ -21,18 +21,19 @@ Module with utility functions for gmpes
 import numpy as np
 import pandas as pd
 import ast
+import re
 
 from openquake.hazardlib import valid
 from openquake.hazardlib import scalerel 
 from openquake.hazardlib.geo import Point
-from openquake.hazardlib.geo.surface import PlanarSurface
-from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+
+from openquake.smt.utils import make_rup, clean_gmm_label
 
 
 def _get_first_point(rup, from_point):
@@ -148,31 +149,40 @@ def get_sites_from_rupture(rup,
     return SiteCollection(sites)
 
 
-def get_rupture(lon,
-                lat,
-                dep,
-                msr,
-                mag,
-                aratio,
-                strike,
-                dip,
-                rake,
-                trt,
-                ztor=None):
+def get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt):
     """
-    Creates a rupture given the hypocenter position
+    Create an OQ rupture from the provided information.
     """
-    hypoc = Point(lon, lat, dep)
-    srf = PlanarSurface.from_hypocenter(hypoc,
-                                        msr,
-                                        mag,
-                                        aratio,
-                                        strike,
-                                        dip,
-                                        rake,
-                                        ztor)
-    rup = BaseRupture(mag, rake, trt, hypoc, srf)
-    rup.hypocenter.depth = dep
+    # If TRT specified assign it and an MSR
+    if trt == 'active_crustal':
+        rup_trt = TRT.ACTIVE_SHALLOW_CRUST
+        rup_msr = scalerel.WC1994()
+    elif trt == 'stable':
+        rup_trt = TRT.STABLE_CONTINENTAL
+        rup_msr = scalerel.WC1994()
+    elif trt == 'slab':
+        rup_trt = TRT.SUBDUCTION_INTRASLAB
+        rup_msr = scalerel.strasser2010.StrasserIntraslab()
+    elif trt == 'interface':
+        rup_trt = TRT.SUBDUCTION_INTERFACE
+        rup_msr = scalerel.strasser2010.StrasserInterface()
+    else:
+        rup_trt = None
+        rup_msr = scalerel.WC1994()
+    
+    # Get rupture
+    rup = make_rup(lon,
+                   lat,
+                   depth,
+                   msr=rup_msr,
+                   mag=mag,
+                   aratio=aratio,
+                   strike=strike,
+                   dip=dip,
+                   rake=rake,
+                   trt=rup_trt,
+                   ztor=ztor)
+    
     return rup
 
 
@@ -187,6 +197,7 @@ def att_curves(gmpe,
                dip,
                rake,
                trt,
+               oq_rup,
                vs30,
                z1pt0,
                z2pt5,
@@ -200,41 +211,11 @@ def att_curves(gmpe,
     """
     Compute the ground-motion intensities for the given context created here
     """
-    # If TRT specified assign it and an MSR
-    if trt == 'active_crustal':
-        rup_trt = TRT.ACTIVE_SHALLOW_CRUST
-        rup_msr = scalerel.WC1994()
-    elif trt == 'slab':
-        rup_trt = TRT.SUBDUCTION_INTRASLAB
-        rup_msr = scalerel.StrasserIntraslab
-    elif trt == 'interface':
-        rup_trt = TRT.SUBDUCTION_INTERFACE
-        rup_msr = scalerel.StrasserInterface
-    elif trt == 'stable':
-        rup_trt = TRT.STABLE_CONTINENTAL
-        rup_msr = scalerel.WC1994()
+    # Make rupture if not provided from XML or CSV
+    if oq_rup is None:
+        rup = get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt)
     else:
-        rup_trt = None
-        rup_msr = scalerel.WC1994()
-
-    if rup_trt == -999 and aratio == -999:
-        msg = 'An aspect ratio must be provided by the user, or alternatively'
-        msg += ' specify a TRT string within the toml file to assign a'
-        msg += ' trt-dependent aratio proxy.'
-        raise ValueError(msg)
-    
-    # Get rupture
-    rup = get_rupture(lon,
-                      lat,
-                      depth,
-                      msr=rup_msr,
-                      mag=mag,
-                      aratio=aratio,
-                      strike=strike,
-                      dip=dip,
-                      rake=rake,
-                      trt=rup_trt,
-                      ztor=ztor)
+        rup = oq_rup
 
     # Set site props
     props = {'vs30': vs30,
@@ -276,10 +257,9 @@ def att_curves(gmpe,
     # Create context
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
-    ctxm = ContextMaker(rup_trt, [gmpe], oqp)
+    ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
     ctxs = list(ctxm.get_ctx_iter([rup], sites))
     ctxs = ctxs[0]
-    ctxs.occurrence_rate = 0.0
 
     # Compute ground-motions
     mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
@@ -293,7 +273,7 @@ def att_curves(gmpe,
         distances = ctxs.rhypo
     else:
         raise ValueError('No valid distance type specified.')
-
+    
     return mean, std, distances, tau, phi
 
 
@@ -317,148 +297,191 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
     else:
         dip_s = dip
 
+    # Prevent assigning neither a trt or an aratio
+    if trt == -999 and aratio == -999:
+        msg = ('An aratio must be provided by the user, or alternatively the user '
+               'must provide a TRT (a trt-dependent aratio is then assigned instead)')
+        raise ValueError(msg)
+
     # Aspect ratio
-    if aratio > -999.0 and np.isfinite(aratio):
+    if aratio != -999.0 and np.isfinite(aratio):
         aratio_s = aratio
     else:
         if trt in ['slab', 'interface']:
             aratio_s = 5
         else:
-            aratio_s = 2 # Crustal
+            aratio_s = 2 # Crustal 
 
     return strike_s, dip_s, aratio_s
 
 
-def mgmpe_check(gmpe):
+def construct_gsim_dict(inputs):
     """
-    Check if the GMPE should be modified using ModifiableGMPE. This function in
-    effect parses the toml parameters for a GMPE into the equivalent parameters
-    required for ModifiableGMPE. If a ModifiableGMPE is not required, a valid
-    GSIM object with all specified kwargs is returned instead
-    :param gmpe:
-        gmpe: GMPE to be modified if required
+    Build a dictionary of the arguments for a GMM.
     """
-    if '[ModifiableGMPE]' in gmpe:
-        params = pd.Series(gmpe.splitlines(), dtype=object)
-        base_gsim = params.iloc[1].split('=')[1].strip().replace('"','')
-        
-        # Get the mgmpe params
-        idx_params = []
-        for idx, par in enumerate(params):
-            if idx > 1:
-                par = str(par)
-                if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
-                    idx_params.append(idx)
-                if 'fix_total_sigma' in par:
-                    idx_params.append(idx)
-                    base_vector = par.split('=')[1].replace('"', '')
-                    fixed_sigma_vector = ast.literal_eval(base_vector)
-                if 'with_betw_ratio' in par:
-                    idx_params.append(idx)
-                    with_betw_ratio = float(par.split('=')[1])
-                if 'set_between_epsilon' in par:
-                    idx_params.append(idx)
-                    between_epsilon = float(par.split('=')[1])
-                if 'add_delta_sigma_to_total_sigma' in par:
-                    idx_params.append(idx)
-                    delta_std = float(par.split('=')[1])
-                if 'set_total_sigma_as_tau_plus_delta' in par:
-                    idx_params.append(idx)
-                    total_set_to_tau_and_delta = float(par.split('=')[1])
-                if 'scaling' in par:
-                    idx_params.append(idx)
-                    if 'median_scaling_scalar' in par:
-                        median_scalar = float(par.split('=')[1])
-                    if 'median_scaling_vector' in par:
-                        base_vector = par.split('=')[1].replace('"', '')
-                        median_vector = ast.literal_eval(base_vector)
-                    if 'sigma_scaling_scalar' in par:
-                        sigma_scalar = float(par.split('=')[1])
-                    if 'sigma_scaling_vector' in par:
-                        base_vector = par.split('=')[1].replace('"', '')
-                        sigma_vector = ast.literal_eval(base_vector)
-                        
-        # Now create kwargs
-        kwargs = {}
-        kwargs['gmpe'] = {base_gsim: {}}
-        
-        # Add the non-gmpe kwargs
-        for idx_p, param in enumerate(params):
-            if idx_p > 1 and idx_p not in idx_params:
-                if 'lt_weight' not in param: # Skip if weight for logic tree
-                    dic_key =  param.split('=')[0].strip().replace('"','')
-                    dic_val =  param.split('=')[1].strip().replace('"','')
-                    kwargs['gmpe'][base_gsim][dic_key] = dic_val
-                
-        # Al Atik 2015 sigma model
-        if 'al_atik_2015_sigma' in gmpe:
-            kwargs['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
-            
-        # Fix total sigma per imt
-        if 'fix_total_sigma' in gmpe:
-            kwargs['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
-
-        # Partition total sigma using a specified ratio of within:between
-        if 'with_betw_ratio' in gmpe:
-            kwargs['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
-
-        # Set epsilon for tau and use instead of total sigma
-        if 'set_between_epsilon' in gmpe:
-            kwargs['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
-            
-        # Add delta to total sigma
-        if 'add_delta_sigma_to_total_sigma' in gmpe:
-            kwargs['add_delta_std_to_total_std'] = {'delta': delta_std}
-                
-        # Set total sigma to sqrt(tau**2 + delta**2)
-        if 'set_total_sigma_as_tau_plus_delta' in gmpe:
-            kwargs['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
-        
-        # Scale median by constant factor over all imts
-        if 'median_scaling_scalar' in gmpe:
-            kwargs['set_scale_median_scalar'] = {'scaling_factor': median_scalar}
-
-        # Scale median by imt-dependent factor
-        if 'median_scaling_vector' in gmpe:
-            kwargs['set_scale_median_vector'] = {'scaling_factor': median_vector}
-
-        # Scale sigma by constant factor over all imts
-        if 'sigma_scaling_scalar' in gmpe:
-            kwargs['set_scale_total_sigma_scalar'] = {'scaling_factor': sigma_scalar}
-
-        # Scale sigma by imt-dependent factor
-        if 'sigma_scaling_vector' in gmpe:
-            kwargs['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
-
-        # CY14SiteTerm
-        if 'CY14SiteTerm' in gmpe: kwargs['cy14_site_term'] = {}
-
-        # BA08SiteTerm
-        if 'BA08SiteTerm' in gmpe: kwargs['ba08_site_term'] = {}
-
-        # BSSA14SiteTerm
-        if "BSSA14SiteTerm" in gmpe: kwargs['bssa14_site_term'] = {}
-
-        # NRCan15SiteTerm (Regular)
-        if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
-            kwargs['nrcan15_site_term'] = {'kind': 'base'}
-
-        # NRCan15SiteTerm (linear)
-        if 'NRCan15SiteTermLinear' in gmpe:
-            kwargs['nrcan15_site_term'] = {'kind': 'linear'}
-
-        # CB14 basin term
-        if 'CB14BasinTerm' in gmpe: kwargs['cb14_basin_term'] = {}
-
-        # M9 basin adjustment
-        if 'M9BasinTerm' in gmpe: kwargs['m9_basin_term'] = {}
-        
-        gmm = mgmpe.ModifiableGMPE(**kwargs)
-
-    # Not using ModifiableGMPE
+    # Build dict
+    kwargs = {}
+    parts = re.search(r'\[([^\]]+)\]', inputs) # Square brackets = extra inputs
+    if parts:
+        start = parts.group(1) # GMM without square brackets
+        other = inputs.split(parts.group(0))[1]
+        other = re.sub(r'\\+n', '\n', other)
+        other = re.sub(r'[\\\'"]', '', other)
+        kwargs['gmpe'] = {start: dict(re.findall(r'(\w+)\s*=\s*([^\n]+)', other))}
     else:
-        # Clean to ensure arguments can be passed (logic tree weights are
-        # retained in original GMM strings in utils_compare_gmpes)
+        kwargs['gmpe'] = {inputs: {}} # GMM without any additional arguments
+
+    # Force float for appropriate params
+    for gmpe in kwargs["gmpe"]:
+        params = kwargs["gmpe"][gmpe]
+        for param in params:
+            value = kwargs["gmpe"][gmpe][param]
+            try:
+                kwargs["gmpe"][gmpe][param] = float(value)
+            except:
+                pass
+
+    return kwargs
+
+
+def build_mgmpe(gmpe):
+    """
+    Build a ModifiableGMPE
+    """
+    # All of the inputs for this model
+    params = pd.Series(gmpe.splitlines(), dtype=object)
+    
+    # Underlying GMM to modify
+    base_gsim = re.search(r'gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
+
+    # Construct dict of gsim kwargs
+    kw_mgmpe = construct_gsim_dict(base_gsim)
+
+    # Get the mgmpe params
+    idx_params = []
+    for idx, par in enumerate(params):
+        if idx > 1:
+            par = str(par)
+            if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
+                idx_params.append(idx)
+            if 'fix_total_sigma' in par:
+                idx_params.append(idx)
+                base_vector = par.split('=')[1].replace('"', '')
+                fixed_sigma_vector = ast.literal_eval(base_vector)
+            if 'with_betw_ratio' in par:
+                idx_params.append(idx)
+                with_betw_ratio = float(par.split('=')[1])
+            if 'set_between_epsilon' in par:
+                idx_params.append(idx)
+                between_epsilon = float(par.split('=')[1])
+            if 'add_delta_sigma_to_total_sigma' in par:
+                idx_params.append(idx)
+                delta_std = float(par.split('=')[1])
+            if 'set_total_sigma_as_tau_plus_delta' in par:
+                idx_params.append(idx)
+                total_set_to_tau_and_delta = float(par.split('=')[1])
+            if 'scaling' in par:
+                idx_params.append(idx)
+                if 'median_scaling_scalar' in par:
+                    median_scalar = float(par.split('=')[1])
+                if 'median_scaling_vector' in par:
+                    base_vector = par.split('=')[1].replace('"', '')
+                    median_vector = ast.literal_eval(base_vector)
+                if 'sigma_scaling_scalar' in par:
+                    sigma_scalar = float(par.split('=')[1])
+                if 'sigma_scaling_vector' in par:
+                    base_vector = par.split('=')[1].replace('"', '')
+                    sigma_vector = ast.literal_eval(base_vector)
+                    
+    # Add the non-gmpe kwargs
+    for idx_p, param in enumerate(params):
+        if idx_p > 1 and idx_p not in idx_params:
+            if 'lt_weight' not in param: # Skip if weight for logic tree
+                dic_key =  param.split('=')[0].strip().replace('"','')
+                dic_val =  param.split('=')[1].strip().replace('"','')
+                kw_mgmpe['gmpe'][base_gsim][dic_key] = dic_val
+            
+    # Al Atik 2015 sigma model
+    if 'al_atik_2015_sigma' in gmpe:
+        kw_mgmpe['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
+        
+    # Fix total sigma per imt
+    if 'fix_total_sigma' in gmpe:
+        kw_mgmpe['set_fixed_total_sigma'] = {'total_sigma': fixed_sigma_vector}
+
+    # Partition total sigma using a specified ratio of within:between
+    if 'with_betw_ratio' in gmpe:
+        kw_mgmpe['add_between_within_stds'] = {'with_betw_ratio': with_betw_ratio}
+
+    # Set epsilon for tau and use instead of total sigma
+    if 'set_between_epsilon' in gmpe:
+        kw_mgmpe['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
+        
+    # Add delta to total sigma
+    if 'add_delta_sigma_to_total_sigma' in gmpe:
+        kw_mgmpe['add_delta_std_to_total_std'] = {'delta': delta_std}
+            
+    # Set total sigma to sqrt(tau**2 + delta**2)
+    if 'set_total_sigma_as_tau_plus_delta' in gmpe:
+        kw_mgmpe['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
+    
+    # Scale median by constant factor over all imts
+    if 'median_scaling_scalar' in gmpe:
+        kw_mgmpe['set_scale_median_scalar'] = {'scaling_factor': median_scalar}
+
+    # Scale median by imt-dependent factor
+    if 'median_scaling_vector' in gmpe:
+        kw_mgmpe['set_scale_median_vector'] = {'scaling_factor': median_vector}
+
+    # Scale sigma by constant factor over all imts
+    if 'sigma_scaling_scalar' in gmpe:
+        kw_mgmpe['set_scale_total_sigma_scalar'] = {'scaling_factor': sigma_scalar}
+
+    # Scale sigma by imt-dependent factor
+    if 'sigma_scaling_vector' in gmpe:
+        kw_mgmpe['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
+
+    # CY14SiteTerm
+    if 'CY14SiteTerm' in gmpe: kw_mgmpe['cy14_site_term'] = {}
+
+    # BA08SiteTerm
+    if 'BA08SiteTerm' in gmpe: kw_mgmpe['ba08_site_term'] = {}
+
+    # BSSA14SiteTerm
+    if "BSSA14SiteTerm" in gmpe: kw_mgmpe['bssa14_site_term'] = {}
+
+    # NRCan15SiteTerm (Regular)
+    if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
+        kw_mgmpe['nrcan15_site_term'] = {'kind': 'base'}
+
+    # NRCan15SiteTerm (linear)
+    if 'NRCan15SiteTermLinear' in gmpe:
+        kw_mgmpe['nrcan15_site_term'] = {'kind': 'linear'}
+
+    # CB14 basin term
+    if 'CB14BasinTerm' in gmpe: kw_mgmpe['cb14_basin_term'] = {}
+
+    # M9 basin adjustment
+    if 'M9BasinTerm' in gmpe: kw_mgmpe['m9_basin_term'] = {}
+
+    return mgmpe.ModifiableGMPE(**kw_mgmpe)
+
+
+def gmpe_check(gmpe):
+    """
+    This function in effect parses the toml parameters for a GMPE into the
+    equivalent parameters required for constructing an OQ GSIM object.
+    :param gmpe:
+        gmpe: GMM and params as parsed from the SMT Comparison module format toml.
+    """
+    # Modifiable GMPE
+    if '[ModifiableGMPE]' in gmpe:
+        return build_mgmpe(gmpe)
+
+    # Regular GMPE
+    else:
+        # Clean to ensure arguments can be passed (the logic tree weights
+        # are retained in original GMM strings in utils_compare_gmpes.py)
         params = pd.Series(gmpe.splitlines())
         idx_to_drop = []
         for idx_p, par in enumerate(params):
@@ -472,6 +495,7 @@ def mgmpe_check(gmpe):
                     gmpe_clean = gmpe_clean + '\n' + par
         else: # Ensures GSIM aliases work
             gmpe_clean = gmpe_clean.replace('[','').replace(']','')
+        
         gmm = valid.gsim(gmpe_clean)
 
     return gmm
@@ -512,29 +536,69 @@ def reformat_att_curves(att_curves, out=None):
     # Get the key describing the vs30 + truncation level
     params_key = pd.Series(att_curves.keys()).values[0]
 
-    # Then get the values per gmm (per imt-mag combination)
-    vals = att_curves[params_key]['gmm att curves per imt-mag']
+    # Get Nstd and make an integer if appropriate
+    nstd = float(params_key.split("GMM sigma epsilon = ")[1])
+    if nstd.is_integer():
+        nstd = int(nstd)
 
-    # Now get the curves into a dictionary format
+    # Then get the values per gmm (per imt-mag combination)
+    gmm_vals = att_curves[params_key]['gmm att curves per imt-mag']
     store = {}
-    for imt in vals.keys():
+    for imt in gmm_vals.keys():
         unit = get_imtl_unit(imt)
-        for scenario in vals[imt]:
-            curves = vals[imt][scenario]
+        for scenario in gmm_vals[imt]:
+            curves = gmm_vals[imt][scenario]
             for gmpe in curves: 
-                # First per GMM get medians and sigmas
+                gmm_str = clean_gmm_label(gmpe, drop_weight_info=True)
+                
+                # Next per GMM get medians and sigmas
                 if "(km)" not in gmpe:
-                    key = f"{imt} ({unit}), {scenario}, {gmpe}"
-                    key = key.replace('\n', ' ')
-                    store[f"{key} median"] = curves[gmpe][f'median ({unit})']
-                    store[f"{key} sigmas"] = curves[gmpe]['sigma (ln)']
+                    key = f"{imt} ({unit}) | {gmm_str} | {scenario}"
+                    
+                    # Add median
+                    store[f"Median | {key}"] = curves[gmpe][f'median ({unit})']
+                    
+                    # Will only be median plus/minus sigma if Nstd > 0
+                    if f"median plus sigma ({unit})" in curves[gmpe]:
+                        store[f"Median Plus Sigma (+ {nstd} epsilon) | {key}"
+                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                        store[f"Median Minus Sigma (- {nstd} epsilon) | {key}"
+                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                        
                 # Then get the distance for given scenario
                 else:
                     dkey = f"values of {gmpe} for {scenario}"
                     store.setdefault(dkey, curves[gmpe])
-                    
+
+    # Also get the GMC LT values
+    gmc_vals = att_curves[params_key]['gmc logic tree curves per imt-mag']
+    for lt in gmc_vals.keys():
+        for br in gmc_vals[lt].keys():
+            for scenario in gmc_vals[lt][br].keys():
+
+                # Get components for the key
+                imtx = scenario.split(",")[0].split("=")[1].split()[0]
+                rest = ','.join(scenario.split(",")[1:]).strip()
+                unit = get_imtl_unit(imtx)
+                branch = br.split("(")[0].strip().title()
+                if branch == "Median":
+                    key = f"{branch} | {imtx} ({unit}) | {lt} | {rest}"
+                elif branch == "Median Plus Sigma":
+                    key = f"{branch} (+ {nstd} epsilon) | {imtx} ({unit}) | {lt} | {rest}"
+                else:
+                    assert branch == "Median Minus Sigma"
+                    key = f"{branch} (- {nstd} epsilon) | {imtx} ({unit}) | {lt} | {rest}"
+                
+                # Store the LT curve
+                store[key] = gmc_vals[lt][br][scenario]
+
     # Now into dataframe
     df = pd.DataFrame(store)
+
+    # Reorder columns to get dist cols on left
+    df = df[[
+        col for col in df.columns if "(km)" in col] + [
+            col for col in df.columns if "(km)" not in col]]
 
     # And export if required
     if out is not None:
@@ -552,31 +616,44 @@ def reformat_spectra(spectra, out=None):
     eps = spectra['nstd']
     branches = ['median', 'median plus sigma', 'median minus sigma']
     for key in spectra.keys():
+        
         # Don't need weighted GMMs (only used for computing aggregated LTs)
         if key in ["periods", "nstd"] or "_wei" in key:
             continue
+        
         # Weighted gmm LTs
         if 'gmc' in key:
             for sc in spectra[key]:
                 for idx_br, br in enumerate(spectra[key][sc]):
+
                     if br == {}:
                         continue # Empty dict if no epsilon applied
-                    s_key = f"{key}, {branches[idx_br]} (+/- {eps} epsilon) (g), {sc}"
+                    
+                    bl = branches[idx_br]
+
+                    if bl == "median plus sigma":
+                        s_key = f"{bl.title()} (+ {eps} epsilon) (g) | {key} logic tree | {sc}"
+                    elif bl == "median":
+                        s_key = f"{bl.title()} (g) | {key} logic tree | {sc}"       
+                    else:
+                        assert bl == "median minus sigma"
+                        s_key = f"{bl.title()} (- {eps} epsilon) (g) | {key} logic tree | {sc}"
+                    
                     store[s_key] = np.array(list(br.values()))
         else:
+
             # Individual gmms
             for gmm in spectra[key]:
+                gmm_str = clean_gmm_label(gmm, drop_weight_info=True)
                 for sc in spectra[key][gmm]:
                     if key == "add":
-                        branch = "median plus sigma"
+                        s_key = f"{gmm_str} | Median Plus Sigma (+ {eps} epsilon) (g) | {sc}"
                     elif key == "med":
-                        branch = "median"
+                        s_key = f"{gmm_str} | Median (g), {sc}"
                     else:
                         assert key == "min"
-                        branch = "median minus sigma"
-                    assert 'lt_weight_gmc' in gmm
-                    s_key = f"{gmm}, {branch} (+/- {eps} epsilon) (g), {sc}"
-                    s_key = s_key.replace("\n", "")
+                        s_key = f"{gmm_str} | Median Minus Sigma (- {eps} epsilon) (g) | {sc}"
+                        
                     store[s_key] = spectra[key][gmm][sc]
                     
     # Make df

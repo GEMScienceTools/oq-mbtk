@@ -24,12 +24,11 @@ import pandas as pd
 from scipy.stats import linregress
 
 
-def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
+def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
     """
     Returns the density distribution of the given gmpe and imt
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
@@ -45,7 +44,8 @@ def residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
 
     for res_type in data.keys():
 
-        vals, bins = _get_histogram_data(data[res_type], bin_width=bin_width)
+        vals, bins = _get_histogram_data(
+            data[res_type], bin_width=bin_width)
 
         mean = statistics[res_type]["Mean"]
         stddev = statistics[res_type]["Std Dev"]
@@ -63,45 +63,15 @@ def _get_histogram_data(data, bin_width=0.5):
     """
     Retreives the histogram of the residuals
     """
-    # ignore nans otherwise max and min raise:
-    bins = np.arange(np.floor(np.nanmin(data)),
-                     np.ceil(np.nanmax(data)) + bin_width,
-                     bin_width)
-    # work on finite numbers to prevent np.histogram raising:
+    # Ignore nans otherwise max and min can raise
+    bins = np.arange(
+        np.floor(np.nanmin(data)),
+        np.ceil(np.nanmax(data)) + bin_width,
+        bin_width
+        )
+    # Work on finite numbers to prevent np.histogram raising
     vals = np.histogram(data[np.isfinite(data)], bins, density=True)[0]
     return vals.astype(float), bins
-
-
-def likelihood(residuals, gmpe, imt, bin_width=0.1):
-    """
-    Returns the likelihood of the given gmpe and imt
-
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Likelihood
-    :param gmpe: (string) the gmpe/gsim
-    :param imt: (string) the intensity measure type
-
-    :return: a dict mapping each residual type (string, e.g. 'Intra event') to
-    a dict with (at least) the mandatory keys 'x', 'y', 'xlabel', 'ylabel'
-    representing the plot data.
-    Additional keys: 'median' (float) representing
-    the median of the data
-    """
-    plot_data = {}
-    data = residuals._compute_likelihood_values_for(gmpe, imt)
-
-    for res_type in data.keys():
-        lh_vals, median_lh = data[res_type]
-        vals, bins = _get_lh_histogram_data(lh_vals, bin_width=bin_width)
-
-        x = bins[:-1]
-        y = vals
-
-        plot_data[res_type] = \
-            {'x': x, 'y': y, 'median': median_lh,
-             'xlabel': "LH (%s)" % imt, 'ylabel': "Frequency"}
-
-    return plot_data
 
 
 def _get_lh_histogram_data(lh_values, bin_width=0.1):
@@ -109,7 +79,7 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     Retreives the histogram of the likelihoods
     """
     bins = np.arange(0.0, 1.0 + bin_width, bin_width)
-    # work on finite numbers to prevent np.histogram raising:
+    # Work on finite numbers to prevent np.histogram raising:
     vals = np.histogram(
         lh_values[np.isfinite(lh_values)], bins, density=True)[0]
     return vals.astype(float), bins
@@ -182,6 +152,7 @@ def _get_distances(residuals, gmpe, imt, res_type, distance_type):
             dist_vals = getattr(ctx["Ctx"], distance_type)
             dist_vals = dist_vals[keep]
             distances = np.hstack([distances, dist_vals])
+            
     return distances
 
 
@@ -284,8 +255,7 @@ def residuals_with_vs30(residuals, gmpe, imt):
     """
     Returns the residuals of the given gmpe and imt vs. vs30
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
@@ -302,8 +272,7 @@ def residuals_with_distance(residuals, gmpe, imt, distance_type="rjb"):
     """
     Returns the residuals of the given gmpe and imt vs. distance
 
-    :param residuals:
-            Residuals as instance of :class: openquake.smt.gmpe_residuals.Residuals
+    :param residuals: instance of :class: openquake.smt.gmpe_residuals.Residuals
     :param gmpe: (string) the gmpe/gsim
     :param imt: (string) the intensity measure type
 
@@ -323,8 +292,8 @@ def _nanlinregress(x, y):
     finite = np.isfinite(x) & np.isfinite(y)
         
     if not finite.any():
-        # empty arrays passed to linreg raise ValueError:
-        # force returning an object with nans:
+        # Empty arrays passed to linreg raise ValueError
+        # so force returning an object with nans
         return linregress([np.nan], [np.nan])
     else:
         return linregress(x[finite], y[finite])
@@ -346,6 +315,42 @@ def get_ctx_vals(var_type, ctx, distance_type):
         event_val = ctx.hypo_depth
 
     return event_val
+
+
+def _get_residual_means_and_stds(residuals):
+    """
+    Get the mean and sigma of the distributions of residuals
+    for each gmpe and imt
+    """
+    # Get all residuals for all GMPEs at all IMTs
+    res_statistics = {}
+    for gmpe in residuals.gmpe_list:
+        for imt in residuals.imts:
+            res_statistics[gmpe, imt] = residuals.get_residual_statistics_for(
+                gmpe, imt)
+    
+    # Now get into dataframes
+    mean_sigma_intra, mean_sigma_inter, mean_sigma_total = {}, {}, {}
+    dummy_values = {'Mean': np.nan, 'Std Dev': np.nan} # Assign if only total sigma
+    for gmpe in residuals.gmpe_list:
+        for imt in residuals.imts:
+            mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
+            if ('Inter event' in residuals.residuals[gmpe][imt]
+                and
+                'Intra event' in residuals.residuals[gmpe][imt]):
+                mean_sigma_inter[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                mean_sigma_intra[
+                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
+            else:
+                mean_sigma_inter[gmpe, imt] = dummy_values
+                mean_sigma_intra[gmpe, imt] = dummy_values
+
+    intra = pd.DataFrame(mean_sigma_intra)
+    inter = pd.DataFrame(mean_sigma_inter)
+    total = pd.DataFrame(mean_sigma_total)
+
+    return intra, inter, total
 
 
 def mean_and_sigma_per_bin(df, idx_res_per_val_bin):
@@ -447,10 +452,7 @@ def get_res_df(var_type, residuals, gmpe, imt, distance_type):
         # Store the eq df
         store.append(eq_df)
 
-    # Into single df of all eqs
-    df = pd.concat(store).sort_values(by="vals")
-
-    return df
+    return pd.concat(store).sort_values(by="vals")
 
 
 def bin_res_wrt_var(residuals, gmpe, imt, var_type, distance_type='repi'):
