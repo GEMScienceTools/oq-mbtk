@@ -1066,3 +1066,85 @@ def rescale_mfd(mfd, frac):
     return {
         mag: rate * frac for mag, rate in mfd.get_annual_occurrence_rates()
     }
+
+
+def make_group_mfd(
+    group,
+    faults=None,
+    seismic_frac=1.0,
+    fault_lookup=None,
+    mfd_type='TaperedGRMFD',
+    b_val=1.0,
+    corner_mag=7.6,
+    min_mag=6.0,
+    bin_width=0.1,
+):
+
+    if not fault_lookup:
+        fault_lookup = {f['fid']: f for f in faults}
+
+    all_faults = np.unique(np.concatenate(group['faults'].values))
+
+    total_moment = 0.0
+
+    for fault in all_faults:
+        total_moment += get_fault_moment_rate(
+            fault_lookup[fault], seismic_fraction=seismic_frac
+        )
+
+    max_mag = group.mag.max()
+
+    moment_rate = total_moment * seismic_frac
+
+    if mfd_type == 'TruncatedGRMFD':
+        try:
+            mfd = TruncatedGRMFD.from_moment(
+                min_mag=min_mag,
+                max_mag=max_mag,
+                bin_width=bin_width,
+                b_val=b_val,
+                moment_rate=moment_rate,
+            )
+        except ValueError:
+            mfd = TruncatedGRMFD.from_moment(
+                min_mag=min_mag - bin_width,
+                max_mag=max_mag,
+                bin_width=bin_width,
+                b_val=b_val,
+                moment_rate=moment_rate,
+            )
+    elif mfd_type == 'TaperedGRMFD':
+        if (max_mag - corner_mag) < 0.5:
+            corner_mag = max_mag - 0.5
+        if corner_mag < (min_mag + bin_width):
+            corner_mag = min_mag + bin_width + 0.01
+        if (max_mag - min_mag) < bin_width:
+            min_mag = max_mag - bin_width
+
+        mfd = TaperedGRMFD.from_moment(
+            min_mag=min_mag,
+            max_mag=max_mag,
+            corner_mag=corner_mag,
+            bin_width=bin_width,
+            b_val=b_val,
+            moment_rate=moment_rate,
+        )
+
+    elif mfd_type == 'YoungsCoppersmith1985MFD':
+        if min_mag >= (max_mag - 0.5):
+            raise ValueError(
+                f"group has min mag {min_mag} and max mag {max_mag}"
+            )
+        mfd = YoungsCoppersmith1985MFD.from_total_moment_rate(
+            min_mag=min_mag,
+            b_val=b_val,
+            char_mag=max_mag - 0.25,
+            total_moment_rate=moment_rate,
+            bin_width=bin_width,
+        )
+    else:
+        raise NotImplementedError(
+            "only truncated, tapered, and youngscoppersmith for now"
+        )
+
+    return mfd
