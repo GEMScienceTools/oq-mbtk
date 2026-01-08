@@ -54,7 +54,7 @@ MFD functions
 
 Declustering
 ============
-Primarily, the declustering is handled in the oq-hmtk inside the OpenQuake engine, but this function in the mbtk
+Primarily, the declustering is handled in the `hmtk <https://github.com/gem/oq-engine/tree/master/openquake/hmtk>`_ module of the OpenQuake engine, but this function in the mbtk
 is most commonly used by the hazard team (for now).
 
 .. autofunction:: openquake.mbt.tools.model_building.dclustering.decluster
