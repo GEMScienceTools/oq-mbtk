@@ -74,10 +74,10 @@ Distributed seismicity tools
 Fault modeling tools
 =======================
 
-The fault modelling tools require a dictionary of inputs describing the fault. The functions use the following default if this is not provided: 
+The fault modelling tools are used to create fault sources from fault data (trace, slip rate, dip, etc.) in json format and a dictionary of parameters that define modelling assumptions and how ruptures will be generated from the fault source. The functions use the following defaults: 
 
 .. code-block:: python  
-
+   
    defaults = {'name': 'unnamed',
                'b_value': 1.,
                'bin_width': 0.1,
