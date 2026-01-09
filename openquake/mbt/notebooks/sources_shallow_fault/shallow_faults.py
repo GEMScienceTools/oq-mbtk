@@ -1,18 +1,13 @@
-# coding: utf-8
-
 import os
 import re
-
 from shapely import wkt
 from osgeo import ogr
-
-from openquake.man.model import read
 
 from openquake.hazardlib.source import SimpleFaultSource
 from openquake.hazardlib.geo.line import Line
 
+from openquake.man.checking_utils.source_model_utils import read
 from openquake.mbt.oqt_project import OQtProject, OQtSource
-
 from openquake.mbt.tools.utils import _get_point_list
 
 

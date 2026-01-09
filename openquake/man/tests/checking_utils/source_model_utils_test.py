@@ -1,7 +1,6 @@
+import os
 import numpy
 import unittest
-
-from openquake.man.checking_utils.source_model_utils import _split_point_source
 
 from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
@@ -10,6 +9,21 @@ from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.geo import Point
 from openquake.hazardlib.geo.nodalplane import NodalPlane
 from openquake.hazardlib.pmf import PMF
+
+from openquake.man.checking_utils import source_model_utils as model
+
+
+BASE_DATA_PATH = os.path.dirname(__file__)
+
+
+class TestReadModel(unittest.TestCase):
+
+    def test_read_source_model(self):
+        """ read simple source model """
+        fname = os.path.join(
+            BASE_DATA_PATH, 'data_source_model_utils_test', 'model', 'source_model.xml')
+        srcs, _ = model.read(fname)
+        self.assertEqual(len(srcs), 1)
 
 
 class TestSplitSources(unittest.TestCase):
@@ -61,20 +75,17 @@ class TestSplitSources(unittest.TestCase):
                                 hypocenter_distribution=hpd)
 
     def test01(self):
-        """
-        Check the a value
-        """
-        srcl = _split_point_source(self.src1)
+        srcl = model._split_point_source(self.src1)
         self.assertEqual(srcl[0].mfd.a_val, 1.8450980400142569)
         self.assertEqual(srcl[1].mfd.a_val, 1.4771212547196624)
 
     def test02(self):
-        """
-        Check occurrence rates
-        """
-        srcl = _split_point_source(self.src2)
-        tmp = numpy.array(srcl[0].mfd.get_annual_occurrence_rates())
-        com = numpy.array([r[1] for r in tmp])
-        print(com)
-        exp = numpy.array([2.1, 1.4, 0.7])
-        numpy.testing.assert_allclose(com, exp, rtol=1e-5, atol=0)
+        srcl = model._split_point_source(self.src2)
+        
+        com = numpy.array(srcl[0].mfd.occurrence_rates)
+        exp = numpy.array(self.src2.mfd.occurrence_rates)*0.7
+        numpy.testing.assert_array_equal(com, exp)
+        
+        com = numpy.array(srcl[1].mfd.occurrence_rates)
+        exp = numpy.array(self.src2.mfd.occurrence_rates)*0.3
+        numpy.testing.assert_array_equal(com, exp)
