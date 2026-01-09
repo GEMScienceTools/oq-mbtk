@@ -22,30 +22,16 @@ features when specified in an SMT format toml input file.
 """
 import os
 import pandas as pd
-import numpy as np
 import shutil
 import unittest
 
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
+from openquake.smt.comparison.utils_gmpes import matrix_to_df
 
 
 # Base path
 BASE = os.path.join(os.path.dirname(__file__), "data")
-
-
-def matrix_to_df(matrix, ngmms):
-    """
-    Convert matrix of ground-motions to dataframe and
-    check the number of arrays per IMT is equal to the
-    number of GMPEs specified in the TOML.
-    """
-    store = {}
-    for imt in matrix.keys():
-        assert len(matrix[imt]) == ngmms
-        store[str(imt)] = np.array(matrix[imt]).flatten()
-
-    return pd.DataFrame(store)
 
 
 class ConditionGroundMotionsTestCase(unittest.TestCase):

@@ -753,7 +753,7 @@ def plot_sammons_util(imt_list,
 
         # Sammon mapping
         coo, cost = sammon(data, display=1) # NOTE: each gmm's array in coo has a structure of
-        coo_per_imt[imt] = coo                # of [idx1, idx2, dist, npoints] where idx1 and idx2
+        coo_per_imt[imt] = coo              # of [idx1, idx2, dist, npoints] where idx1 and idx2
         fig.add_subplot(nrows, 2, i+1)      # are merged at distance of dist into a cluster which
         for g, gmpe in enumerate(labels):   # containing npoints points
 

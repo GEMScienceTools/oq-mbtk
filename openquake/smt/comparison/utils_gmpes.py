@@ -394,6 +394,9 @@ def build_mgmpe(gmpe):
             else:
                 assert "conditional_gmpe" in par # Otherwise must be cgmpe
                 idx_params.append(idx)
+                # If this code is failing for the user please ensure you are carefully
+                # following the syntax provided in the docs for using conditional GMPEs
+                # or check oq-mbtk\openquake\smt\tests\comparison\data\cgmpe_test.toml.
                 re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
                 cgmpe_dict = ast.literal_eval(re_match.group(1))
                 cgmpes = {imt: construct_gsim_dict(
@@ -692,3 +695,23 @@ def reformat_spectra(spectra, out=None):
         df.to_csv(out, index=True)
 
     return df
+
+
+def matrix_to_df(matrix, ngmms):
+    """
+    Convert matrix of ground-motions to dataframe with
+    one column per IMT and values being the flattened
+    array of predictions from each GMPE.
+    
+    This function also checks that the number of arrays
+    per IMT is equal to the number of GMPEs specified in
+    the TOML as a sanity check.
+
+    Currently only used in ModifiableGMPE-based unit tests.
+    """
+    store = {}
+    for imt in matrix.keys():
+        assert len(matrix[imt]) == ngmms
+        store[str(imt)] = np.array(matrix[imt]).flatten()
+
+    return pd.DataFrame(store)
