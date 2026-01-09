@@ -421,7 +421,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
 def plot_ratios_util(config, output_directory):
     """
     Generate ratio (GMPE median attenuation/baseline GMPE
-    median attenuation)  plots for given run configuration.
+    median attenuation) plots for given run configuration.
 
     NOTE: The ratios of any specified GMC logic trees against
     the baseline GMM are not computed/plotted.
@@ -482,7 +482,15 @@ def plot_ratios_util(config, output_directory):
                                  config.volc_back_arc,
                                  config.eshm20_region)
             b_mean = results[0][0][0]
-
+            if np.all(b_mean) == 0:
+                # Should only occur in case of using a conditional GMPE
+                # which also does not support the requested IMT
+                assert imt not in baseline.params["conditional_gmpe"]
+                raise ValueError(f"A conditional GMPE which does not "
+                                 f"support {imt} has been specified "
+                                 f"for as the baseline model in GMPE "
+                                 f"ratio plotting.")
+            
             # Now compute ratios for each GMM
             for g, gmpe in enumerate(config.gmpes_list):        
                 

@@ -31,7 +31,7 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
-from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
 
 from openquake.smt.utils import make_rup, clean_gmm_label
 
@@ -339,11 +339,17 @@ def construct_gsim_dict(inputs):
 
 def build_mgmpe(gmpe):
     """
-    Build a ModifiableGMPE.
+    Build a ModifiableGMPE from a string of a GMPE parsed from a Comparison TOML.
+
+    NOTE: The way ModifiableGMPEs are built from the comparison TOML makes them
+    slightly less flexible than when built from an OpenQuake XML. Such limitations
+    can be seen by inspecting this code. For example, for the Al Atik sigma model,
+    we always use the "global" tau model. An experienced user can of course modify
+    below any hard-coded values if they deem necessary.
     """
     # All of the inputs for this model
     params = pd.Series(gmpe.splitlines(), dtype=object)
-    
+
     # Underlying GMM to modify
     base_gsim = re.search(r'gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
 
@@ -357,23 +363,23 @@ def build_mgmpe(gmpe):
             par = str(par)
             if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
                 idx_params.append(idx)
-            if 'fix_total_sigma' in par:
+            elif 'fix_total_sigma' in par:
                 idx_params.append(idx)
                 base_vector = par.split('=')[1].replace('"', '')
                 fixed_sigma_vector = ast.literal_eval(base_vector)
-            if 'with_betw_ratio' in par:
+            elif 'with_betw_ratio' in par:
                 idx_params.append(idx)
                 with_betw_ratio = float(par.split('=')[1])
-            if 'set_between_epsilon' in par:
+            elif 'set_between_epsilon' in par:
                 idx_params.append(idx)
                 between_epsilon = float(par.split('=')[1])
-            if 'add_delta_sigma_to_total_sigma' in par:
+            elif 'add_delta_sigma_to_total_sigma' in par:
                 idx_params.append(idx)
                 delta_std = float(par.split('=')[1])
-            if 'set_total_sigma_as_tau_plus_delta' in par:
+            elif 'set_total_sigma_as_tau_plus_delta' in par:
                 idx_params.append(idx)
                 total_set_to_tau_and_delta = float(par.split('=')[1])
-            if 'scaling' in par:
+            elif 'scaling' in par:
                 idx_params.append(idx)
                 if 'median_scaling_scalar' in par:
                     median_scalar = float(par.split('=')[1])
@@ -385,7 +391,14 @@ def build_mgmpe(gmpe):
                 if 'sigma_scaling_vector' in par:
                     base_vector = par.split('=')[1].replace('"', '')
                     sigma_vector = ast.literal_eval(base_vector)
-                    
+            else:
+                assert "conditional_gmpe" in par # Otherwise must be cgmpe
+                idx_params.append(idx)
+                re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
+                cgmpe_dict = ast.literal_eval(re_match.group(1))
+                cgmpes = {imt: construct_gsim_dict(
+                    gmpe_str) for imt, gmpe_str in cgmpe_dict.items()}
+
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
         if idx_p > 1 and idx_p not in idx_params:
@@ -472,7 +485,11 @@ def build_mgmpe(gmpe):
     if 'M9BasinTerm' in gmpe:
         kw_mgmpe['m9_basin_term'] = {}
         
-    return mgmpe.ModifiableGMPE(**kw_mgmpe)
+    # Conditional GMPE(s)
+    if 'conditional_gmpe' in gmpe:
+        kw_mgmpe['conditional_gmpe'] = cgmpes
+        
+    return ModifiableGMPE(**kw_mgmpe)
 
 
 def gmpe_check(gmpe):
