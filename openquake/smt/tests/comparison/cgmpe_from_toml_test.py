@@ -35,6 +35,10 @@ BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ConditionGroundMotionsTestCase(unittest.TestCase):
+    """
+    Test cases for use of conditional GMPEs in the SMT's
+    Comparison module.
+    """
     @classmethod 
     def setUpClass(self):
         self.input_file = os.path.join(BASE, "cgmpe_test.toml")
