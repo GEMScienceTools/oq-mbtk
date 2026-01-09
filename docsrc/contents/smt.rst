@@ -572,7 +572,7 @@ Comparing GMPEs
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png
     
-10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
+10. Using ModifiableGMPE to modify GMPEs within an SMT Comparison ``.toml``. 
 
     In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
    
@@ -584,43 +584,43 @@ Comparing GMPEs
         [models]
 
         [models.0-ModifiableGMPE]
-        gmpe = 'YenierAtkinson2015BSSA'
+        gmpe = "YenierAtkinson2015BSSA"
         sigma_model = 'al_atik_2015_sigma' # Use Al Atik (2015) sigma model
 
         [models.1-ModifiableGMPE]
-        gmpe = 'CampbellBozorgnia2014'
+        gmpe = "CampbellBozorgnia2014"
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Set total sigma per imt
 
         [models.2-ModifiableGMPE]
-        gmpe = 'CampbellBozorgnia2014'
+        gmpe = "CampbellBozorgnia2014"
         with_betw_ratio = 1.7 # Add between-event and within-event sigma using ratio of 1.7 to partition total sigma
                
         [models.3-ModifiableGMPE]
-        gmpe = 'CampbellBozorgnia2014'
+        gmpe = "CampbellBozorgnia2014"
         set_between_epsilon = 1.5 # Set between-event epsilon (i.e. tau epsilon)
                               
         [models.4-ModifiableGMPE]
-        gmpe = 'AbrahamsonEtAl2014'
+        gmpe = "AbrahamsonEtAl2014"
         median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
 
         [models.5-ModifiableGMPE]
-        gmpe = 'AbrahamsonEtAl2014'
+        gmpe = "AbrahamsonEtAl2014"
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # Scale median by imt-dependent factor
 
         [models.6-ModifiableGMPE]
-        gmpe = 'KothaEtAl2020'
+        gmpe = "KothaEtAl2020"
         sigma_scaling_scalar = 1.05 # Scale sigma by factor of 1.05 over all imts
 
         [models.7-ModifiableGMPE]
-        gmpe = 'KothaEtAl2020'
+        gmpe = "KothaEtAl2020"
         sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
 
         [models.8-ModifiableGMPE]
-        gmpe = 'BooreEtAl2014'
-        site_term = 'CY14SiteTerm' # Use CY14 site term
+        gmpe = "BooreEtAl2014"
+        site_term = "CY14SiteTerm" # Use CY14 site term
 
         [models.9-ModifiableGMPE]
-        gmpe = 'AtkinsonMacias2009'
+        gmpe = "AtkinsonMacias2009"
         site_term = 'BA08SiteTerm' # Use BA08 site term
 
         [models.10-ModifiableGMPE]
@@ -628,41 +628,64 @@ Comparing GMPEs
         site_term = "BSSA14SiteTerm" # Use BSSA14 site term
 
         [models.11-ModifiableGMPE]
-        gmpe = 'BooreEtAl2014'
-        site_term = 'NRCan15SiteTerm' # Use NRCan15 site term ("base" kind)
+        gmpe = "BooreEtAl2014"
+        site_term = "NRCan15SiteTerm" # Use NRCan15 site term ("base" kind)
 
         [models.12-ModifiableGMPE]
-        gmpe = 'BooreEtAl2014'
-        site_term = 'NRCan15SiteTermLinear' # Use NRCan15 site term ("linear" kind)
+        gmpe = "BooreEtAl2014"
+        site_term = "NRCan15SiteTermLinear" # Use NRCan15 site term ("linear" kind)
 
         [models.13-ModifiableGMPE]
         gmpe = "AtkinsonBoore2006Modified2011"
         site_term = "CEUS2020SiteTerm_refVs30=760" # Use Stewart et al. (2020) site term with a reference Vs30 of 760 m/s
 
         [models.14-ModifiableGMPE]
-        gmpe = 'AtkinsonMacias2009'
-        basin_term = 'CB14BasinTerm' # Apply CB14 basin adjustment
+        gmpe = "AtkinsonMacias2009"
+        basin_term = "CB14BasinTerm" # Apply CB14 basin adjustment
 
         [models.15-ModifiableGMPE]
-        gmpe = 'KuehnEtAl2020SInter'
-        basin_term = 'M9BasinTerm' # Apply M9 basin adjustment
+        gmpe = "KuehnEtAl2020SInter"
+        basin_term = "M9BasinTerm" # Apply M9 basin adjustment
 
         [models.16-ModifiableGMPE]
-        gmpe = 'CampbellBozorgnia2014'
+        gmpe = "CampbellBozorgnia2014"
         add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
 
         [models.17-ModifiableGMPE]
-        gmpe = 'CampbellBozorgnia2014'
+        gmpe = "CampbellBozorgnia2014"
         set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
         [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
-        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # OQ syntax for instantiating gsim from string in openquake.hazardlib.valid.gsim
+        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # OQ syntax for instantiating gsim from string in openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
 
         [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
-        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
-        site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
+        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"
+        site_term = "BA08SiteTerm" # Arbitrary for testing execution of this capability
         
+10. Using conditional GMPEs within an SMT Comparison ``.toml``. 
+
+   Conditional GMPEs can also be specified within the SMT's Comparison module. Like within the OpenQuake Engine, these leverage ModifiableGMPE to make it possible to specify a different conditional GMPE for each intensity measure we want to compute predictions for in combination with an "underlying" GMPE.
+   
+   NOTE: The user should be mindful that if an intensity measure is not specified within the conditional GMPE's entry within the ``.toml`` file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course, if the underlying GMPE does not support a requested intensity
+   measure then an error is raised as within a "regular" GMPE).
+
+    .. code-block:: ini
+        [models]
+
+        [models.0-ModifiableGMPE] # Base GMPE and conditional GMPE both with multiple inputs
+        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=True' 
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+
+        [models.1-ModifiableGMPE] # Checking works with multiple conditional GMPEs/conditioned imts, where one of the GMPEs has no inputs
+        gmpe = "AbrahamsonGulerce2020SInter"
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan\nrho_pga_sa1=0.52', 'PGV': 'AbrahamsonBhasin2020'}"
+
+        [ratios_baseline_gmm.ModifiableGMPE] # This one is a bit complex: it is using the IA predicted by the MacedoEtAl2019SInter
+                                             # GMPE with KuehnEtAl2020SInter as the underlying GMM, and then computing ratios against
+                                             # against the IA predicted by the two conditional GMPEs specified above.
+        gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
 
 References
 ==========
