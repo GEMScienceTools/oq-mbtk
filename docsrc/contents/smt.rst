@@ -115,7 +115,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        [models.LanzanoEtAl2019_RJB_OMO]
     
        # Examples below of how some GMPEs not considered in this residual analysis
-       # with additional parameters than be specified within the Comparison toml
+       # with additional parameters can be specified within the SMT Comparison toml
     
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # String representation in a list of GMMs would be "[AbrahamsonGulerce2020SInter]\nregion='CAS'"     
@@ -126,7 +126,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        [imts]
        imt_list = ['PGA', 'SA(0.2)', 'SA(0.6)', 'SA(1.0)']    
           
-3. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
+3. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module's capabilities.
 
    We first need to get the metadata from the parsed ``.pkl`` file (stored within the metadata folder):
 
