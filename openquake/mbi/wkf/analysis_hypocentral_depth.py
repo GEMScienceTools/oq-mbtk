@@ -89,7 +89,7 @@ def analyze_hypocentral_depth(folder_subcat: str, depth_min: float = 0,
             tlist = []
             for w, m in zip(wei, midd):
                 if w > 1e-10:
-                    tlist.append([w, m])
+                    tlist.append([float(w), float(m)])
             var['hypocenter_distribution'] = tlist
 
         if writecsv:
