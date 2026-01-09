@@ -44,6 +44,11 @@ def check_mfds(fname_input_pattern: str, fname_config: str = None,  *,
     code compares the total MFD of the sources against the original one in the
     configuration file. The ID of the source if not provided is taken from the
     name of the files (i.e., last label preceded by `_`)
+    
+    :param fname_input_pattern:
+    	pattern to match for xml files
+    :param fname_config:
+    	configuration file with GR params to compare
     """
     for fname in sorted(glob(fname_input_pattern)):
 
