@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution and expected values from conditional GMPE
-features when specified in an SMT format toml input file.
+Tests for execution and expected values from conditional
+GMPEs specified in an SMT Comparison toml.
 """
 import os
 import pandas as pd
@@ -35,11 +35,6 @@ BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ConditionGroundMotionsTestCase(unittest.TestCase):
-    """
-    Test case for the execution and expected values from
-    conditional GMPEs when specified within an SMT Comparison
-    TOML.
-    """
     @classmethod 
     def setUpClass(self):
         self.input_file = os.path.join(BASE, "cgmpe_test.toml")
@@ -50,9 +45,9 @@ class ConditionGroundMotionsTestCase(unittest.TestCase):
     
     def test_cgmpe_from_toml(self):
         """
-        Check conditional GMPEs specified within an SMT TOML using
-        ModifiableGMPE are executed correctly and that the expected
-        values are returned.
+        Check conditional GMPEs specified within an SMT Comparison
+        toml using ModifiableGMPE are executed correctly and that
+        the expected values are returned.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
