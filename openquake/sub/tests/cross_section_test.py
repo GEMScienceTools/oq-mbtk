@@ -15,10 +15,9 @@ from openquake.sub.make_cs_coords import make_cs_coords
 from openquake.utils import are_equal_ignoring_line_endings
 
 BASE_PATH = os.path.dirname(__file__)
-tmp = 'data/crust/crust_except.xyz'
-CRUST_DATA_PATH = os.path.join(BASE_PATH, tmp)
-tmp_idl = 'data/crust/crust_except_idl.xyz'
-CRUST_DATA_PATH_IDL = os.path.join(BASE_PATH, tmp_idl)
+CRUST_DATA_PATH = os.path.join(BASE_PATH, 'data', 'crust', 'crust_except.xyz')
+CRUST_DATA_PATH_IDL = os.path.join(BASE_PATH, 'data', 'crust',
+                                   'crust_except_idl.xyz')
 
 
 def _get_data(filename):
@@ -150,6 +149,7 @@ class edge2profileTest(unittest.TestCase):
 
         reference_file = os.path.join(BASE_PATH, 'expected', 'cs_file.cs')
         cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
-        outfi = os.path.join('/tmp/cs_file.cs')
+        out_folder = tempfile.mkdtemp()
+        outfi = os.path.join(out_folder, 'cs_file.cs')
         make_cs_coords(cs_dir, outfi, 'cs.ini')
         self.assertTrue(are_equal_ignoring_line_endings(outfi, reference_file))
