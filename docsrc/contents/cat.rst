@@ -1,20 +1,65 @@
 CAtalogue Toolkit (cat) module
 ##############################
 
+Catalogue formats and parsers  
+*****************************
+
 The :index:`Catalogue Toolkit` module provides functionalities for the compilation of a homogenised catalogue starting from a collection of catalogues with different origins and magnitudes.
 
 The formats of the original catalogues supported are:
 
 - ISF (see http://www.isc.ac.uk/standards/isf/)
-- GEM Hazard Modeller's Tookit .csv format
 - GCMT .ndk formats (see https://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained)
+- GEM Hazard Modeller's Tookit (hmtk) .csv format
 
-The module contains tools to transform between these different catalogue types, retaining the most neccessary information. The easiest way to build a homogenised catalogue within this framework is to run a bash script which includes the required inputs for each stage of the model and to specify the parameters with a toml file. We demonstrate below how to set this up, but individual steps can also be called directly in python if preffered. 
+The module contains tools to transform between these different catalogue types, retaining the most neccessary information.
 
-Setting up a bash script
-========================
+The csv format is most flexible. It includes the following necessary columns:
+	* eventID - a unique identifier for each event
+	* year, month, day, hour, minute, second - time information for each event
+	* latitude, longitude, depth - describing event locations
+	* magnitude - event magnitude
 
-The bash script specifies all file locations and steps for generating a homogenised model. At each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with ./run_all.sh
+This format will also read and retain the following columns if they are included:
+	* Agency - a string specifiying the agency providing the magnitude
+	* sigmaMagnitude - magnitude uncertainty
+	* SemiMajor90, SemiMinor90 - Length (km) of the semi-major (minor) axis of the 90% confidence ellipsoid for location error 
+	* ErrorStrike - Azimuth (in degrees) of the 90 % confidence ellipsoid for location error 
+	* TimeError - error associated with recorded time (seconds)
+	* magnitudeType - a description of the magnitude type
+
+Extra columns in the catalogue are permitted, though they will not be passed to the final catalogue output. With this approach, almost any catalogue
+can be included with some small column renamings (e.g., with pandas :code:`df.rename(columns={"eventid": "eventID"})`). 
+
+There are also parsers to move between the different catalogue formats, for example :code:`GCMTtoISFParser`:
+
+.. autoclass:: openquake.cat.parsers.converters.GCMTtoISFParser
+	:members: parse
+
+Or from the ndk format to a GCMT catalogue:
+
+.. autoclass:: openquake.cat.parsers.gcmt_ndk_parser.ParseNDKtoGCMT
+	:members: read_file, read_ndk_event
+
+The ISC_GEM catalogue can be parsed to the csv format using the :code:`openquake.cat.parsers.iscgem_parser.parse_iscgem`
+
+.. autofunction:: openquake.cat.parsers.iscgem_parser.parse_iscgem
+
+The :code:`openquake.wkf.catalogue` module contains further useful conversion functions that are used within the SSC workflow, e.g.:
+
+.. autofunction:: openquake.wkf.catalogue.to_df
+
+
+
+Catalogue homogenisation  
+************************
+
+ The easiest way to build a homogenised catalogue within this framework is to run a bash script which includes the required inputs for each stage of the model and to specify the parameters for the merge, homogenise and check steps with a toml file each. Using the bash script and the toml files makes this process reproducible and makes it easier to review the steps taken to create a homogenised catalogue. We demonstrate below how to set this up, but individual steps can also be called directly in python if preffered. 
+
+Setting up a bash script (optional but recommended)  
+===================================================
+
+The bash script specifies all file locations and steps for generating a homogenised model. At each step, we provide a different .toml file specifying the necessary parameters. If you have all the neccessary files set out as below (and named run_all.sh) you should have no problems in running the script with :code:`./run_all.sh`. 
 
 Further details on each step follow.
 
@@ -51,8 +96,12 @@ Merging
 
 The first step in compiling a catalogue is merging information from different sources. This might include a global catalogue (e.g. ISC-GEM or GCMT), and various local catalogues that are more likely to have recorded smaller magnitude events, or contain more accurate locations. The merge tools are designed to allow multiple catalogues to be combined into one, regardless of original catalogue formats, and to retain only unique events across the catalogues. 
 
-As we see in the bash script above, we run the merge with :code:`oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The :code:`merge` function takes the toml file as its single argument. An example of merge .toml file might look like this: 
- 
+As we see in the bash script above, we run the merge with :code:`oqm cat merge merge.toml` where merge.toml contains all the necessary information for the merge. The :code:`merge` function takes the toml file as its single argument and uses the :code:`openquake.cat.hmg.merge.process_catalogues`:
+
+.. autofunction:: openquake.cat.hmg.merge.process_catalogues  
+
+The settings file should provide some mecessary data for each catalogue that is to be included. This should include some catalogue information and some information on the tolerances for merging. An example of the merge settings .toml file might look like this: 
+
 .. code-block:: ini
 
 	[general]
@@ -81,14 +130,23 @@ As we see in the bash script above, we run the merge with :code:`oqm cat merge m
 This contains some general settings for the output, namely the path where the output should be saved and a prefix that will be used to name the file. If you are running the merge function as part of a homogenisation bash script, it is strongly recommended to make this consistent with the CASE argument (as in the example)! The toml file should also be named merge_$CASE. A minimumn magnitude can also be specified here, which will filter the catalogue to events above the specified minimum, and a polygon describing a geographic area of interest can also be added to filter the catalogue to that region.
 The rest of the merge toml should contain the details of the catalogues to be merged. For each catalogue, it is necessary to specify a code, name, file location and catalogue type. The code and name are for the user to choose, but the code should be short as it will feature in the final catalogue to indicate which catalogue the event came from. The type argument will be used to process the catalogue, so should be one of "csv", "isf" or "gcmt".
 
-To ensure events are not duplicated, the user can specify space-time windows over which events are considered to be the same. These are specified using :code:`delta_t` for time and :code:`delta_ll` for distance, where :code:`delta_ll` can be specified in degrees or kms by specifying :code:`use_km = True`. For both parameters, these can be specified as a single value, as a year-value pair to allow for changes in location/temporal accuracy in different time periods, or as a function of magnitude m, which is particularly useful when using the GCMT catalogue, which has some significant differences in location/time compared to other catalogues due to the moment tensor inversion considering these as model parameters. This can result in significant differences for large events, some of which may be so large that they are better removed manually (for example, the 3.5 minute time difference between ISC_GEM and GCMT for the 2004 Sumatra-Andaman earthquake). For the window parameters, we can also specify a buffer (:code:`buff_ll` or :code:`buff_t`) which highlights events which fall within some space/time of the window parameter and flags these as potential duplicates. The units for :code:`buff_ll` should be consistent with those used in :code:`delta_ll` and specified using the :code:`use_kms` argument (i.e. set use_kms = True to use km units or use_kms = False to use lat/lon). In the case where catalogues to be merged might come from the same source or otherwise have matching event ids, the :code:`use_ids` argument will remove duplicated event ids directly. 
+To ensure events are not duplicated, the user can specify space-time windows over which events are considered to be the same. These are specified using :code:`delta_t` for time and :code:`delta_ll` for distance, where :code:`delta_ll` can be specified in degrees or kms by specifying :code:`use_km = True`. For both parameters, these can be specified as a single value, as a year-value pair to allow for changes in location/temporal accuracy in different time periods, or as a function of magnitude m, which is particularly useful when using the GCMT catalogue, which has some significant differences in location/time compared to other catalogues due to the moment tensor inversion considering these as model parameters. This can result in significant differences for large events, some of which may be so large that they are better removed manually (for example, the 3.5 minute time difference between ISC_GEM and GCMT for the 2004 Sumatra-Andaman earthquake). For the window parameters, we can also specify a buffer (:code:`buff_ll` or :code:`buff_t`) which highlights events which fall within some space/time of the window parameter and flags these as potential duplicates. The units for :code:`buff_ll` should be consistent with those used in :code:`delta_ll` and specified using the :code:`use_kms` argument (i.e. set :code:`use_kms = True` to use km units or :code:`use_kms = False` to use lat/lon). In the case where catalogues to be merged might come from the same source or otherwise have matching event ids, the :code:`use_ids` argument will remove duplicated event ids directly. This can be undesired behaviour if different catalogues use similar (but not consistent) ID schemes.
 
 The output of the :code:`merge` function will be two h5 files specifying information on the origin :code:`_otab.h5` and the magnitudes :code:`_mtab.h5`. The origin file will contain the event locations, depths, agency information and focal mechanism parameters where available, while the magnitudes file will include information on the event magnitude and uncertainties.
 
 Homogenisation
 ==============
 
-The next step in creating a catalogue is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done by using a regression to map from one magnitude to a desired magnitude. This requires that an event would need to be recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty that should be passed on to the next stage.
+The next step is the homogenisation of magnitudes to moment magnitude M_w. The catalogue toolkit provides different tools to help with this. Homogenising magnitudes is normally done using a regression to map from one magnitude type to a desired magnitude type (normally Mw). This requires that an event has been recorded in both magnitudes, and ideally a good number of matching events to ensure a significant result. In the toolkit, we use odr regression with scipy to find the best fit model, with options to fit a simple linear regression, an exponential regression, a polynomial regression, or a bilinear regression with a fixed point of change in slope. The function outputs parameters for the chosen fit, plus uncertainty. This process can require several iterations of checking the homogenisations and it is not practical or advisable to include it directly within the homogenisation workflow used with the bash script. We recommend instead to keep the regression component seperate from the larger workflow and include the final parameters in the settings file to be passed into the workflow. If you already have suitable conversion equations, skip to the `Applying homogenisations`_ subsection. 
+
+Magnitude regressions
+---------------------
+
+To see available agency-magnitude pairs, you can use the function :code:`mine_agency_magnitude_combinations`:
+
+.. autofunction:: openquake.cat.catalogue_query_tools.mine_agency_magnitude_combinations
+
+We can build queries using the code below: 
 
 .. code-block:: ini
 
@@ -165,7 +223,13 @@ The next step in creating a catalogue is the homogenisation of magnitudes to mom
     		print(fmt.format(results.sd_beta[0], results.sd_beta[1]))
     		print("\n")
 
-Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
+Using the above functions, we can query our catalogues to identify events that are present in both catalogues in both magnitude types. We can then use these to build a regression model and identify a relationship between different magnitude types. The catalogue regression tools can be found here:
+
+.. autoclass:: openquake.cat.catalogue_query_tools.CatalogueRegressor
+	:members: from_catalogue, from_array, plot_model, plot_model_density, plot_magnitude_conversion_model, get_standard_deviation, get_magnitude_conversion_model, get_catalogue_residuals, run_regression
+
+
+In the example below, we select mw magnitudes from our `local` catalogue and Mw magnitudes from `ISCGEM`. We specify a polynomial fit to the data, with starting parameter estimates for the regression of 1.2 and 0.7
 
 .. code-block:: ini 
 
@@ -179,7 +243,7 @@ Using the above functions, we can query our catalogues to identify events that a
 	# Regression type to fit and starting parameters
 	results = regress.run_regression("polynomial", [1.2, 0.7])
 	# Results
-        # Print resulting best fit
+    # Print resulting best fit
 	print_mbt_conversion(results, agency, magtype)
 	# plot the regression 
 	regress.plot_model_density(overlay=False, sample=0)
@@ -193,6 +257,11 @@ Alternatively, if we wanted an example with a bilinear fit with a break in slope
 This would give us a different fit to our data and a different equation to supply to the homogenisation toml.
 
 Where there are not enough events to allow for a direct regression or we are unhappy with the fit for our data, there are many conversions in the literature which may be useful. This process may take some revising and iterating - it is sometimes very difficult to identify a best fit, especially where we have few datapoints or highly uncertain data. Once we are happy with the fits to our data, we can add the regression equation to the homogenisation .toml file. This process should be repeated for every magnitude we wish to convert to Mw. 
+
+.. _Applying homogenisations:
+
+Applying homogenisations
+------------------------
 
 The final homogenisation step itself is also controlled by a toml file, where each observed magnitude is specified individually and the regression coefficients and uncertainty are included. It is also necessary to specify a hierarchy of catalogues so that a preferred catalogue is used for the magnitude where the event has multiple entries. If you have an isf format catalogue, you can also specify here the hierarchy of individual agencies (or authors in the isf format) within the catalogue. In the example below, we merge the ISCGEM and a local catalogue, preferring ISCGEM magnitudes where available as specified in the ranking. Because the ISCGEM already provides magnitudes in Mw, we simply retain all Mw magnitudes from ISCGEM. In this example, our local catalogue has two different magnitude types for which we have derived a regression. We specify how to convert to the standardised Mw from the local.mw and the standard deviations, which are outputs of the fitting we carried out above.
 
@@ -232,13 +301,21 @@ The final homogenisation step itself is also controlled by a toml file, where ea
 The order of conversions in the list will determine priority for conversion, so for the local events we will first convert all events with mw magnitudes and then use mww only where the mw magnitudes are not available, and the local conversions will not be used when we have an ISCGEM Mw. In this way we can specify hierarchies for both the agencies and the magnitudes. 
 The actual homogenisation step is carried out by calling
 :code:`oqm cat homogenise $ARG1 $ARG2 $ARG3`
-as in the bash script example, where $ARG1 is the homogenisation toml file and and $ARG2 and $ARG3 are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
+as in the bash script example, where `$ARG1` is the homogenisation toml file and and `$ARG2` and `$ARG3` are the hdf5 file outputs from the merge step, describing the origins and magnitude information for the merged catalogue respectively.
 
-Checking for duplicate events
+Checking for duplicate events  
 =============================
 
 A common issue when merging catalogues is that there are differences in earthquake metadata in different catalogues. To avoid creating a catalogue with duplicate events, we specify the time and space criteria in the merge stage, so that events that are very close in time and space will not be added to the catalogue.  
-We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the :code:`check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file. A :code:`check.toml` file might look like this:
+We can check how well we have achieved this by looking at events that are retained in the final catalogue but fall within a certain time and space window. We can use the :code:`check_duplicates` function to do this, which takes in a check.toml file and the homogenised catalogue h5 file.
+
+.. autofunction:: openquake.cat.hmg.check.check_catalogue
+
+.. autofunction:: openquake.cat.hmg.check.process
+
+
+
+ A settings file might look like this:
 
 .. code-block:: ini
 
@@ -249,15 +326,14 @@ We can check how well we have achieved this by looking at events that are retain
 
 where delta_ll and dela_t specify the time and space windows (in seconds and degrees respctively) to test for duplicate events. Again, we can specify different time limits and write the limits as functions of magnitudes i.e.:
 
-.. code-block :: ini
+.. code-block:: ini  
 
 	[general]
 	delta_ll = [['1899', '100*m']]
 	delta_t = [['1899', '30*m']]
-	output_path = "./tmp/"
 
-The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the check.toml file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
+The check_duplicates output is a geojson file that draws lines between events that meet the criteria in the `check.toml` file. Each line segment contains the details of the two events, including their original magnitudes, the agencies that the events are taken from and the time and spatial distance between the two events, so that a user can check if they are happy for these events to be retained or would prefer to iterate on the parameters.
 
-The process of building a reliable homogenised catalogue is iterative: at any step we may identify changes that should be made to merge criteria or regression parameters. It is also important to look at the resulting frequency-magnitude distribution to idenitfy any obvious changes in slope, which may indicate that our regressions are not performing as well as we would like. 
+The process of building a reliable homogenised catalogue is iterative: at any step we may identify changes that should be made to merge criteria or regression parameters. It is also important to look at the resulting frequency-magnitude distribution to idenitfy any obvious changes in slope, which may indicate that our regressions are not performing as well as we would like, and at magnitude-density plots that might show us clumping of magnitudes because of poor regression choices. For these reasons, we find the use of the bash script and toml files simplifies tracking of different versions of the catalogue and improves reproducibility. 
 
 
