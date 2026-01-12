@@ -319,7 +319,7 @@ def make_fault_mfd(
             )
         except ValueError:
             mfd = TruncatedGRMFD.from_moment(
-                min_mag=min_mag - bin_width,
+                min_mag=max_mag - bin_width,
                 max_mag=max_mag,
                 bin_width=bin_width,
                 b_val=b_val,
