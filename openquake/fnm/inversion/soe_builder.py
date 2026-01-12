@@ -149,7 +149,12 @@ def _get_tapered_gr_rate(mag, b, a, corner_mag, mag_lo=4.0, mag_hi=9.05):
 
 
 def make_rel_gr_mfd_eqns(
-    rups, b=1.0, rup_include_list=None, corner_mag=None, weight=1.0
+    rups,
+    b=1.0,
+    rup_include_list=None,
+    rup_fractions=None,
+    corner_mag=None,
+    weight=1.0,
 ):
     """
     Creates a set of equations that enforce a relative Gutenberg-Richter
@@ -165,6 +170,10 @@ def make_rel_gr_mfd_eqns(
         Gutenberg-Richter b-value
 
     rup_include_list : Optional list of ruptures to include in equation set
+
+    rup_fractions : Optional list of fractions to apply to included ruptures
+
+    corner_mag : Optional corner magnitude for tapered GR
 
     weight: float
         Weight to apply to the equation set
@@ -182,25 +191,36 @@ def make_rel_gr_mfd_eqns(
     rel_rates_adj = {M: 1 / rel_rates[M] for M in unique_mags}
 
     mag_rup_idxs = {}
+    mag_rup_fracs = {}
     for M in unique_mags:
-        if rup_include_list is None:
-            mag_rup_idxs[M] = [
-                i for i, rup in enumerate(rups) if rup["M"] == M
-            ]
+        mag_rup_idxs[M] = []
+        mag_rup_fracs[M] = []
+
+    if rup_include_list is None:
+        for i, rup in enumerate(rups):
+            mag_rup_idxs[rup["M"]].append(i)
+            mag_rup_fracs[rup["M"]].append(1.0)
+    else:
+        # Create a mapping from rup index to fraction
+        if rup_fractions is None:
+            frac_map = {idx: 1.0 for idx in rup_include_list}
         else:
-            mag_rup_idxs[M] = [
-                i
-                for i, rup in enumerate(rups)
-                if rup["M"] == M and rup["idx"] in rup_include_list
-            ]
+            frac_map = {
+                idx: frac for idx, frac in zip(rup_include_list, rup_fractions)
+            }
+
+        for i, rup in enumerate(rups):
+            if i in frac_map:
+                mag_rup_idxs[rup["M"]].append(i)
+                mag_rup_fracs[rup["M"]].append(frac_map[i])
 
     n_eqs = len(unique_mags) - 1
     rel_mag_eqns = ssp.dok_array((n_eqs, len(rups)), dtype=float)
     for i, M in enumerate(unique_mags[1:]):
-        for idx in mag_rup_idxs[ref_mag]:
-            rel_mag_eqns[i, idx] = -rel_rates_adj[ref_mag]
-        for idx in mag_rup_idxs[M]:
-            rel_mag_eqns[i, idx] = rel_rates_adj[M]
+        for idx, frac in zip(mag_rup_idxs[ref_mag], mag_rup_fracs[ref_mag]):
+            rel_mag_eqns[i, idx] = -rel_rates_adj[ref_mag] * frac
+        for idx, frac in zip(mag_rup_idxs[M], mag_rup_fracs[M]):
+            rel_mag_eqns[i, idx] = rel_rates_adj[M] * frac
 
     rel_mag_eqns_lhs = rel_mag_eqns
     rel_mag_eqns_rhs = np.zeros(n_eqs)
@@ -562,6 +582,7 @@ def make_eqns(
     mfd_rel_weight=1.0,
     mfd_abs_weight=1.0,
     regional_abs_mfds=None,
+    regional_rel_mfds=None,
     fault_abs_mfds=None,
     mfd_abs_normalize=False,
     slip_rate_smoothing=False,
@@ -645,6 +666,45 @@ def make_eqns(
             rhs_set.append(rhs)
             err_set.append(errs)
             metadata_set.append(metadata)
+
+    if regional_rel_mfds is not None:
+        logging.info("Making regional MFD relative eqns")
+        for reg, reg_mfd_data in regional_rel_mfds.items():
+            # Check if reg_mfd_data is a dict and has required keys
+            if not isinstance(reg_mfd_data, dict):
+                logging.warning(f"Skipping region {reg}: data is not a dict")
+                continue
+
+            if ('rups_include' in reg_mfd_data) and (
+                len(reg_mfd_data['rups_include']) > 0
+            ):
+                b_val = reg_mfd_data.get('b_value', 1.0)
+                corner_mag = reg_mfd_data.get('corner_mag', None)
+                weight = (reg_mfd_data.get('weight', 1.0),)  # mfd_rel_weight)
+                rup_fractions = reg_mfd_data.get('rup_fractions', None)
+
+                reg_rel_result = make_rel_gr_mfd_eqns(
+                    rups,
+                    b=b_val,
+                    rup_include_list=reg_mfd_data['rups_include'],
+                    rup_fractions=rup_fractions,
+                    corner_mag=corner_mag,
+                    weight=weight,
+                )
+                if (
+                    reg_rel_result is not None
+                    and reg_rel_result[-1] is not None
+                ):
+                    lhs, rhs, errs, metadata = reg_rel_result
+                    metadata['start_idx'] = current_eq_idx
+                    metadata['end_idx'] = current_eq_idx + metadata['n_eqs']
+                    metadata['details']['region'] = reg
+                    current_eq_idx += metadata['n_eqs']
+
+                    lhs_set.append(lhs)
+                    rhs_set.append(rhs)
+                    err_set.append(errs)
+                    metadata_set.append(metadata)
 
     if mfd is not None:
         if incremental_abs_mfds:
