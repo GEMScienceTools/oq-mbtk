@@ -1,4 +1,4 @@
-# Copyright (C) 2021 GEM Foundation
+# Copyright (C) 2021-2025 GEM Foundation
 #
 # OpenQuake is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published
@@ -15,7 +15,7 @@
 #
 #
 #
-ARG BASE_CONTAINER=ubuntu:focal
+ARG BASE_CONTAINER=python:3.12.6-slim
 FROM $BASE_CONTAINER
 LABEL maintainer="GEM Foundation <devops@openquake.org>" \
        vendor="GEM Foundation"
@@ -31,7 +31,7 @@ RUN apt-get update \
     run-one \
     gmt gmt-gshhg \
     ghostscript \
-    build-essential python3 python3-pip python3-dev python3-venv && \ 
+    build-essential && \ 
     apt-get clean && rm -rf /var/lib/apt/lists/* && \
     useradd -m -u 1000 -s /bin/bash openquake  
 #
@@ -47,13 +47,11 @@ ENV GMT_SESSION_NAME=$$
 RUN pip install pip wheel setuptools --upgrade && \
     pip install notebook jupyterlab ipywidgets && \
     cd /usr/src && git clone -q --depth=1 -b $oq_branch https://github.com/gem/oq-engine.git && cd oq-engine && \
-    pip --disable-pip-version-check install -e . -r requirements-py38-linux64.txt --no-warn-script-location && \
+    pip --disable-pip-version-check install -e . -r requirements-py312-linux64.txt --no-warn-script-location && \
     cd /usr/src && git clone -q https://github.com/GEMScienceTools/oq-mbtk.git --depth=1 && cd oq-mbtk && \
-    pip install rtree && pip install -e . && \
-    cd /usr/src && git clone -q https://github.com/GEMScienceTools/gmpe-smtk.git --depth=1 && cd gmpe-smtk && \
-    python3 setup.py install && \
+    && pip install -e . && \
     cd /usr/src && git clone -q https://github.com/GEMScienceTools/hamlet.git --depth=1 && cd hamlet && \
-    pip install h3 && pip install -e . -r requirements.txt 
+    pip install -e . -r requirements.txt 
 #
 #ENV OQ_CONFIG_FILE /opt/openquake/openquake.cfg
 #ADD openquake.cfg /opt/openquake/openquake.cfg
