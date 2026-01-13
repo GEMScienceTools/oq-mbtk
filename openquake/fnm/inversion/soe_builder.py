@@ -158,9 +158,10 @@ def make_rel_gr_mfd_eqns(
 ):
     """
     Creates a set of equations that enforce a relative Gutenberg-Richter
-    magnitude frequency distribution. The resulting set of equations has
-    M rows representing the number of unique magnitudes in the rupture set,
-    and N columns representing each rupture.
+    magnitude frequency distribution using cumulative rates (N(M >= m)).
+    The resulting set of equations has M rows representing the number of
+    unique magnitudes in the rupture set, and N columns representing each
+    rupture.
 
     Parameters
     ----------
@@ -190,16 +191,11 @@ def make_rel_gr_mfd_eqns(
     rel_rates = rel_gr_mfd_rates(unique_mags, b, corner_mag=corner_mag)
     rel_rates_adj = {M: 1 / rel_rates[M] for M in unique_mags}
 
-    mag_rup_idxs = {}
-    mag_rup_fracs = {}
-    for M in unique_mags:
-        mag_rup_idxs[M] = []
-        mag_rup_fracs[M] = []
+    mag_rup_idxs = {M: [] for M in unique_mags}
+    mag_rup_fracs = {M: [] for M in unique_mags}
 
     if rup_include_list is None:
-        for i, rup in enumerate(rups):
-            mag_rup_idxs[rup["M"]].append(i)
-            mag_rup_fracs[rup["M"]].append(1.0)
+        included = [(i, rup, 1.0) for i, rup in enumerate(rups)]
     else:
         # Create a mapping from rup index to fraction
         if rup_fractions is None:
@@ -208,19 +204,25 @@ def make_rel_gr_mfd_eqns(
             frac_map = {
                 idx: frac for idx, frac in zip(rup_include_list, rup_fractions)
             }
+        included = [
+            (i, rup, frac_map[i])
+            for i, rup in enumerate(rups)
+            if i in frac_map
+        ]
 
-        for i, rup in enumerate(rups):
-            if i in frac_map:
-                mag_rup_idxs[rup["M"]].append(i)
-                mag_rup_fracs[rup["M"]].append(frac_map[i])
+    for M in unique_mags:
+        for i, rup, frac in included:
+            if rup["M"] >= M:
+                mag_rup_idxs[M].append(i)
+                mag_rup_fracs[M].append(frac)
 
     n_eqs = len(unique_mags) - 1
     rel_mag_eqns = ssp.dok_array((n_eqs, len(rups)), dtype=float)
     for i, M in enumerate(unique_mags[1:]):
         for idx, frac in zip(mag_rup_idxs[ref_mag], mag_rup_fracs[ref_mag]):
-            rel_mag_eqns[i, idx] = -rel_rates_adj[ref_mag] * frac
+            rel_mag_eqns[i, idx] += -rel_rates_adj[ref_mag] * frac
         for idx, frac in zip(mag_rup_idxs[M], mag_rup_fracs[M]):
-            rel_mag_eqns[i, idx] = rel_rates_adj[M] * frac
+            rel_mag_eqns[i, idx] += rel_rates_adj[M] * frac
 
     rel_mag_eqns_lhs = rel_mag_eqns
     rel_mag_eqns_rhs = np.zeros(n_eqs)
