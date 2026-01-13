@@ -71,9 +71,6 @@ class Configurations(object):
             self.rup_params_from_source_key(config_file)
         else:
             self.rup_params_from_file(config_file['rup_file'])
-        
-        # Check same length mag and depth lists to avoid indexing error
-        assert len(self.mag_list) == len(self.depth_list)
 
         # Get imts
         self.imt_list = config_file['general']['imt_list']
@@ -166,8 +163,17 @@ class Configurations(object):
         self.rake = config_file['source_properties']['rake']
         self.mag_list = np.array(config_file['source_properties']['mags'])
         self.depth_list = np.array(config_file['source_properties']['depths'])
+        if len(self.mag_list) != len(self.depth_list):
+            raise ValueError("An equal number of magnitudes and depths must be "
+                             "specified.")
         self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
+        for par in ["ztor"]: # Iterate in case add more params in the future
+            param = getattr(self, par)
+            if param != -999 and len(param) != len(self.mag_list):
+                raise ValueError(f"{par} must be specified as a list equal in "
+                                 f"length to number of magnitudes and depths "
+                                 f"specified (or set to -999 to not consider).")
         self.trt = config_file['source_properties']['trt']
         self.rup = None
 
