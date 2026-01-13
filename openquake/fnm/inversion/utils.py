@@ -668,7 +668,7 @@ def get_rup_rates_from_fault_slip_rates(
     seismic_fraction=1.0,
     rupture_set_for_rates_from_slip_rates='all',
     faults_or_subfaults='subfaults',
-    export_fault_mfds=False,
+    export_fault_mfds=True,
     exit_after_mfd_export=False,
     **kwargs,
 ):
