@@ -165,21 +165,21 @@ def plot_trellis_util(config, output_directory):
                 
             # Plot logic trees if specified and also store
             for key_gmc in lt_weights:
-                store_gmm_curves = trel_logic_trees(config,
-                                                    key_gmc,
-                                                    lt_weights[key_gmc],
-                                                    lt_vals_gmc[key_gmc],
-                                                    gmc_p[key_gmc],
-                                                    store_gmm_curves,
-                                                    r_vals,
-                                                    config.nstd,
-                                                    imt,
-                                                    mag,
-                                                    depth_g,
-                                                    dip_g,
-                                                    config.rake,
-                                                    cfg_key,
-                                                    unit)
+                store_gmm_curves = trellis_logic_trees(config,
+                                                       key_gmc,
+                                                       lt_weights[key_gmc],
+                                                       lt_vals_gmc[key_gmc],
+                                                       gmc_p[key_gmc],
+                                                       store_gmm_curves,
+                                                       r_vals,
+                                                       config.nstd,
+                                                       imt,
+                                                       mag,
+                                                       depth_g,
+                                                       dip_g,
+                                                       config.rake,
+                                                       cfg_key,
+                                                       unit)
                     
             # Create key of magnitude and other scenario info
             mag_key = f'Mw = {mag}, depth = {depth_g} km, dip = {dip_g} deg, rake = {config.rake} deg'
@@ -390,14 +390,14 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
             # Plot logic trees if required
             for key_gmc in gmc_weights:
                 if gmc_vals[key_gmc][0] != {}: # If none empty LT
-                    lt_vals[key_gmc][sk] = lt_spectra(config,
-                                                      ax1,
-                                                      config.gmpes_list,
-                                                      config.nstd,
-                                                      periods,
-                                                      key_gmc,
-                                                      gmc_vals[key_gmc],
-                                                      sk)
+                    lt_vals[key_gmc][sk] = spectra_logic_trees(config,
+                                                               ax1,
+                                                               config.gmpes_list,
+                                                               config.nstd,
+                                                               periods,
+                                                               key_gmc,
+                                                               gmc_vals[key_gmc],
+                                                               sk)
                 
             # Add grid and set xlims
             ax1.set_xlim(min(periods), max(periods))
@@ -1075,40 +1075,40 @@ def trellis_data(gmpe,
     return lt_vals_gmc
 
 
-def trel_logic_trees(config,
-                     key_gmc,
-                     gmc,
-                     lt_vals_gmc,
-                     gmc_p,
-                     store_gmm_curves,
-                     r_vals,
-                     nstd,
-                     i,
-                     m,
-                     dep,
-                     dip,
-                     rake,
-                     cfg_key,
-                     unit):
+def trellis_logic_trees(config,
+                        key_gmc,
+                        gmc,
+                        lt_vals_gmc,
+                        gmc_p,
+                        store_gmm_curves,
+                        r_vals,
+                        nstd,
+                        i,
+                        m,
+                        dep,
+                        dip,
+                        rake,
+                        cfg_key,
+                        unit):
     """
     Manages plotting of the logic tree attenuation curves and
     adds them to the store of exported attenuation curves.
     """
     # If logic tree provided plot and add to attenuation curve store
     if gmc is not None:
-        median, plus_sig, minus_sig = lt_trel(config,
-                                              r_vals,
-                                              nstd,
-                                              i,
-                                              m,
-                                              dep,
-                                              dip, 
-                                              rake,
-                                              key_gmc,
-                                              lt_vals_gmc,
-                                              gmc_p[0],
-                                              gmc_p[1],
-                                              gmc_p[2])
+        median, plus_sig, minus_sig = lt_trellis_plot(config,
+                                                      r_vals,
+                                                      nstd,
+                                                      i,
+                                                      m,
+                                                      dep,
+                                                      dip, 
+                                                      rake,
+                                                      key_gmc,
+                                                      lt_vals_gmc,
+                                                      gmc_p[0],
+                                                      gmc_p[1],
+                                                      gmc_p[2])
 
         store_gmm_curves[cfg_key][
             'gmc logic tree curves per imt-mag'][key_gmc] = {}
@@ -1126,7 +1126,7 @@ def trel_logic_trees(config,
     return store_gmm_curves
 
 
-def lt_trel(config,
+def lt_trellis_plot(config,
             r_vals,
             nstd,
             i,
@@ -1342,16 +1342,16 @@ def spectra_data(gmpe,
                      }
 
 
-def lt_spectra(config,
-               ax1,
-               gmpe_list,
-               nstd,
-               period,
-               key_gmc,
-               ltv,
-               sk):
+def spectra_logic_trees(config,
+                        ax1,
+                        gmpe_list,
+                        nstd,
+                        period,
+                        key_gmc,
+                        ltv,
+                        sk):
     """
-    Plot spectra for the GMPE logic tree.
+    Manages plotting and handling of the spectra for each logic tree.
     """
     # Get identifier for given GMC in the toml GMMs
     check = f'lt_weight_gmc{key_gmc.split("lt_gmc_")[1]}'
@@ -1406,7 +1406,6 @@ def lt_spectra(config,
 
     return [lt_median, lt_add_sig, lt_min_sig]
 
-        
    
 def load_obs_spectra(obs_spectra_fname):
     """
