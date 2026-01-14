@@ -269,6 +269,18 @@ def test_make_abs_mfd_eqns_bins_rupture_magnitudes_for_rhs_lookup():
     assert float(err[0]) < 1e8
 
 
+def test_make_abs_mfd_eqns_applies_min_mfd_error_floor_for_zero_rates():
+    # Regression: if a target MFD rate is zero, errors can go to zero and
+    # weights can explode. `make_abs_mfd_eqns` should apply the default
+    # `min_mfd_error` floor (1e-5), capping weights at 1e5.
+    rups = [{"M": 6.0}]
+    mfd = {6.0: 0.0}
+
+    _, rhs, err, _ = make_abs_mfd_eqns(rups, mfd, mag_decimals=1)
+    np.testing.assert_array_almost_equal(rhs, np.array([0.0]))
+    np.testing.assert_array_almost_equal(err, np.array([1.0e5]))
+
+
 def test_make_abs_mfd_eqns_faults():
     total_mfd = hz.mfd.TruncatedGRMFD(5.0, 7.1, 0.1, 3.61759073, 1.0)
     f0_mfd = hz.mfd.TruncatedGRMFD.from_moment(
@@ -722,15 +734,15 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     8.82647205e01,
                     9.90346453e01,
                     1.39890155e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     8.82106779e01,
                     9.89740084e01,
                     1.39804503e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     9.86227943e01,
                     1.10656595e02,
                     1.56306595e02,
-                    1.00000000e10,
+                    1.00000000e05,
                 ]
             ),
             decimal=3,
@@ -824,15 +836,15 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     8.82647205e01,
                     9.90346453e01,
                     1.39890155e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     8.82106779e01,
                     9.89740084e01,
                     1.39804503e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     9.86227943e01,
                     1.10656595e02,
                     1.56306595e02,
-                    1.00000000e10,
+                    1.00000000e05,
                 ]
             ),
             decimal=3,
