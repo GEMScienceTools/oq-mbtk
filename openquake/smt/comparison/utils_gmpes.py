@@ -391,8 +391,7 @@ def build_mgmpe(gmpe):
                 if 'sigma_scaling_vector' in par:
                     base_vector = par.split('=')[1].replace('"', '')
                     sigma_vector = ast.literal_eval(base_vector)
-            else:
-                assert "conditional_gmpe" in par # Otherwise must be cgmpe
+            elif "conditional_gmpe" in par:
                 idx_params.append(idx)
                 # If this code is failing for the user please ensure you are carefully
                 # following the syntax provided in the docs for using conditional GMPEs
