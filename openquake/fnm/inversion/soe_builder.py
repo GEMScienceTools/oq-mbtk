@@ -281,6 +281,7 @@ def make_abs_mfd_eqns(
     normalize=False,
     cumulative=False,
     region_name=None,
+    min_mfd_error=1e-5,
 ):
     """
     Vectorized build of absolute MFD equations.
@@ -356,7 +357,9 @@ def make_abs_mfd_eqns(
     # --- errors and weights ---
     # Note: sqrt(0) -> 0; if you want to avoid zero-variance, add small epsilon.
     mfd_abs_errs = np.sqrt(mfd_abs_rhs)
-    mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
+    mfd_abs_errs_weighted = (
+        weights_from_errors(mfd_abs_errs, min_error=min_mfd_error) * weight
+    )
 
     abs_mag_eqns = ssp.csr_array(abs_mag_eqns)
 
@@ -384,6 +387,7 @@ def _make_abs_mfd_eqns_old(
     normalize=False,
     cumulative=False,
     region_name=None,
+    min_mfd_error=1e-5,
 ):
     """
     This function is useful as a reference
@@ -446,7 +450,9 @@ def _make_abs_mfd_eqns_old(
         abs_mag_eqns /= norm_constant
 
     mfd_abs_errs = np.sqrt(mfd_abs_rhs)
-    mfd_abs_errs_weighted = weights_from_errors(mfd_abs_errs) * weight
+    mfd_abs_errs_weighted = (
+        weights_from_errors(mfd_abs_errs, min_error=min_mfd_error) * weight
+    )
 
     eq_metadata = {
         'type': 'mfd_abs',
