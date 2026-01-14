@@ -53,6 +53,7 @@ from openquake.fnm.inversion.utils import (
     rup_df_to_rupture_dicts,
     subsection_df_to_fault_dicts,
     get_fault_moment_rate,
+    get_mfd_occurrence_rates,
 )
 
 from openquake.fnm.all_together_now import (
@@ -167,7 +168,7 @@ def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
     np.testing.assert_array_almost_equal(
         soln,
         np.array(
-            [3.83612506e-04, 3.83612506e-04, 7.67225013e-05, 2.42617852e-04]
+            [3.52359071e-04, 3.52359071e-04, 1.03058514e-04, 2.22850461e-04]
         ),
     )
 
@@ -247,6 +248,25 @@ def test_and_solve_slip_rate_and_abs_mfd_eqns():
     soln = np.linalg.lstsq(lhs, rhs, rcond=-1)[0]
 
     resids = lhs @ soln - rhs
+
+
+def test_make_abs_mfd_eqns_bins_rupture_magnitudes_for_rhs_lookup():
+    # Regression: rupture magnitudes can carry float noise (e.g., 6.1 stored as
+    # 6.100000000000001), while target MFD keys are discretized/rounded. If the
+    # rupture magnitudes are not rounded similarly, RHS lookup can return 0.0,
+    # producing extreme row weights.
+    rups = [
+        {"M": 6.1 + 1e-12},
+        {"M": 6.1 - 1e-12},
+    ]
+    mfd = {6.1: 1.23e-4}
+
+    lhs, rhs, err, _ = make_abs_mfd_eqns(rups, mfd, mag_decimals=1)
+    lhs = lhs.todense()
+
+    np.testing.assert_array_almost_equal(lhs, np.array([[1.0, 1.0]]))
+    np.testing.assert_array_almost_equal(rhs, np.array([1.23e-4]))
+    assert float(err[0]) < 1e8
 
 
 def test_make_abs_mfd_eqns_faults():
@@ -475,6 +495,9 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             "calculate_rates_from_slip_rates": True,
             "filter_by_plausibility": False,
             "export_fault_mfds": True,
+            # Avoid multiprocessing in unit tests; some CI/sandboxed
+            # environments disallow POSIX semaphores used by ProcessPool.
+            "parallel_subfault_build": False,
         }
 
         self.fault_network = build_fault_network(
@@ -601,9 +624,12 @@ class TestEqnsFromLilFaults(unittest.TestCase):
         for fault_key, mfd_stuff in fault_abs_mfds.items():
             for key, test_value in mfd_stuff.items():
                 if key == 'mfd':
+                    test_mfd = get_mfd_occurrence_rates(
+                        fault_abs_mfds[fault_key][key]
+                    )
                     np.testing.assert_almost_equal(
                         np.array(
-                            sorted(fault_abs_mfds[fault_key][key].keys())
+                            sorted(test_mfd.keys())
                         ),
                         np.array(
                             sorted(
@@ -613,7 +639,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     )
                     np.testing.assert_almost_equal(
                         np.array(
-                            sorted(fault_abs_mfds[fault_key][key].values())
+                            sorted(test_mfd.values())
                         ),
                         np.array(
                             sorted(
