@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tool for creating visualisation of database information
+Tool for creating visualisation of database information.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -59,8 +59,8 @@ EC8_BOUNDS = {
 
 def get_eq_and_st_coordinates(db1):
     """
-    From the strong motion database, returns lists of latitudes and longitudes
-    of the events and stations
+    From the strong motion database, returns lists of latitudes and
+    longitudes of the events and stations.
     """
     eq_coos, st_coos = [], []
     for record in db1.records:
@@ -84,8 +84,8 @@ def get_eq_and_st_coordinates(db1):
 
 def get_magnitude_distances(db1, dist_type):
     """
-    From the strong motion database, returns lists of magnitude and distance
-    pairs
+    From the strong motion database, returns lists of magnitude
+    and distance pairs.
     """
     mags = []
     dists = []
@@ -110,7 +110,8 @@ def get_magnitude_distances(db1, dist_type):
 
 def db_magnitude_distance(db1, dist_type, filename):
     """
-    Creates a plot of magnitude verses distance for a strong motion database
+    Creates a plot of magnitude verses distance for a strong
+    motion database.
     """
     plt.figure()
     mags, dists = get_magnitude_distances(db1, dist_type)
@@ -124,8 +125,8 @@ def db_magnitude_distance(db1, dist_type, filename):
 
 def db_geographical_coverage(db1, filename):
     """
-    Creates a plot of the locations of event hypocenters and station locations
-    for a strong motion database
+    Creates a plot of the locations of event hypocenters and station
+    locations for a strong motion database.
     """
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -147,7 +148,7 @@ def db_geographical_coverage(db1, filename):
 
 def _site_selection(db1, site_class, classifier):
     """
-    Select records within a particular site class and/or vs30 range
+    Select records within a particular site class and/or vs30 range.
     """
     idx = []
     for iloc, rec in enumerate(db1.records):
@@ -181,7 +182,8 @@ def db_magnitude_distance_by_site(db1,
                                   filename,
                                   classification="NEHRP"):
     """
-    Plot magnitude-distance comparison by site NEHRP or Eurocode 8 Site class   
+    Plot magnitude-distance comparison by site NEHRP or Eurocode 8
+    Site class.
     """ 
     if classification == "NEHRP":
         site_bounds = NEHRP_BOUNDS
@@ -215,7 +217,7 @@ def db_magnitude_distance_by_site(db1,
 
 def db_magnitude_distance_by_trt(db1, dist_type, filename):
     """
-    Plot magnitude-distance comparison by tectonic region
+    Plot magnitude-distance comparison by tectonic region.
     """
     trts=[]
     for i in db1.records:

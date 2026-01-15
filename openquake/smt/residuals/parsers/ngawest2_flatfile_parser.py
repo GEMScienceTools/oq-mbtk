@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for the NGAWest2 flatfile
+Parser for the NGAWest2 flatfile.
 """
 import pandas as pd
 import os
@@ -85,8 +85,8 @@ HEADERS = ["event_id",
 
 def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
     """
-    Convert NGAWest2 flatfile into an ESM format flatfile which can be
-    readily parsed into SMT metadata.
+    Convert NGAWest2 flatfile into an ESM format flatfile which
+    can be readily parsed into SMT metadata.
     """
     # Reformat/map some of the metadata
     ngawest2['event_time'] = pd.Series()
@@ -385,12 +385,12 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
 
 class NGAWest2FlatfileParser(SMDatabaseReader):
     """
-    Parses the data from flatfile to a set of metadata objects
+    Parses the data from flatfile to a set of metadata objects.
     """
 
     def parse(self, location='./'):
         """
-        Parse the metadata
+        Parse the metadata.
         """
         assert os.path.isfile(self.input_files)
         headers = getline(self.input_files, 1).rstrip("\n").split(";")
@@ -502,7 +502,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_record(self, metadata):
         """
-        Parse a record
+        Parse a record.
         """
         wfid = "_".join(
             [metadata["event_id"], metadata["network_code"], metadata["station_code"]])
@@ -527,7 +527,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_event_data(self, metadata):
         """
-        Parses the event metadata
+        Parses the event metadata.
         """
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
@@ -560,7 +560,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        NGAWest2 only provides Mw so no mag type precedence required
+        NGAWest2 only provides Mw so no mag type precedence required.
         """
         # Make Magnitude object just for Mw
         mag = Magnitude(float(metadata["Mw"].strip()), "Mw", source=None)
@@ -572,7 +572,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
-        If rupture data is available - parse it, otherwise return None
+        If rupture data is available - parse it, otherwise return None.
         """
         # Get the SoF
         sof = metadata["fm_type_code"]
@@ -612,7 +612,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_distances(self, metadata, hypo_depth):
         """
-        Parse the distances provided in the flatfile
+        Parse the distances provided in the flatfile.
         """
         repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
         if pd.isnull(repi):
@@ -635,7 +635,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_site_data(self, metadata):
         """
-        Parses the site information
+        Parses the site information.
         """
         # Basic site/station information
         network_code = metadata["network_code"].strip()
@@ -678,7 +678,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_waveform_data(self, metadata, wfid):
         """
-        Parse the waveform data
+        Parse the waveform data.
         """
         # U channel - usually east
         xorientation = metadata["U_channel_code"].strip()
@@ -705,7 +705,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _parse_ground_motion(self, location, row, record, headers):
         """
-        Parse the ground-motion data
+        Parse the ground-motion data.
         """
         # Get the data
         scalars, spectra = self._retreive_ground_motion_from_row(row, headers)
@@ -787,7 +787,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
     def _retreive_ground_motion_from_row(self, row, header_list):
         """
-        Get the ground-motion data from a row (record) in the database
+        Get the ground-motion data from a row (record) in the database.
         """
         imts = ["U", "V", "W", "rotD50"] # NOTE: H1 and H2 not used (RotD50 in ngawest2)
         spectra = []

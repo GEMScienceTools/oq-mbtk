@@ -34,7 +34,7 @@ demo_threshold = 20
 
 def make_database(flatfile, out_dir):
     """
-    Compute the residuals from the example flatfile, GMMs and imts
+    Compute the residuals from the example flatfile, GMMs and imts.
     """
     # Create metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
@@ -51,7 +51,7 @@ def make_database(flatfile, out_dir):
 
 def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     """
-    Perform the analysis using the demo files
+    Perform the analysis using the demo files.
     """
     # Print that workflow has begund
     print("Single station residual analysis workflow has begun...")
@@ -114,7 +114,7 @@ def main(flatfile=demo_flatfile,
          out_dir=demo_out,
          threshold=demo_threshold):
     """
-    Run the demo single station residual analysis
+    Run the demo single station residual analysis.
     """
     # Make a new directory for outputs
     if os.path.exists(out_dir):

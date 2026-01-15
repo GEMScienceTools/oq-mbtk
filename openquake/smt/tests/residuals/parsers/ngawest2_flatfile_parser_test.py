@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the ngawest2 flatfile format in SMT
+Tests parsing of the ngawest2 flatfile.
 """
 import os
 import shutil
@@ -44,7 +44,6 @@ TARGET_IDS = [
 
 
 class NGAWest2FlatfileParserTestCase(unittest.TestCase):
-    
     @classmethod
     def setUpClass(cls):
         cls.ngawest2_flatfile_directory = os.path.join(
@@ -81,4 +80,7 @@ class NGAWest2FlatfileParserTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Remove the database.
+        """
         shutil.rmtree(cls.db_file)
