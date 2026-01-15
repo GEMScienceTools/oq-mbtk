@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module with utility functions for gmpes
+Module with utility functions for gmpes.
 """
 import numpy as np
 import pandas as pd
@@ -31,22 +31,15 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
-from openquake.hazardlib.gsim.mgmpe import modifiable_gmpe as mgmpe
+from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
 
 from openquake.smt.utils import make_rup, clean_gmm_label
 
 
-def _get_first_point(rup, from_point):
+def _get_first_point(sfc, from_point):
     """
     Get the first point in the collection of sites from the rupture.
-    
-    Currently the SMT only computes ground-shaking for up or down-dip from the
-    up-dip edge centre point (rrup, rjb), or from midpoint of the rupture (repi,
-    rhypo). Will be expanded to include up-or-down dip from down-dip edge centre
-    point or from a vertex of the rupture.
     """
-    sfc = rup.surface
-
     if from_point == 'MP':
         return sfc.get_middle_point() # Get midpoint of rup surface
 
@@ -83,15 +76,15 @@ def get_sites_from_rupture(rup,
                            step=5.,
                            site_props=''):
     """
-    Get the sites from the rupture to create the context with
+    Get the sites from the rupture to create the context with.
     :param rup:
         Rupture object
     :param from_point:
-        A string. Options: 'TC', 'TL', 'TR'
+        A string. Options: 'TC', 'TL', 'TR', 'BR', 'BL'
     :return:
         A :class:`openquake.hazardlib.site.SiteCollection` instance
     """
-    from_pnt = _get_first_point(rup, from_point)
+    from_pnt = _get_first_point(rup.surface, from_point)
     r_lon = from_pnt.longitude
     r_lat = from_pnt.latitude
     r_dep = 0
@@ -151,7 +144,7 @@ def get_sites_from_rupture(rup,
 
 def get_rup(mag, lon, lat, depth, ztor, aratio, strike, dip, rake, trt):
     """
-    Create an OQ rupture from the provided information.
+    Create an OQ rupture.
     """
     # If TRT specified assign it and an MSR
     if trt == 'active_crustal':
@@ -209,7 +202,7 @@ def att_curves(gmpe,
                volc_back_arc,
                eshm20_region):
     """
-    Compute the ground-motion intensities for the given context created here
+    Compute the ground-motion intensities for the given context created here.
     """
     # Make rupture if not provided from XML or CSV
     if oq_rup is None:
@@ -346,11 +339,17 @@ def construct_gsim_dict(inputs):
 
 def build_mgmpe(gmpe):
     """
-    Build a ModifiableGMPE
+    Build a ModifiableGMPE from a string of a GMPE parsed from a Comparison TOML.
+
+    NOTE: The way ModifiableGMPEs are built from the comparison TOML makes them
+    slightly less flexible than when built from an OpenQuake XML. Such limitations
+    can be seen by inspecting this code. For example, for the Al Atik sigma model,
+    we always use the "global" tau model. An experienced user can of course modify
+    below any hard-coded values if they deem necessary.
     """
     # All of the inputs for this model
     params = pd.Series(gmpe.splitlines(), dtype=object)
-    
+
     # Underlying GMM to modify
     base_gsim = re.search(r'gmpe\s*=\s*(.*)', params.iloc[1]).group(1).replace('"','')
 
@@ -364,23 +363,23 @@ def build_mgmpe(gmpe):
             par = str(par)
             if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
                 idx_params.append(idx)
-            if 'fix_total_sigma' in par:
+            elif 'fix_total_sigma' in par:
                 idx_params.append(idx)
                 base_vector = par.split('=')[1].replace('"', '')
                 fixed_sigma_vector = ast.literal_eval(base_vector)
-            if 'with_betw_ratio' in par:
+            elif 'with_betw_ratio' in par:
                 idx_params.append(idx)
                 with_betw_ratio = float(par.split('=')[1])
-            if 'set_between_epsilon' in par:
+            elif 'set_between_epsilon' in par:
                 idx_params.append(idx)
                 between_epsilon = float(par.split('=')[1])
-            if 'add_delta_sigma_to_total_sigma' in par:
+            elif 'add_delta_sigma_to_total_sigma' in par:
                 idx_params.append(idx)
                 delta_std = float(par.split('=')[1])
-            if 'set_total_sigma_as_tau_plus_delta' in par:
+            elif 'set_total_sigma_as_tau_plus_delta' in par:
                 idx_params.append(idx)
                 total_set_to_tau_and_delta = float(par.split('=')[1])
-            if 'scaling' in par:
+            elif 'scaling' in par:
                 idx_params.append(idx)
                 if 'median_scaling_scalar' in par:
                     median_scalar = float(par.split('=')[1])
@@ -392,15 +391,24 @@ def build_mgmpe(gmpe):
                 if 'sigma_scaling_vector' in par:
                     base_vector = par.split('=')[1].replace('"', '')
                     sigma_vector = ast.literal_eval(base_vector)
-                    
+            elif "conditional_gmpe" in par:
+                idx_params.append(idx)
+                # If this code is failing for the user please ensure you are carefully
+                # following the syntax provided in the docs for using conditional GMPEs
+                # or check oq-mbtk\openquake\smt\tests\comparison\data\cgmpe_test.toml.
+                re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
+                cgmpe_dict = ast.literal_eval(re_match.group(1))
+                cgmpes = {imt: construct_gsim_dict(
+                    gmpe_str) for imt, gmpe_str in cgmpe_dict.items()}
+
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
         if idx_p > 1 and idx_p not in idx_params:
             if 'lt_weight' not in param: # Skip if weight for logic tree
-                dic_key =  param.split('=')[0].strip().replace('"','')
-                dic_val =  param.split('=')[1].strip().replace('"','')
+                dic_key = param.split('=')[0].strip().replace('"','')
+                dic_val = param.split('=')[1].strip().replace('"','')
                 kw_mgmpe['gmpe'][base_gsim][dic_key] = dic_val
-            
+
     # Al Atik 2015 sigma model
     if 'al_atik_2015_sigma' in gmpe:
         kw_mgmpe['sigma_model_alatik2015'] = {"tau_model": "global", "ergodic": False}
@@ -442,29 +450,48 @@ def build_mgmpe(gmpe):
         kw_mgmpe['set_scale_total_sigma_vector'] = {'scaling_factor': sigma_vector}
 
     # CY14SiteTerm
-    if 'CY14SiteTerm' in gmpe: kw_mgmpe['cy14_site_term'] = {}
+    if 'CY14SiteTerm' in gmpe:
+        kw_mgmpe['cy14_site_term'] = {}
 
     # BA08SiteTerm
-    if 'BA08SiteTerm' in gmpe: kw_mgmpe['ba08_site_term'] = {}
+    if 'BA08SiteTerm' in gmpe:
+        kw_mgmpe['ba08_site_term'] = {}
 
     # BSSA14SiteTerm
-    if "BSSA14SiteTerm" in gmpe: kw_mgmpe['bssa14_site_term'] = {}
+    if "BSSA14SiteTerm" in gmpe:
+        kw_mgmpe['bssa14_site_term'] = {}
 
-    # NRCan15SiteTerm (Regular)
+    # NRCan15SiteTerm ("base" kind)
     if ('NRCan15SiteTerm' in gmpe and 'NRCan15SiteTermLinear' not in gmpe):
         kw_mgmpe['nrcan15_site_term'] = {'kind': 'base'}
 
-    # NRCan15SiteTerm (linear)
+    # NRCan15SiteTerm ("linear" kind)
     if 'NRCan15SiteTermLinear' in gmpe:
         kw_mgmpe['nrcan15_site_term'] = {'kind': 'linear'}
 
+    # CEUS2020SiteTerm (Stewart et al. 2020)
+    if 'CEUS2020SiteTerm' in gmpe:
+        try:
+            assert "_refVs30=" in gmpe
+            ref_vs30 = float(gmpe.split("refVs30=")[-1].replace("'",'').replace('"',''))
+        except:
+            raise ValueError("If using the CEUS2020SiteTerm the user must also specify a "
+                             "ref vs30 to be used for the non-linear scaling component.")
+        kw_mgmpe['ceus2020_site_term'] = {"ref_vs30": ref_vs30, 'wimp': None}
+
     # CB14 basin term
-    if 'CB14BasinTerm' in gmpe: kw_mgmpe['cb14_basin_term'] = {}
+    if 'CB14BasinTerm' in gmpe:
+        kw_mgmpe['cb14_basin_term'] = {}
 
     # M9 basin adjustment
-    if 'M9BasinTerm' in gmpe: kw_mgmpe['m9_basin_term'] = {}
-
-    return mgmpe.ModifiableGMPE(**kw_mgmpe)
+    if 'M9BasinTerm' in gmpe:
+        kw_mgmpe['m9_basin_term'] = {}
+        
+    # Conditional GMPE(s)
+    if 'conditional_gmpe' in gmpe:
+        kw_mgmpe['conditional_gmpe'] = cgmpes
+        
+    return ModifiableGMPE(**kw_mgmpe)
 
 
 def gmpe_check(gmpe):
@@ -472,7 +499,7 @@ def gmpe_check(gmpe):
     This function in effect parses the toml parameters for a GMPE into the
     equivalent parameters required for constructing an OQ GSIM object.
     :param gmpe:
-        gmpe: GMM and params as parsed from the SMT Comparison module format toml.
+        gmpe: GMM and params as parsed from the SMT Comparison module format toml
     """
     # Modifiable GMPE
     if '[ModifiableGMPE]' in gmpe:
@@ -504,7 +531,7 @@ def gmpe_check(gmpe):
 def get_imtl_unit(i):
     """
     Return a string of the intensity measure type's physical units of
-    measurement
+    measurement.
     """
     if str(i) in ['PGD', 'SDi']:
         unit = 'cm' # PGD, inelastic spectral displacement
@@ -530,8 +557,9 @@ def get_imtl_unit(i):
 
 def reformat_att_curves(att_curves, out=None):
     """
-    Export the attenuation curves into a CSV for the given
-    config (i.e. run parameters).
+    Export the attenuation curves generated by plot_trellis_util
+    (found within openquake.smt.comparison.utils_gmpes) into a CSV
+    for the given config (i.e. run parameters).
     """
     # Get the key describing the vs30 + truncation level
     params_key = pd.Series(att_curves.keys()).values[0]
@@ -603,14 +631,15 @@ def reformat_att_curves(att_curves, out=None):
     # And export if required
     if out is not None:
         df.to_csv(out, index=False)
-
+        
     return df
 
 
 def reformat_spectra(spectra, out=None):
     """
-    Export the response spectra into a CSV for the given
-    config (i.e. run parameters).
+    Export the response spectra generated by plot_spectra_util
+    (found within openquake.smt.comparison.utils_gmpes) into a
+    CSV for the given config (i.e. run parameters).
     """
     store = {}
     eps = spectra['nstd']
@@ -665,3 +694,23 @@ def reformat_spectra(spectra, out=None):
         df.to_csv(out, index=True)
 
     return df
+
+
+def matrix_to_df(matrix, ngmms):
+    """
+    Convert matrix of ground-motions to dataframe with
+    one column per IMT and values being the flattened
+    array of predictions from each GMPE.
+    
+    This function also checks that the number of arrays
+    per IMT is equal to the number of GMPEs specified in
+    the TOML as a sanity check.
+
+    Currently only used in ModifiableGMPE-based unit tests.
+    """
+    store = {}
+    for imt in matrix.keys():
+        assert len(matrix[imt]) == ngmms
+        store[str(imt)] = np.array(matrix[imt]).flatten()
+
+    return pd.DataFrame(store)

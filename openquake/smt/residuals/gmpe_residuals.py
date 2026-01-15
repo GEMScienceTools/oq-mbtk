@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to get GMPE residuals
+Module to get GMPE residuals.
 """
 import sys
 import warnings
@@ -68,7 +68,7 @@ ST_PAR = ["vs30",
 ### Util functions
 def get_gmm_from_toml(key, config):
     """
-    Get a GMM from a TOML file
+    Get a GMM from a TOML file.
     """
     # ModifiableGMPE is not implemented for use in res module
     if key == "ModifiableGMPE":
@@ -111,7 +111,7 @@ def get_gmm_from_toml(key, config):
 
 def get_gmpe_str(gmpe):
     """
-    Return a simplified string representative of the given gmpe
+    Return a simplified string representative of the given gmpe.
     """
     if '_toml=' in str(gmpe):
         return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
@@ -357,7 +357,7 @@ class Residuals(object):
 
     def get_exp_motions(self, context):
         """
-        Calculate the expected ground motions from the context
+        Calculate the expected ground motions from the context.
         """
         # Get expected
         exp = {gmpe: {} for gmpe in self.gmpe_list}
@@ -398,7 +398,7 @@ class Residuals(object):
 
     def calculate_residuals(self, context, normalise=True):
         """
-        Calculate the residual terms
+        Calculate the residual terms.
         """
         # Calculate residual
         residual = {}
@@ -441,13 +441,13 @@ class Residuals(object):
         of Abrahamson & Youngs (1992).
         
         :param obs: array of observed ground-shaking values for a single ctx
-                    (i.e. event) for a given imt, in natural log.
+                    (i.e. event) for a given imt, in natural log
         :param mean: array of ground-shaking values for the same ctx 
-                     predicted by the given GMPE and imt, in natural log.
+                     predicted by the given GMPE and imt, in natural log
         :param inter: float representing the inter-event component of GMPE
-                      sigma for a given imt.
+                      sigma for a given imt
         :param intra: float representing the intra-event component of GMPE
-                      sigma for a given imt.
+                      sigma for a given imt
         :param normalise: bool which if True normalises the residuals using
                           the corresponding GMPE sigma components
         """
@@ -471,7 +471,7 @@ class Residuals(object):
 
     def get_residual_statistics(self):
         """
-        Retreives the mean and standard deviation values of the residuals
+        Retreives the mean and standard deviation values of the residuals.
         """
         statistics = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
@@ -485,12 +485,7 @@ class Residuals(object):
     def get_residual_statistics_for(self, gmpe, imtx):
         """
         Retreives the mean and standard deviation values of the residuals for
-        a given gmpe and imtx
-
-        :param gmpe: (string) the gmpe. It must be in the list of this
-            object's gmpes
-        :param imtx: (string) the imt. It must be in the imts defined for
-            the given `gmpe`
+        a given gmpe and imtx.
         """
         residuals = self.residuals[gmpe][imtx]
         return {
@@ -502,7 +497,7 @@ class Residuals(object):
     def _get_magnitudes(self):
         """
         Returns an array of magnitudes equal in length to the number of
-        residuals
+        residuals.
         """
         magnitudes = np.array([])
         for ctxt in self.contexts:
@@ -514,7 +509,7 @@ class Residuals(object):
 
     def export_residuals(self, out_fname):
         """
-        Export the observed, predicted and residuals to a text file
+        Export the observed, predicted and residuals to a text file.
         """
         ctxs = self.contexts # List of contexts
         store = {}
@@ -645,7 +640,7 @@ class Residuals(object):
     def get_llh_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
-        loglikehood (LLH) function described in Scherbaum et al. (2009)
+        loglikehood (LLH) function described in Scherbaum et al. (2009):
         
         Scherbaum, F., Delavaud, E., Riggelsen, C. (2009) "Model Selection in
         Seismic Hazard Analysis: An Information-Theoretic Perspective",
@@ -720,7 +715,7 @@ class Residuals(object):
 
     def get_edr_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
-        Calculates the EDR values for each GMPE but per IMT instead
+        Calculates the EDR values for each GMPE but per IMT instead.
 
         :param float bandwidth:
             Discretisation width
@@ -759,7 +754,7 @@ class Residuals(object):
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
         Calculate the Euclidean Distanced-Based Rank for a set of
-        observed and expected values from a particular GMPE
+        observed and expected values from a particular GMPE.
         """
         finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
         if not finite.any():
@@ -789,7 +784,7 @@ class Residuals(object):
 
     def _get_edr_kappa(self, obs, exp):
         """
-        Returns the correction factor kappa
+        Returns the correction factor kappa.
         """
         mu_a = np.mean(obs)
         mu_y = np.mean(exp)
@@ -806,7 +801,7 @@ class Residuals(object):
         """
         Calculates the stochastic area values per GMPE for each IMT
         according to the Stochastic Area Ranking method of Sunny et
-        al. (2021).
+        al. (2021):
         
         Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
         of Earthquake Ground Motion Models Using the Stochastic Area Metric,
@@ -957,7 +952,7 @@ class SingleStationAnalysis(object):
     def get_site_residuals(self, database, component="Geometric"):
         """
         Calculates the total, inter-event and within-event residuals for
-        each site
+        each site.
         """
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)

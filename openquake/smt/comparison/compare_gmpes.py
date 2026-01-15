@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Module to compare GMPEs using trellis plots, hierarchical
-clustering, Sammon maps and Euclidean distance matrix plots
+clustering, Sammon maps and Euclidean distance matrix plots.
 """
 import os
 import copy
@@ -25,18 +25,23 @@ import toml
 import numpy as np
 import pandas as pd
 import re
+import ast
 
 from openquake.commonlib.readinput import get_rupture
 from openquake.commonlib.oqvalidation import OqParam
 from openquake.hazardlib.source.rupture import get_ruptures
-from openquake.hazardlib.imt import from_string
 from openquake.hazardlib.gsim_lt import GsimLogicTree
 from openquake.hazardlib.geo.mesh import RectangularMesh
 
 from openquake.smt.comparison.utils_compare_gmpes import (
-    plot_trellis_util, plot_spectra_util, plot_ratios_util,
-    plot_cluster_util, plot_sammons_util, plot_matrix_util,
-    compute_matrix_gmpes)
+    plot_trellis_util,
+    plot_spectra_util,
+    plot_ratios_util,
+    plot_cluster_util,
+    plot_sammons_util,
+    plot_matrix_util,
+    compute_matrix_gmpes
+    )
 
 
 F32 = np.float32
@@ -44,13 +49,13 @@ F32 = np.float32
 
 class Configurations(object):
     """
-    Class to derive configuration for input into GMPE comparison plots
+    Class to derive configuration for input into GMPE comparison plots.
     """
     def __init__(self, filename):
         """
         :param  filename:
             toml file providing configuration for use within comparative
-            plotting methods.
+            plotting methods
         """
         # Import parameters for comparative plots from .toml file
         config_file = toml.load(filename) 
@@ -66,16 +71,28 @@ class Configurations(object):
             self.rup_params_from_source_key(config_file)
         else:
             self.rup_params_from_file(config_file['rup_file'])
-        
-        # Get custom colors
-        self.custom_color_flag = config_file['custom_colors']['custom_colors_flag']
-        self.custom_color_list = config_file['custom_colors']['custom_colors_list']
-        
-        # Check same length mag and depth lists to avoid indexing error
-        assert len(self.mag_list) == len(self.depth_list)
-        
+
         # Get imts
-        self.imt_list = [from_string(imt) for imt in config_file['general']['imt_list']]
+        self.imt_list = config_file['general']['imt_list']
+
+        # Set the default mapping of LT info
+        self.lt_mapping = {
+            "lt_gmc_1": {"col": 'r', "wei": "lt_weight_gmc1", "label": "Logic Tree 1"},
+            "lt_gmc_2": {"col": 'b', "wei": "lt_weight_gmc2", "label": "Logic Tree 2"},
+            "lt_gmc_3": {"col": 'g', "wei": "lt_weight_gmc3", "label": "Logic Tree 3"},
+            "lt_gmc_4": {"col": 'k', "wei": "lt_weight_gmc4", "label": "Logic Tree 4"}
+            }
+        
+        # Add custom LT labels if required
+        if "custom_lt_labels" in config_file["custom_plotting"]:
+            lt_labels = ast.literal_eval(config_file["custom_plotting"]["custom_lt_labels"])
+            for lt in lt_labels:
+                if lt not in self.lt_mapping:
+                    raise ValueError("custom_lt_labels must be a dict with keys such as 'lt_gmc_1'"
+                                     "(going up to 'lt_gmc_4' if desired) with the value for each " \
+                                     "key being a string representing the corresponding logic tree in "
+                                     "the outputted plots.")
+                self.lt_mapping[lt]["label"] = lt_labels[lt]
 
         # Get GMMs and LT weights from either TOML or XML
         if 'gmc_xml' in config_file:
@@ -92,7 +109,11 @@ class Configurations(object):
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
-            
+
+        # Get plotting options
+        self.custom_color_flag = config_file['custom_plotting']['custom_colors_flag']
+        self.custom_color_list = config_file['custom_plotting']['custom_colors_list']    
+        
     def get_general_params(self, config_file):
         """
         Get the general-use configuration parameters from the toml.
@@ -142,16 +163,24 @@ class Configurations(object):
         self.rake = config_file['source_properties']['rake']
         self.mag_list = np.array(config_file['source_properties']['mags'])
         self.depth_list = np.array(config_file['source_properties']['depths'])
+        if len(self.mag_list) != len(self.depth_list):
+            raise ValueError("An equal number of magnitudes and depths must be "
+                             "specified.")
         self.ztor = config_file['source_properties']['ztor']
         self.aratio = config_file['source_properties']['aratio']
+        for par in ["ztor"]: # Iterate in case add more params in the future
+            param = getattr(self, par)
+            if param != -999 and len(param) != len(self.mag_list):
+                raise ValueError(f"{par} must be specified as a list equal in "
+                                 f"length to number of magnitudes and depths "
+                                 f"specified (or set to -999 to not consider).")
         self.trt = config_file['source_properties']['trt']
         self.rup = None
 
     def rup_params_from_file(self, rup_data):
         """
-        Load a rupture from either an XML or a CSV file instead
-        of constructing one using the information provided in the
-        toml.
+        Load a rupture from either an XML or a CSV file instead of
+        constructing one using the information provided in the toml.
         """
         # Load into an OQ rupture object
         ftype = rup_data['fname'].split('.')[-1]
@@ -232,10 +261,10 @@ class Configurations(object):
 
     def get_lt_weights(self, gmpe_list):
         """
-        Manage the logic tree weight assigned for each GMPE in the toml (if any)
+        Manage the logic tree weight assigned for each GMPE in the toml (if any).
         """
         weight_keys = ['lt_weight_gmc1', 'lt_weight_gmc2', 'lt_weight_gmc3', 'lt_weight_gmc4']
-        weights = [{} for _ in weight_keys]
+        weights = {key: {} for key in weight_keys}
         msg = "Sum of GMC logic tree weights must be 1.0"
 
         # Get weight for each GMM if provided
@@ -245,28 +274,29 @@ class Configurations(object):
                 for line in lines:
                     for idx, key in enumerate(weight_keys):
                         if key in line:
-                            weights[idx][gmpe] = float(line.split('=')[1])
+                            weights[key][gmpe] = float(line.split('=')[1])
 
         # Check weights in each logic tree sum to 1
-        lt_weights = []
-        for idx, wt in enumerate(weights):
-            if wt:
-                total_weight = np.sum(pd.Series(wt))
-                assert abs(total_weight - 1.0) < 1e-10, msg
-                lt_weights.append(wt)
+        lt_weights = {}
+        for wt in weights:
+            wei = weights[wt]
+            if wei:
+                assert abs(np.sum(pd.Series(wei)) - 1.0) < 1e-10, msg
+                lt_weights[wt] = wei
                 # Also check that "plot_lt_only" if specified is uniformly applied
-                if (not all("plot_lt_only" in gmm for gmm in list(wt.keys()))
+                if (not all("plot_lt_only" in gmm for gmm in list(wei.keys()))
                     and
-                    any("plot_lt_only" in gmm for gmm in list(wt.keys()))):
+                    any("plot_lt_only" in gmm for gmm in list(wei.keys()))):
+                    gmc_label = wt.replace("_weight", "")
                     raise ValueError(f"Plotting of only the logic tree must be "
                                      f"consistently specified across all GMMs in the "
-                                     f"given logic tree (check logic tree {idx+1})")
+                                     f"given logic tree (check logic tree {gmc_label})")
             else:
-                lt_weights.append(None)
+                lt_weights[wt] = None
 
         # Add to config object
-        for idx_lt, lt in enumerate(lt_weights):
-            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
+        for lt in lt_weights:
+            setattr(self, lt, lt_weights[lt])
 
     def get_gmms_xml(self, xml_dic):
         """
@@ -310,13 +340,15 @@ class Configurations(object):
         for idx_trt, trt in enumerate(trts):
             lt_gmc = {}
             for gmm in gsim_lt.branches:
-                if gmm.trt == trt:
+                if gmm.trt != trt:
                     continue
                 wei = gmm.weight['weight']
                 gmpe_toml = f"{gmm.gsim._toml} \nlt_weight_gmc{idx_trt+1}{add} = {wei}"
                 gmpe_list.append(gmpe_toml)
                 lt_gmc[gmpe_toml] = wei
-            
+                # Override the default labels to match the TRTs
+                self.lt_mapping[f'lt_gmc_{idx_trt+1}']['label'] = f"Logic Tree {idx_trt+1} ({trt})"
+
             # Store GMC's weights
             lt_weight[idx_trt] = lt_gmc
 
@@ -325,16 +357,16 @@ class Configurations(object):
         
         # Add GMC LT weights
         for idx_lt, lt in enumerate(lt_weight):
-            setattr(self, f'lt_weights_gmc{idx_lt+1}', lt)
-
+            setattr(self, f'lt_weight_gmc{idx_lt+1}', lt)
+            
         # Cannot set baseline gmm if using GMC XML
         setattr(self, 'baseline_gmm', None) 
 
     def get_eucl_params(self, config_file):
         """
-        For each magnitude considered within the Sammons Maps, Euclidean distance
-        matrix plots and agglomerative clustering dendrograms get the magnitudes
-        and assign a depth for each.
+        For each magnitude considered within the Sammons Maps, Euclidean
+        distance matrix plots and agglomerative clustering dendrograms get
+        the magnitudes and assign a depth for each.
 
         Also get the label to use for each GMM.
         """
@@ -363,10 +395,10 @@ class Configurations(object):
 
 def plot_trellis(filename, output_directory):
     """
-    Plot trellis for given run configuration
+    Plot trellis for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
     
@@ -377,13 +409,13 @@ def plot_trellis(filename, output_directory):
 def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
     Plot response spectra and GMPE sigma wrt spectral period for given run
-    configuration
+    configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     :param obs_spectra:
         csv of an observed spectra to plot and associated event information.
-        An example file can be found in openquake.smt.tests.file_samples.
+        An example file can be found in openquake.smt.tests.file_samples
     """
     config = Configurations(filename)
 
@@ -403,10 +435,10 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
 def plot_ratios(filename, output_directory):
     """
     Plot ratio (GMPE median attenuation/baseline GMPE median attenuation) for
-    given run configuration
+    given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -423,7 +455,7 @@ def plot_cluster(filename, output_directory):
     percentile of predicted ground-motion by each GMPE for given configurations
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -461,10 +493,10 @@ def plot_cluster(filename, output_directory):
 def plot_sammons(filename, output_directory):
     """
     Plot Sammon Maps of median and 84th percentile predicted ground-motion
-    by each GMPE for given configurations
+    by each GMPE for given configurations.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.
+        plotting methods
     """ 
     config = Configurations(filename)
 
@@ -503,10 +535,10 @@ def plot_sammons(filename, output_directory):
 def plot_matrix(filename, output_directory):
     """
     Plot Euclidean distance matrix of median and 84th percentile predicted
-    ground-motion by each GMPE for given configurations
+    ground-motion by each GMPE for given configurations.
     :param  filename:
         toml file providing configuration for use within comparative
-        plotting methods.    
+        plotting methods
     """ 
     config = Configurations(filename)
     

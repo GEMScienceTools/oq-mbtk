@@ -66,8 +66,8 @@ DATA_TYPE_KEYS = {
 
 def _get_filename_info(filename):
     """
-    ESMD follows a specific naming convention. Return this information in
-    a dictionary
+    ESMD follows a specific naming convention. Return this information
+    in a dictionary.
     """
     file_info = filename.split(".") # Sometimes are consecutive dots in delimiter
     return {FILE_INFO_KEY[i]: file_info[i] for i in range(len(file_info))}
@@ -76,7 +76,7 @@ def _get_filename_info(filename):
 def _get_metadata_from_file(file_str):
     """
     Pulls the metadata from lines 1 - 64 of a file and returns a cleaned
-    version as an ordered dictionary
+    version as an ordered dictionary.
     """
     metadata = []
     for i in range(1, 65):
@@ -94,7 +94,7 @@ def _get_metadata_from_file(file_str):
 def _get_xyz_metadata(file_dict):
     """
     The ESM is a bit messy mixing the station codes. Returns the metadata
-    corrsponding to the x-, y- and z-component of each of the records
+    corrsponding to the x-, y- and z-component of each of the records.
     """
     metadata = {}
     if file_dict["Time-Series"]["X"]:
@@ -111,7 +111,7 @@ def _get_xyz_metadata(file_dict):
 
 class ESMDatabaseParser(SMDatabaseReader):
     """
-    Parser for extracting metadata from ESM format records
+    Parser for extracting metadata from ESM format records.
     """
     ORGANIZER = []
     def parse(self):
@@ -129,7 +129,7 @@ class ESMDatabaseParser(SMDatabaseReader):
     def _sort_files(self):
         """
         Searches through the directory and organise the files associated
-        with a particular recording into a dictionary
+        with a particular recording into a dictionary.
         """
         skip_files = []
         for file_str in sorted(os.listdir(self.input_files)):
@@ -237,7 +237,7 @@ class ESMDatabaseParser(SMDatabaseReader):
 
     def parse_metadata(self, metadata, file_dict):
         """
-        Parses the metadata dictionary
+        Parses the metadata dictionary.
         """
         # Get the file info dictionary for the X-record
         file_str = file_dict["Time-Series"]["X"]
@@ -398,7 +398,7 @@ class ESMDatabaseParser(SMDatabaseReader):
             
     def _parse_processing_data(self, wfid, metadata):
         """
-        Parses the information regarding the record processing
+        Parses the information regarding the record processing.
         """
         xcomp = self._parse_component_data(wfid, metadata["X"])
         ycomp = self._parse_component_data(wfid, metadata["Y"])
@@ -452,7 +452,7 @@ class ESMDatabaseParser(SMDatabaseReader):
 
 class ESMTimeSeriesParser(SMTimeSeriesReader):
     """
-    Parser for ESM (ASCII format) time histories
+    Parser for ESM (ASCII format) time histories.
     """
     def parse_record(self):
         """
@@ -475,7 +475,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
 
     def _parse_time_history(self, ifile):
         """
-        Parse the time history
+        Parse the time history.
         """
         # Build the metadata dictionary again
         metadata = _get_metadata_from_file(ifile)
@@ -508,7 +508,7 @@ class ESMTimeSeriesParser(SMTimeSeriesReader):
 
 class ESMSpectraParser(SMSpectraReader):
     """
-    Parse ESM format response spectra
+    Parse ESM format response spectra.
     """
     def parse_spectra(self):
         """
