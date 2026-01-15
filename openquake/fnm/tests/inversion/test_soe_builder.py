@@ -45,6 +45,7 @@ from openquake.fnm.inversion.soe_builder import (
     get_fault_moment,
     get_slip_rate_fraction,
     make_fault_mfd_equation_components,
+    make_fault_rel_mfd_equation_components,
     make_eqns,
     hz,
 )
@@ -565,6 +566,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         fault_abs_mfds_correct = {
@@ -665,6 +667,87 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                         == fault_abs_mfds_correct[fault_key][key]
                     )
 
+    def test_make_fault_mfd_equation_components_full_counting(self):
+        fault_abs_mfds = make_fault_mfd_equation_components(
+            self.fault_network['fault_mfds'],
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            seismic_slip_rate_frac=1.0,
+            full_counting=True,
+        )
+
+        for _, mfd_stuff in fault_abs_mfds.items():
+            assert all(frac == 1.0 for frac in mfd_stuff['rup_fractions'])
+
+    def test_make_fault_rel_mfd_equation_components_no_scale(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            full_counting=False,
+        )
+
+        expected = {
+            0: {
+                'b_value': 1.0,
+                'rups_include': [0, 1, 4],
+                'rup_fractions': [1.0, 0.4997, 0.3569],
+            },
+            1: {
+                'b_value': 1.0,
+                'rups_include': [1, 2, 4],
+                'rup_fractions': [0.5003, 1.0, 0.3573],
+            },
+            2: {
+                'b_value': 1.0,
+                'rups_include': [3, 4],
+                'rup_fractions': [1.0, 0.2858],
+            },
+        }
+        assert fault_rel_mfds == expected
+
+    def test_make_fault_rel_mfd_equation_components_full_counting(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            full_counting=True,
+        )
+
+        for _, mfd_stuff in fault_rel_mfds.items():
+            assert all(frac == 1.0 for frac in mfd_stuff['rup_fractions'])
+
+    def test_make_fault_rel_mfd_equation_components_b_value_scalar(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            b_value=0.9,
+            full_counting=False,
+        )
+
+        for _, mfd_stuff in fault_rel_mfds.items():
+            assert mfd_stuff['b_value'] == 0.9
+
+    def test_make_fault_rel_mfd_equation_components_b_value_sequence(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            b_value=[0.8, 1.0, 1.2],
+            full_counting=False,
+        )
+
+        assert fault_rel_mfds[0]['b_value'] == 0.8
+        assert fault_rel_mfds[1]['b_value'] == 1.0
+        assert fault_rel_mfds[2]['b_value'] == 1.2
+
     def test_make_equations_from_fault_mfds(self):
 
         total_fault_moment = self.fault_network['subfault_df']['moment'].sum()
@@ -676,6 +759,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         lhs, rhs, err = make_eqns(
@@ -765,6 +849,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         lhs, rhs, err = make_eqns(

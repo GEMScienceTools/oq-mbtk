@@ -31,6 +31,8 @@
 
 import logging
 
+# from collections.abc import Mapping
+
 import numpy as np
 import scipy.sparse as ssp
 
@@ -300,7 +302,9 @@ def make_abs_mfd_eqns(
     # rupture magnitudes are not binned similarly (or have float noise), RHS
     # lookup can spuriously return 0.0, producing extreme row weights.
     if mag_decimals is not None:
-        M = np.array([round(float(m), mag_decimals) for m in M], dtype=np.float64)
+        M = np.array(
+            [round(float(m), mag_decimals) for m in M], dtype=np.float64
+        )
     unique_mags = np.unique(M)  # sorted ascending
 
     mfd_occ_rates = get_mfd_occurrence_rates(
@@ -539,15 +543,21 @@ def make_fault_mfd_equation_components(
     rup_key="rupture_df_keep",
     seismic_slip_rate_frac=1.0,
     skip_missing_rup_idxs=False,
+    full_counting=True,
 ):
     """
-    Construct per-element magnitude–frequency constraint components for a rupture-rate inversion.
+    Construct per-element magnitude–frequency constraint components for a
+    rupture-rate inversion.
 
-    For each key in `fault_mfds` (typically a fault id or subfault id), this function returns:
-      - the MFD object for that element (optionally rescaled by `seismic_slip_rate_frac`),
-      - `rups_include`: indices into the provided `rups` list identifying ruptures that involve
+    For each key in `fault_mfds` (typically a fault id or subfault id), this
+    function returns:
+      - the MFD object for that element (optionally rescaled by
+        `seismic_slip_rate_frac`),
+      - `rups_include`: indices into the provided `rups` list identifying
+        ruptures that involve
         (touch) the element, based on `fault_network[rup_key]` and `fault_key`,
-      - `rup_fractions`: per-rupture weights to apply in MFD equations; when using full-counting,
+      - `rup_fractions`: per-rupture weights to apply in MFD equations; when
+        using full-counting,
         each included rupture has weight 1.0.
 
     Parameters
@@ -555,22 +565,30 @@ def make_fault_mfd_equation_components(
     fault_mfds : dict
         Mapping from element id -> MFD object.
     rups : list[dict]
-        Rupture dictionaries. Each rupture must have an 'idx' used to match against indices
+        Rupture dictionaries. Each rupture must have an 'idx' used to match
+        against indices
         referenced by `fault_network[rup_key]`.
     fault_network : dict
-        Data structure containing a rupture table at `fault_network[rup_key]` that encodes which
-        elements (given by `fault_key`) each rupture involves.
+        Data structure containing a rupture table at `fault_network[rup_key]`
+        that encodes which elements (given by `fault_key`) each rupture
+        involves.
     fault_key : str
-        Column/key name in `fault_network[rup_key]` indicating the element membership of each
-        rupture (e.g., 'faults' or 'subfaults').
+        Column/key name in `fault_network[rup_key]` indicating the element
+        membership of each rupture (e.g., 'faults' or 'subfaults').
     rup_key : str
-        Key in `fault_network` pointing to the rupture table used to build membership.
+        Key in `fault_network` pointing to the rupture table used to build
+        membership.
     seismic_slip_rate_frac : float or None
-        If provided and not equal to 1.0, scales each element MFD to represent only a fraction of
-        activity (e.g., seismic fraction). If None or 1.0, MFDs are unchanged.
+        If provided and not equal to 1.0, scales each element MFD to represent
+        only a fraction of activity (e.g., seismic fraction). If None or 1.0,
+        MFDs are unchanged.
     skip_missing_rup_idxs : bool or 'warn'
-        Controls behavior when rupture indices referenced by the membership table cannot be found
-        in `rups`. If True, silently skip. If 'warn', log and skip. If False, raise.
+        Controls behavior when rupture indices referenced by the membership
+        table cannot be found in `rups`. If True, silently skip. If 'warn', log
+        and skip. If False, raise.
+    full_counting: bool
+        Considers that each rupture that involves a fault/subfault fully
+        counts when considering the MFD of the fault.
 
     Returns
     -------
@@ -612,18 +630,24 @@ def make_fault_mfd_equation_components(
                 j = rup_id_count_lookup[rup_idx]
                 fault_mfd_data[container_id]["rups_include"].append(j)
                 frac = 1.0
-                # If rupture dictionaries carry fractional participation, use it.
-                # This is important when building per-(sub)fault MFD constraints:
-                # a rupture that spans multiple (sub)faults should contribute
-                # proportionally rather than full-counting in every container.
-                if fault_key == "subfaults":
-                    subfault_fracs = rups[j].get("subfault_fracs")
-                    if isinstance(subfault_fracs, dict):
-                        frac = float(subfault_fracs.get(container_id, 1.0))
-                elif fault_key == "faults":
-                    fault_fracs = rups[j].get("faults_orig")
-                    if isinstance(fault_fracs, dict):
-                        frac = float(fault_fracs.get(container_id, 1.0))
+                # If rupture dictionaries carry fractional participation, use it
+                # only when full-counting is disabled. This is important when
+                # building per-(sub)fault MFD constraints: a rupture that spans
+                # multiple (sub)faults should contribute proportionally rather
+                # than counting fully in every container.
+                if not full_counting:
+                    if fault_key == "subfaults":
+                        subfault_fracs = rups[j].get("subfault_fracs")
+                        if isinstance(subfault_fracs, dict):
+                            frac_val = subfault_fracs.get(container_id, 1.0)
+                            if float(frac_val) != 1.0:
+                                frac = float(frac_val)
+                    elif fault_key == "faults":
+                        fault_fracs = rups[j].get("faults_orig")
+                        if isinstance(fault_fracs, dict):
+                            frac_val = fault_fracs.get(container_id, 1.0)
+                            if float(frac_val) != 1.0:
+                                frac = float(frac_val)
 
                 fault_mfd_data[container_id]["rup_fractions"].append(frac)
             except KeyError as e:
@@ -638,6 +662,127 @@ def make_fault_mfd_equation_components(
                     raise e
 
     return fault_mfd_data
+
+
+def make_fault_rel_mfd_equation_components(
+    rups,
+    fault_network,
+    fault_key="subfaults",
+    rup_key="rupture_df_keep",
+    b_value=1.0,
+    skip_missing_rup_idxs=False,
+    full_counting=True,
+):
+    """
+    Construct per-element rupture-inclusion lists for relative MFD constraints.
+
+    This mirrors the rupture membership logic in
+    `make_fault_mfd_equation_components`, but does not require per-element MFDs.
+    The returned dict is compatible with the `regional_rel_mfds` structure used
+    by `make_eqns` (i.e., it provides `rups_include` and `rup_fractions`).
+
+    Parameters
+    ----------
+    rups : list[dict]
+        Rupture dictionaries. Each rupture must have an 'idx' used to match
+        against indices referenced by `fault_network[rup_key]`.
+    fault_network : dict
+        Data structure containing a rupture table at `fault_network[rup_key]`
+        that encodes which elements (given by `fault_key`) each rupture
+        involves.
+    fault_key : str
+        Column/key name in `fault_network[rup_key]` indicating the element
+        membership of each rupture (e.g., 'faults' or 'subfaults').
+    rup_key : str
+        Key in `fault_network` pointing to the rupture table used to build
+        membership.
+    b_value : float or sequence
+        Gutenberg-Richter b-value(s) to associate with each element. If a
+        scalar, the same value is used for all elements. If a sequence, it
+        must have length equal to the number of elements encountered via the
+        rupture membership lookup; values are assigned in sorted element-id
+        order when possible.
+    skip_missing_rup_idxs : bool or 'warn'
+        Controls behavior when rupture indices referenced by the membership
+        table cannot be found in `rups`. If True, silently skip. If 'warn', log
+        and skip. If False, raise.
+    full_counting : bool
+        If True, each included rupture contributes with fraction 1.0.
+        If False, use per-rupture fractional participation (when available)
+        and only override the default 1.0 when a stored fraction is not 1.0.
+
+    Returns
+    -------
+    dict
+        Mapping from element id -> dict with keys:
+          - 'b_value': b-value associated with the element,
+          - 'rups_include': list of integer indices into `rups`,
+          - 'rup_fractions': list of float weights aligned with `rups_include`.
+    """
+    fault_rel_data = {}
+
+    rup_fault_lookup = make_rup_fault_lookup(fault_network[rup_key], fault_key)
+    try:
+        container_ids = sorted(rup_fault_lookup.keys())
+    except TypeError:
+        container_ids = list(rup_fault_lookup.keys())
+
+    # Normalize b-values to a per-container mapping.
+    if b_value is None:
+        b_value_map = {cid: 1.0 for cid in container_ids}
+    elif np.isscalar(b_value):
+        b_value_map = {cid: float(b_value) for cid in container_ids}
+    elif isinstance(b_value, dict):
+        b_value_map = {cid: float(b_value.get(cid, 1.0)) for cid in container_ids}
+    else:
+        n_containers = len(container_ids)
+        if len(b_value) != n_containers:
+            raise ValueError(
+                f"b_value must be a scalar or a sequence of length {n_containers} "
+                f"(got {len(b_value)})"
+            )
+        b_value_map = {cid: float(b_value[i]) for i, cid in enumerate(container_ids)}
+
+    rup_id_count_lookup = {r["idx"]: i for i, r in enumerate(rups)}
+
+    for container_id, on_container_rups in rup_fault_lookup.items():
+        fault_rel_data[container_id] = {
+            "b_value": b_value_map[container_id],
+            "rups_include": [],
+            "rup_fractions": [],
+        }
+
+        for rup_idx in on_container_rups:
+            try:
+                j = rup_id_count_lookup[rup_idx]
+                fault_rel_data[container_id]["rups_include"].append(j)
+
+                frac = 1.0
+                if not full_counting:
+                    if fault_key == "subfaults":
+                        subfault_fracs = rups[j].get("subfault_fracs")
+                        if isinstance(subfault_fracs, dict):
+                            frac_val = subfault_fracs.get(container_id, 1.0)
+                            if float(frac_val) != 1.0:
+                                frac = float(frac_val)
+                    elif fault_key == "faults":
+                        fault_fracs = rups[j].get("faults_orig")
+                        if isinstance(fault_fracs, dict):
+                            frac_val = fault_fracs.get(container_id, 1.0)
+                            if float(frac_val) != 1.0:
+                                frac = float(frac_val)
+
+                fault_rel_data[container_id]["rup_fractions"].append(frac)
+            except KeyError as e:
+                if skip_missing_rup_idxs is True:
+                    continue
+                elif skip_missing_rup_idxs == "warn":
+                    logging.info(f"can't find rupture idx={rup_idx}, skipping...")
+                    continue
+                else:
+                    raise e
+
+    return fault_rel_data
 
 
 def make_eqns(
@@ -656,6 +801,7 @@ def make_eqns(
     regional_abs_mfds=None,
     regional_rel_mfds=None,
     fault_abs_mfds=None,
+    fault_rel_mfds=None,
     mfd_abs_normalize=False,
     slip_rate_smoothing=False,
     fault_adjacence=None,
@@ -685,6 +831,17 @@ def make_eqns(
             else:
                 raise ValueError(
                     "regional_abs_mfds and fault_abs_mfds may not share keys"
+                )
+
+    if fault_rel_mfds is not None:
+        if regional_rel_mfds is None:
+            regional_rel_mfds = fault_rel_mfds
+        else:
+            if len(set(regional_rel_mfds.keys()) & set(fault_rel_mfds.keys())) == 0:
+                regional_rel_mfds.update(fault_rel_mfds)
+            else:
+                raise ValueError(
+                    "regional_rel_mfds and fault_rel_mfds may not share keys"
                 )
 
     if seismic_slip_rate_frac is None and mfd is not None:
