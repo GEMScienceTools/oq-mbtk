@@ -502,7 +502,8 @@ Comparing GMPEs
 
 5. Plot of Spectra from a Record
 
-   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the
+   Comparison module. A comparison of a record's spectra against some GMPEs can be generated as follows:
 
     .. code-block:: ini
     
@@ -514,7 +515,7 @@ Comparing GMPEs
 
 6. Plot of ratios of attenuation curves
 
-   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
+   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` file - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
 
     .. code-block:: ini
     
