@@ -383,6 +383,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      mag_list,
                                      dep_list,
                                      config.dist_list,
+                                     config.dist_type,
+                                     config.vs30,
                                      eq_id,
                                      st_id)
                 
@@ -1219,7 +1221,7 @@ def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list
         else:
             pyplot.ylabel(str(imt) + ' (g)', fontsize='16') # PGA, SA, AvgSA
     
-    # xlims (manage this here because if rrup or rjb will be mag dependent)
+    # xlims (manage because if rrup or rjb will be dependent on finiteness of rupture)
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
 
@@ -1443,6 +1445,8 @@ def plot_obs_spectra(ax1,
                      mag_list,
                      dep_list,
                      dist_list,
+                     dist_type,
+                     vs30,
                      eq_id,
                      st_id):
     """
@@ -1453,17 +1457,19 @@ def plot_obs_spectra(ax1,
         
         # Get rup params
         mw = np.asarray(mag_list, float)[0]
-        rrup = np.asarray(dist_list, float)[0]
+        dist = np.asarray(dist_list, float)[0]
         depth = np.asarray(dep_list, float)[0]
         
         # Get label for spectra plot
-        obs_string = (f"{eq_id}\nrecorded at {st_id} (Rrup = {rrup} km, "
-                      f"\nMw = {mw}, depth = {depth} km)")
+        obs_string = (
+            f"{eq_id}\nrecorded at {st_id} ({dist_type}={dist}km, "
+            f"\nMw={mw}, depth={depth}km, vs30={vs30}m/s)"
+            )
                       
         # Plot the observed spectra
         ax1.plot(obs_spectra['Period (s)'],
                  obs_spectra['SA (g)'],
-                 color='r',
+                 color='k',
                  linewidth=3,
                  linestyle='-',
                  label=obs_string)    

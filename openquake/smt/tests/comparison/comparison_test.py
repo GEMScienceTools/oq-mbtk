@@ -246,14 +246,10 @@ class ComparisonTestCase(unittest.TestCase):
         obs_spectra = reformat_spectra(spectra) 
         # Same function writing expected can reformat the observed
         pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
-        
-        # Specify target files
-        target_file_trellis = (os.path.join(
-            self.outdir, 'TrellisPlots.png'))
-        target_file_spectra = (os.path.join(
-            self.outdir, 'ResponseSpectra.png'))
 
         # Check target file created and outputted in expected location
+        target_file_trellis = (os.path.join(self.outdir, 'TrellisPlots.png'))
+        target_file_spectra = (os.path.join(self.outdir, 'ResponseSpectra.png'))
         self.assertTrue(target_file_trellis)
         self.assertTrue(target_file_spectra)
 
