@@ -110,8 +110,8 @@ gmpe = "CampbellBozorgnia2014"
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
 [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
-gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"      # Similar to OQ syntax for instantiating gsim 
-fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"  # from string in openquake.hazardlib.valid.gsim
+gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
+fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
 
 [models.19-NGAEastGMPE] # Use a gmpe table
 gmpe_table = "NGAEast_FRANKEL_J15.hdf5"
