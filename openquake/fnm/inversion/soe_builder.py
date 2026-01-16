@@ -69,7 +69,7 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     # )
     slip_rate_err = weights_from_errors(
         [fault["slip_rate_err"] * 1e-3 for fault in faults],
-        zero_error=1.0,
+        min_error=1.0,
     )
 
     slip_rate_rhs *= seismic_slip_rate_frac
@@ -729,11 +729,13 @@ def make_fault_rel_mfd_equation_components(
 
     # Normalize b-values to a per-container mapping.
     if b_value is None:
-        b_value_map = {cid: 1.0 for cid in container_ids}
+        b_value_map = {cid: None for cid in container_ids}
     elif np.isscalar(b_value):
         b_value_map = {cid: float(b_value) for cid in container_ids}
     elif isinstance(b_value, dict):
-        b_value_map = {cid: float(b_value.get(cid, 1.0)) for cid in container_ids}
+        b_value_map = {
+            cid: float(b_value.get(cid, 1.0)) for cid in container_ids
+        }
     else:
         n_containers = len(container_ids)
         if len(b_value) != n_containers:
@@ -741,7 +743,9 @@ def make_fault_rel_mfd_equation_components(
                 f"b_value must be a scalar or a sequence of length {n_containers} "
                 f"(got {len(b_value)})"
             )
-        b_value_map = {cid: float(b_value[i]) for i, cid in enumerate(container_ids)}
+        b_value_map = {
+            cid: float(b_value[i]) for i, cid in enumerate(container_ids)
+        }
 
     rup_id_count_lookup = {r["idx"]: i for i, r in enumerate(rups)}
 
@@ -777,7 +781,9 @@ def make_fault_rel_mfd_equation_components(
                 if skip_missing_rup_idxs is True:
                     continue
                 elif skip_missing_rup_idxs == "warn":
-                    logging.info(f"can't find rupture idx={rup_idx}, skipping...")
+                    logging.info(
+                        f"can't find rupture idx={rup_idx}, skipping..."
+                    )
                     continue
                 else:
                     raise e
@@ -837,7 +843,10 @@ def make_eqns(
         if regional_rel_mfds is None:
             regional_rel_mfds = fault_rel_mfds
         else:
-            if len(set(regional_rel_mfds.keys()) & set(fault_rel_mfds.keys())) == 0:
+            if (
+                len(set(regional_rel_mfds.keys()) & set(fault_rel_mfds.keys()))
+                == 0
+            ):
                 regional_rel_mfds.update(fault_rel_mfds)
             else:
                 raise ValueError(
@@ -909,7 +918,7 @@ def make_eqns(
             ):
                 b_val = reg_mfd_data.get('b_value', 1.0)
                 corner_mag = reg_mfd_data.get('corner_mag', None)
-                weight = (reg_mfd_data.get('weight', 1.0),)  # mfd_rel_weight)
+                weight = reg_mfd_data.get('weight', mfd_rel_weight)
                 rup_fractions = reg_mfd_data.get('rup_fractions', None)
 
                 reg_rel_result = make_rel_gr_mfd_eqns(

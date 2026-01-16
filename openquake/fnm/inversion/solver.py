@@ -50,7 +50,10 @@ from openquake.fnm.inversion.fastmath import (
 )
 
 
-def weight_from_error(error, zero_error=1e-10, min_error=None, max_weight=None):
+def weight_from_error(
+    error,
+    min_error=1e-10,
+):
     """
     Convert an uncertainty-like value (error / sigma) into a row weight.
 
@@ -60,35 +63,22 @@ def weight_from_error(error, zero_error=1e-10, min_error=None, max_weight=None):
         Error/sigma value.
     zero_error : float
         Replacement error when `error` is exactly zero.
-    min_error : float or None
-        Optional floor for small-but-nonzero errors to avoid extremely large
-        weights (e.g., from tiny/zero target rates in MFD constraints).
-    max_weight : float or None
-        Optional cap on the returned weight.
+
     """
     error = float(error)
-    if error == 0.0:
-        error = zero_error
-    if min_error is not None and error < float(min_error):
-        error = float(min_error)
+    if error < min_error:
+        error = min_error
 
     weight = 1.0 / error  # **2
-    if max_weight is not None and weight > float(max_weight):
-        weight = float(max_weight)
     return weight
 
 
-def weights_from_errors(errors, zero_error=1e-10, min_error=None, max_weight=None):
+def weights_from_errors(
+    errors,
+    min_error=1e-10,
+):
     return np.array(
-        [
-            weight_from_error(
-                error,
-                zero_error=zero_error,
-                min_error=min_error,
-                max_weight=max_weight,
-            )
-            for error in errors
-        ]
+        [weight_from_error(error, min_error=min_error) for error in errors]
     )
 
 
@@ -476,7 +466,7 @@ def solve_nnls_pg(
     """
 
     if weights is not None:
-        if weights == 'equalize':
+        if isinstance(weights, str) and weights == 'equalize':
             weights = get_obs_equalization_weights(b)
         assert len(weights) == len(b)
         A = ssp.diags(weights).dot(A)
