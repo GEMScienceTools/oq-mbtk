@@ -541,17 +541,22 @@ def plot_ratios_util(config, output_directory):
                                 linestyle='-',
                                 label=clean_gmm_label(gmpe))
                 
-                # Update plots
-                update_ratio_plots(config.dist_type,
-                                   mag,
+                # Update plots                
+                update_ratio_plots(mag,
                                    imt,
-                                   i,
                                    m,
-                                   config.imt_list,
-                                   r_vals,
+                                   i,
+                                   depth_g,
+                                   config.vs30,
                                    config.minR,
-                                   config.maxR)
+                                   config.maxR,
+                                   r_vals,
+                                   config.imt_list,
+                                   config.dist_type)
     
+                # Add grid
+                pyplot.grid(axis='both', which='both', alpha=0.5)
+
     # Finalise plots
     for ax in axs: ax.set_ylim(1/2*np.min(ratio_store), 2*np.max(ratio_store)) # Small buffer in log-space
     out = os.path.join(output_directory, 'RatioPlots.png')
@@ -1528,7 +1533,7 @@ def get_dist_label(dist_type):
         return 'Rhypo (km)'
 
 
-def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
+def update_ratio_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles and axis labels to ratio plots.
     """
@@ -1536,16 +1541,16 @@ def update_ratio_plots(dist_type, m, i, n, l, imt_list, r_vals, minR, maxR):
     dt_label = get_dist_label(dist_type)    
 
     # Bottom row only
-    if n == len(imt_list)-1:
+    if i == len(imt_list)-1:
         pyplot.xlabel(dt_label, fontsize='12')
 
     # Top row only
-    if n == 0:
-        pyplot.title('Mw = ' + str(m), fontsize='16')
+    if i == 0:
+        pyplot.title(f'Mw={mag}, depth={dep}km, vs30={vs30}m/s', fontsize='12')
 
     # Left row only
-    if l == 0:
-        pyplot.ylabel('GMM/baseline for %s' %str(i), fontsize='14')
+    if m == 0:
+        pyplot.ylabel('GMM/baseline for %s' %str(imt), fontsize='14')
 
     # Set xlims
     min_r_val = min(r_vals[r_vals>=1])
