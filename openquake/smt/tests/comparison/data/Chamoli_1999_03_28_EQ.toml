@@ -7,7 +7,7 @@ minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # Specify distance metric for trellis/spectra
 dist_list = [26.7] # Distance intervals for use in spectra plots
-Nstd = 1 # Truncation for GMM sigma distribution
+Nstd = 0 # Truncation for GMM sigma distribution
 
 [site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 vs30 = 800
@@ -41,5 +41,5 @@ lt_weight_gmc1 = 0.33
 lt_weight_gmc1 = 0.33
 
 [custom_plotting]
-custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+custom_colors_flag = true #(set to true for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

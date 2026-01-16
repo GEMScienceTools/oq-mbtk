@@ -408,14 +408,15 @@ def plot_trellis(filename, output_directory):
                 
 def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     """
-    Plot response spectra and GMPE sigma wrt spectral period for given run
-    configuration.
+    Plot response spectra and GMPE predictions for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods
     :param obs_spectra:
-        csv of an observed spectra to plot and associated event information.
-        An example file can be found in openquake.smt.tests.file_samples
+        CSV of an observed spectra to plot (contains intensity value per
+        period, EQ ID and station ID). An example of this file can be
+        found in oq-mbtk.openquake.smt.tests.comparison.data for the
+        1993 Chamoli earthquake.
     """
     config = Configurations(filename)
 

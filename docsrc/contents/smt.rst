@@ -502,7 +502,8 @@ Comparing GMPEs
 
 5. Plot of Spectra from a Record
 
-   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the
+   Comparison module (``oq-mbtk\openquake\smt\tests\comparison\data``). A comparison of a record's spectra against some GMPEs can be generated as follows:
 
     .. code-block:: ini
     
@@ -514,7 +515,7 @@ Comparing GMPEs
 
 6. Plot of ratios of attenuation curves
 
-   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
+   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` file - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
 
     .. code-block:: ini
     
@@ -656,8 +657,8 @@ Comparing GMPEs
         set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
         [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
-        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # OQ syntax for instantiating gsim from string in openquake.hazardlib.valid.gsim
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
+        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
 
         [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"
