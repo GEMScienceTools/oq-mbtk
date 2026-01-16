@@ -78,7 +78,7 @@ gmpe = "AtkinsonMacias2009"
 site_term = "BA08SiteTerm" # Use BA08 site term
 
 [models.10-ModifiableGMPE]
-gmpe = "EMME24BB_GMM1SGM1"
+gmpe = "AtkinsonMacias2009"
 site_term = "BSSA14SiteTerm" # Use BSSA14 site term
 
 [models.11-ModifiableGMPE]

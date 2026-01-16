@@ -154,9 +154,10 @@ def plot_trellis_util(config, output_directory):
                 # Update plots
                 update_trellis_plots(mag,
                                      imt,
-                                     i,
                                      m,
+                                     i,
                                      depth_g,
+                                     config.vs30,
                                      config.minR,
                                      config.maxR,
                                      r_vals,
@@ -272,16 +273,16 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         }
 
     # Plot the data
-    for n, dist in enumerate(dist_list):
-        for l, m in enumerate(mag_list):
+    for d, dist in enumerate(dist_list):
+        for m, mag in enumerate(mag_list):
             
             ax1 = fig.add_subplot(
-                len(config.dist_list), len(mag_list), l+1+n*len(mag_list))
+                len(config.dist_list), len(mag_list), m+1+d*len(mag_list))
 
             # Get depth params
-            depth_g = dep_list[l]         
+            depth_g = dep_list[m]         
             if config.ztor != -999:
-                ztor_g = config.ztor[l]
+                ztor_g = config.ztor[m]
             else:
                 ztor_g = None
 
@@ -293,8 +294,9 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                      config.trt)
 
             # Scenario key
-            sk = f"{config.dist_type}={dist}km, Mw={m}, depth={depth_g}km, vs30={config.vs30}m/s"
+            sk = f"{config.dist_type}={dist}km, Mw={mag}, depth={depth_g}km, vs30={config.vs30}m/s"
 
+            # Iterate over the GMMs
             for g, gmpe in enumerate(config.gmpes_list):     
 
                 # Set stores
@@ -304,11 +306,11 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 # Perform gmpe check
                 gmm = gmpe_check(gmpe)
                 
-                for k, imt in enumerate(imt_list): 
+                for i, imt in enumerate(imt_list): 
                         
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
-                                                           m,
+                                                           mag,
                                                            config.lon,
                                                            config.lat,
                                                            depth_g,
@@ -385,7 +387,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      st_id)
                 
                 # Update plots
-                update_spectra_plots(ax1, m, depth_g, dist, n, l, config.dist_list, config.dist_type)
+                update_spectra_plots(
+                    ax1, mag, depth_g, dist, config.vs30, d, m, config.dist_list, config.dist_type)
             
             # Plot logic trees if required
             for key_gmc in gmc_weights:
@@ -1177,7 +1180,7 @@ def lt_trellis_plot(config,
     return median_gmc, plus_sig_gmc, minus_sig_gmc
 
 
-def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_type):
+def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list, dist_type):
     """
     Add titles, axis labels and axis limits to trellis plots.
     """
@@ -1185,31 +1188,31 @@ def update_trellis_plots(m, i, n, l, dep, minR, maxR, r_vals, imt_list, dist_typ
     dt_label = get_dist_label(dist_type)
     
     # Bottom row only
-    if n == len(imt_list)-1: 
+    if i == len(imt_list)-1: 
         pyplot.xlabel(dt_label, fontsize='16')
 
     # Top row only
-    if n == 0:
-        pyplot.title(f'Mw={m}, depth={dep}km', fontsize='16')
+    if i == 0:
+        pyplot.title(f'Mw={mag}, depth={dep}km, vs30={vs30}m/s', fontsize='12')
     
     # Left row only
-    if l == 0:
-        if str(i) in ['PGD', 'SDi']:
-            pyplot.ylabel(str(i) + ' (cm)', fontsize='16')
-        elif str(i) in ['PGV']:
-            pyplot.ylabel(str(i) + ' (cm/s)', fontsize='16')
-        elif str(i) in ['IA']:
-            pyplot.ylabel(str(i) + ' (m/s)', fontsize='16')
-        elif str(i) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
-            pyplot.ylabel(str(i) + ' (s)', fontsize='16')
-        elif str(i) in ['CAV']:
-            pyplot.ylabel(str(i) + ' (g-sec)', fontsize='16')
-        elif str(i) in ['MMI']:
-            pyplot.ylabel(str(i) + ' (MMI)', fontsize='16')
-        elif str(i) in ['FAS', 'EAS']:
-            pyplot.ylabel(str(i) + ' (Hz)')
+    if m == 0:
+        if str(imt) in ['PGD', 'SDi']:
+            pyplot.ylabel(str(imt) + ' (cm)', fontsize='16')
+        elif str(imt) in ['PGV']:
+            pyplot.ylabel(str(imt) + ' (cm/s)', fontsize='16')
+        elif str(imt) in ['IA']:
+            pyplot.ylabel(str(imt) + ' (m/s)', fontsize='16')
+        elif str(imt) in ['RSD', 'RSD595', 'RSD575', 'RSD2080', 'DRVT']:
+            pyplot.ylabel(str(imt) + ' (s)', fontsize='16')
+        elif str(imt) in ['CAV']:
+            pyplot.ylabel(str(imt) + ' (g-sec)', fontsize='16')
+        elif str(imt) in ['MMI']:
+            pyplot.ylabel(str(imt) + ' (MMI)', fontsize='16')
+        elif str(imt) in ['FAS', 'EAS']:
+            pyplot.ylabel(str(imt) + ' (Hz)')
         else:
-            pyplot.ylabel(str(i) + ' (g)', fontsize='16') # PGA, SA, AvgSA
+            pyplot.ylabel(str(imt) + ' (g)', fontsize='16') # PGA, SA, AvgSA
     
     # xlims (manage this here because if rrup or rjb will be mag dependent)
     min_r_val = min(r_vals[r_vals>=1])
@@ -1461,20 +1464,20 @@ def plot_obs_spectra(ax1,
                  label=obs_string)    
         
         
-def update_spectra_plots(ax1, m, depth_g, i, n, l, dist_list, dist_type):
+def update_spectra_plots(ax1, mag, depth_g, dist, vs30, d, m, dist_list, dist_type):
     """
     Add titles and axis labels to spectra.
     """
     # Title
-    ax1.set_title(f'Mw={m}, depth={depth_g}km, {dist_type}={i}km',
-                  fontsize=12, y=1.0, pad=-16)
+    ax1.set_title(f'Mw={mag}, depth={depth_g}km, {dist_type}={dist}km, vs30={vs30}m/s',
+                  fontsize=9.5, y=1.0, pad=-16)
 
      # Bottom row only
-    if n == len(dist_list)-1:
+    if d == len(dist_list)-1:
         ax1.set_xlabel('Period (s)', fontsize=16)
     
     # Left column only
-    if l == 0:
+    if m == 0:
         ax1.set_ylabel('SA (g)', fontsize=16) 
 
 
