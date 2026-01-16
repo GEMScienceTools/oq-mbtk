@@ -36,7 +36,7 @@ from openquake.smt.comparison.utils_gmpes import (get_imtl_unit,
                                                   gmpe_check)
 
 
-def plot_trellis_util(config, output_directory):
+def plot_trellis_util(config, outdir):
     """
     Generate trellis plots for given run configuration.
     """    
@@ -205,7 +205,7 @@ def plot_trellis_util(config, output_directory):
     maxy = np.max(max_pred)
     miny = np.min(min_pred)
     for ax in axs: ax.set_ylim(miny, 2*maxy) # Small buffer in log-space
-    output = os.path.join(output_directory, 'TrellisPlots.png')
+    output = os.path.join(outdir, 'TrellisPlots.png')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(output, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.close()
@@ -213,7 +213,7 @@ def plot_trellis_util(config, output_directory):
     return store_gmm_curves
     
 
-def plot_spectra_util(config, output_directory, obs_spectra_fname):
+def plot_spectra_util(config, outdir, obs_spectra_fname):
     """
     Plot response spectra for given run configuration. Can also plot an
     observed spectrum and the corresponding predictions by the specified
@@ -413,12 +413,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         bbox_coo = (1.1, 1.05)
         fs = '16'
     ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
-    save_spectra_plot(fig, obs_spectra, output_directory, eq_id, st_id)
+    save_spectra_plot(fig, obs_spectra, outdir, eq_id, st_id)
 
     return lt_vals
 
 
-def plot_ratios_util(config, output_directory):
+def plot_ratios_util(config, outdir):
     """
     Generate ratio (GMPE median attenuation/baseline GMPE
     median attenuation) plots for given run configuration.
@@ -551,7 +551,7 @@ def plot_ratios_util(config, output_directory):
     
     # Finalise plots
     for ax in axs: ax.set_ylim(1/2*np.min(ratio_store), 2*np.max(ratio_store)) # Small buffer in log-space
-    out = os.path.join(output_directory, 'RatioPlots.png')
+    out = os.path.join(outdir, 'RatioPlots.png')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.close()
