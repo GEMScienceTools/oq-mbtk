@@ -1,0 +1,69 @@
+openquake.man.tools package
+===========================
+
+Submodules
+----------
+
+openquake.man.tools.csv\_output module
+--------------------------------------
+
+.. automodule:: openquake.man.tools.csv_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.get\_shapely\_pgn\_area\_in\_km2 module
+-----------------------------------------------------------
+
+.. automodule:: openquake.man.tools.get_shapely_pgn_area_in_km2
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.make\_gmm\_list module
+------------------------------------------
+
+.. automodule:: openquake.man.tools.make_gmm_list
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_3d\_disagg module
+-------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_3d_disagg
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_disagg\_LLT module
+--------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_disagg_LLT
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.plot\_disagg\_MDE module
+--------------------------------------------
+
+.. automodule:: openquake.man.tools.plot_disagg_MDE
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tools.read\_calc\_results module
+----------------------------------------------
+
+.. automodule:: openquake.man.tools.read_calc_results
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:

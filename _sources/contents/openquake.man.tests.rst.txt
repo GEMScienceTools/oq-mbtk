@@ -1,0 +1,18 @@
+openquake.man.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.man.tests.single_source_utils
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,37 @@
+openquake.man.tests.single\_source\_utils package
+=================================================
+
+Submodules
+----------
+
+openquake.man.tests.single\_source\_utils.area\_utils\_test module
+------------------------------------------------------------------
+
+.. automodule:: openquake.man.tests.single_source_utils.area_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tests.single\_source\_utils.fault\_utils\_test module
+-------------------------------------------------------------------
+
+.. automodule:: openquake.man.tests.single_source_utils.fault_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.tests.single\_source\_utils.point\_utils\_test module
+-------------------------------------------------------------------
+
+.. automodule:: openquake.man.tests.single_source_utils.point_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.tests.single_source_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
