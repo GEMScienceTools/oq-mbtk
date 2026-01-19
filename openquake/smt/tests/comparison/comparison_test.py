@@ -64,17 +64,17 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(BASE, "comparison_test.toml")
-        self.outdir = os.path.join(BASE, 'compare_gmpes_test')
+        self.input_file = os.path.join(BASE, "inputs", "comparison_test.toml")
+        self.outdir = os.path.join(BASE, "expected", 'compare_gmpes_test')
         self.input_file_plot_obs_spectra = os.path.join(
-            BASE, 'Chamoli_1999_03_28_EQ.toml')
+            BASE, "inputs", 'Chamoli_1999_03_28_EQ.toml')
         self.input_file_obs_spectra_csv = os.path.join(
-            BASE, 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
-        self.exp_curves = os.path.join(BASE, 'exp_curves.csv')
-        self.exp_spectra = os.path.join(BASE, 'exp_spectra.csv')
-        self.rup_xml = os.path.join(BASE, 'rup.xml')
-        self.rup_csv = os.path.join(BASE, 'rup.csv')
-        self.gmc_xml = os.path.join(BASE, 'gmm_lt.xml')
+            BASE, "inputs", 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.exp_curves = os.path.join(BASE, "expected", 'exp_curves.csv')
+        self.exp_spectra = os.path.join(BASE, "expected", 'exp_spectra.csv')
+        self.rup_xml = os.path.join(BASE, "inputs", 'rup.xml')
+        self.rup_csv = os.path.join(BASE, "inputs", 'rup.csv')
+        self.gmc_xml = os.path.join(BASE, "inputs", 'gmm_lt.xml')
 
         # Set the output
         if not os.path.exists(self.outdir):

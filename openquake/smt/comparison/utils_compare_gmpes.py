@@ -586,18 +586,13 @@ def compute_matrix_gmpes(config, mtxs_type):
     lts = {gmc: getattr(config, config.lt_mapping[gmc]['wei'])
            for gmc in config.lt_mapping.keys()}
 
-    # Get mag, imt and depth lists
-    mag_list = config.mags_eucl
-    dep_list = config.depths_eucl
-    imt_list = config.imt_list
-
     mtxs_median = {}
-    for i, imt in enumerate(imt_list): # Iterate through imt_list
+    for i, imt in enumerate(config.imt_list): # Iterate through imt_list
 
         # Dict for storing medians
         matrix_medians = np.zeros(
             (len(config.gmpes_list),
-            (len(mag_list)*int((config.maxR-config.minR)/1))))
+            (len(config.mag_list)*int((config.maxR-config.minR)/1))))
 
         # Need to also store GMM LT weighted medians
         lt_preds = {
@@ -622,13 +617,13 @@ def compute_matrix_gmpes(config, mtxs_type):
                 wt = None
 
             medians = []
-            for m, mag in enumerate(mag_list): # Iterate though mag_list
+            for m, mag in enumerate(config.mag_list): # Iterate though mag_list
             
                 # Perform gmpe check
                 gmm = gmpe_check(gmpe)
 
                 # Get depth param
-                depth_g = dep_list[m] 
+                depth_g = config.depth_list[m] 
                 ztor_g = None # NOTE: No hypo depth constraint used here
 
                 # Get rupture params
