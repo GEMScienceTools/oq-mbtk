@@ -41,9 +41,9 @@ class ConditionGroundMotionsTestCase(unittest.TestCase):
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(BASE, "cgmpe_test.toml")
-        self.output_directory = os.path.join(BASE, 'cgmpe_test')
-        self.exp_cgmpe = os.path.join(BASE, "exp_cgmpe.csv")
+        self.input_file = os.path.join(BASE, "inputs", "cgmpe_test.toml")
+        self.output_directory = os.path.join(BASE, "expected", 'cgmpe_test')
+        self.exp_cgmpe = os.path.join(BASE, "expected", "exp_cgmpe.csv")
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
     

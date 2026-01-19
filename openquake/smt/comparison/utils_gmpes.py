@@ -32,6 +32,8 @@ from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
+from openquake.hazardlib.gsim.mgmpe.generic_gmpe_avgsa import (
+    GmpeIndirectAvgSA, GenericGmpeAvgSA)
 
 from openquake.smt.utils import make_rup, clean_gmm_label
 
@@ -308,6 +310,29 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
     return strike_s, dip_s, aratio_s
 
 
+def build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe):
+    """
+    Build a GMPE which can be used to predict AvgSA using the
+    indirect approach. This function can build either the
+    GmpeIndirectAvgSA class (which requires t_low, t_high, and
+    the number of periods) OR GenericGmpeAvgSA (specify a list
+    of averaging periods).
+    """
+    # AvgSA GMPE
+    check = list(kw_mgmpe.keys())
+    if "gmpe" not in check[0] and check[0] != "gmpe":
+        raise ValueError(
+            "Specification of an indirect approach AvgSA GMPE in combination "
+            "with additional ModifiableGMPE capabilities is not supported.")
+    gmm_base = list(kw_mgmpe['gmpe'].keys())[0]
+    for par in kw_mgmpe['gmpe'][gmm_base].keys():
+        avgsa[par] = kw_mgmpe['gmpe'][gmm_base][par]
+    if "GmpeIndirectAvgSA" in gmpe:
+        return GmpeIndirectAvgSA(gmpe_name=gmm_base, **avgsa)
+    else:
+        return GenericGmpeAvgSA(gmpe_name=gmm_base, **avgsa)
+
+
 def construct_gsim_dict(inputs):
     """
     Build a dictionary of the arguments for a GMM.
@@ -365,8 +390,7 @@ def build_mgmpe(gmpe):
                 idx_params.append(idx)
             elif 'fix_total_sigma' in par:
                 idx_params.append(idx)
-                base_vector = par.split('=')[1].replace('"', '')
-                fixed_sigma_vector = ast.literal_eval(base_vector)
+                fixed_sigma_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
             elif 'with_betw_ratio' in par:
                 idx_params.append(idx)
                 with_betw_ratio = float(par.split('=')[1])
@@ -384,13 +408,11 @@ def build_mgmpe(gmpe):
                 if 'median_scaling_scalar' in par:
                     median_scalar = float(par.split('=')[1])
                 if 'median_scaling_vector' in par:
-                    base_vector = par.split('=')[1].replace('"', '')
-                    median_vector = ast.literal_eval(base_vector)
+                    median_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
                 if 'sigma_scaling_scalar' in par:
                     sigma_scalar = float(par.split('=')[1])
                 if 'sigma_scaling_vector' in par:
-                    base_vector = par.split('=')[1].replace('"', '')
-                    sigma_vector = ast.literal_eval(base_vector)
+                    sigma_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
             elif "conditional_gmpe" in par:
                 idx_params.append(idx)
                 # If this code is failing for the user please ensure you are carefully
@@ -400,6 +422,9 @@ def build_mgmpe(gmpe):
                 cgmpe_dict = ast.literal_eval(re_match.group(1))
                 cgmpes = {imt: construct_gsim_dict(
                     gmpe_str) for imt, gmpe_str in cgmpe_dict.items()}
+            elif "GmpeIndirectAvgSA" in par or "GenericGmpeAvgSA" in par:
+                idx_params.append(idx)
+                avgsa = ast.literal_eval(par.split('=')[1].replace('"', ''))
 
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
@@ -491,6 +516,10 @@ def build_mgmpe(gmpe):
     if 'conditional_gmpe' in gmpe:
         kw_mgmpe['conditional_gmpe'] = cgmpes
         
+    # Indirect approach AvgSA GMPE
+    if "GmpeIndirectAvgSA" in gmpe or "GenericGmpeAvgSA" in gmpe:
+        return build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe)
+
     return ModifiableGMPE(**kw_mgmpe)
 
 
@@ -498,8 +527,7 @@ def gmpe_check(gmpe):
     """
     This function in effect parses the toml parameters for a GMPE into the
     equivalent parameters required for constructing an OQ GSIM object.
-    :param gmpe:
-        gmpe: GMM and params as parsed from the SMT Comparison module format toml
+    :param gmpe: GMM and params parsed from the Comparison toml.
     """
     # Modifiable GMPE
     if '[ModifiableGMPE]' in gmpe:
