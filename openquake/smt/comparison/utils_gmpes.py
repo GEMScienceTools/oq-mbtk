@@ -318,9 +318,8 @@ def build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe):
     the number of periods) OR GenericGmpeAvgSA (specify a list
     of averaging periods).
     """
-    # AvgSA GMPE
     check = list(kw_mgmpe.keys())
-    if "gmpe" not in check[0] and check[0] != "gmpe":
+    if check[0] != "gmpe" or len(check) > 1:
         raise ValueError(
             "Specification of an indirect approach AvgSA GMPE in combination "
             "with additional ModifiableGMPE capabilities is not supported.")
