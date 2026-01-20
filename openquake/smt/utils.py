@@ -38,11 +38,56 @@ AVAILABLE_GSIMS = get_available_gsims()
 _GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
 # GEM Global Flatfile Mappings
+CMS2_TO_G = 1/980.665
+CMS_TO_GSEC = 1/980.665
 GEM_FF_MAPPINGS = {
+    # Dist types: dist cols
     "repi": "epi_dist",
     "rjb": "JB_dist",
-    "rrup": "rup_dist"
-    } # Don't add rhypo as not present (easy to compute though if required)
+    "rrup": "rup_dist",
+    # IMT strings: {col, units in flatfile, conversion to OQ gsim units --> found in oq-engine.openquake.hazardlib.imt}
+    "CAV": {"col": "rotD50_CAV", "unit": "cm/s", "conv_factor": CMS_TO_GSEC},
+    "IA": {"col": "rotD50_IA", "unit": "m/s", "conv_factor": 1},
+    "PGD": {"col": "rotD50_pgd", "unit": "cm", "conv_factor": 1},
+    "PGV": {"col": "rotD50_pgv", "unit": "cm/s", "conv_factor": 1},
+    "PGA": {"col": "rotD50_pga", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.01)": {"col": "rotD50_T0_010", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.025)": {"col": "rotD50_T0_025", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.04)": {"col": "rotD50_T0_040", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.05)": {"col": "rotD50_T0_050", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.07)": {"col": "rotD50_T0_070", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.1)": {"col": "rotD50_T0_100", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.15)": {"col": "rotD50_T0_150", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.2)": {"col": "rotD50_T0_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.25)": {"col": "rotD50_T0_250", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.3)": {"col": "rotD50_T0_300", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.35)": {"col": "rotD50_T0_350", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.4)": {"col": "rotD50_T0_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.45)": {"col": "rotD50_T0_450", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.5)": {"col": "rotD50_T0_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.6)": {"col": "rotD50_T0_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.7)": {"col": "rotD50_T0_700", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.75)": {"col": "rotD50_T0_750", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.8)": {"col": "rotD50_T0_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.9)": {"col": "rotD50_T0_900", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.0)": {"col": "rotD50_T1_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.2)": {"col": "rotD50_T1_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.4)": {"col": "rotD50_T1_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.6)": {"col": "rotD50_T1_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.8)": {"col": "rotD50_T1_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.0)": {"col": "rotD50_T2_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.5)": {"col": "rotD50_T2_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.0)": {"col": "rotD50_T3_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.5)": {"col": "rotD50_T3_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.0)": {"col": "rotD50_T4_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.5)": {"col": "rotD50_T4_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(5.0)": {"col": "rotD50_T5_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(6.0)": {"col": "rotD50_T6_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(7.0)": {"col": "rotD50_T7_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(8.0)": {"col": "rotD50_T8_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(9.0)": {"col": "rotD50_T9_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(10.0)": {"col": "rotD50_T10_000", "unit": "g", "conv_factor": CMS2_TO_G}
+    }
 
 
 ### General utils for value validation
