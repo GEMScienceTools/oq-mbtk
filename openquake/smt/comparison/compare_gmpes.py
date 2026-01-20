@@ -393,16 +393,23 @@ class Configurations(object):
         # Add GMM labels
         self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
-def plot_trellis(filename, output_directory):
+def plot_trellis(filename, output_directory, obs_data_fname=None):
     """
     Plot trellis for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods
+    :param  obs_data_fname:
+        GEM-flatfile format CSV file - the (appropriate) data from this
+        flatfile will be plotted on the attenuation curves:
+        --> Data within Mw +/- 0.25 of given magnitude
+        --> Data within +/- 25 km of specified distance type
+        --> Data within +/- 150 m/s of specified Vs30
+        --> Data within +/- 15 km of given focal depth
     """ 
     config = Configurations(filename)
     
-    store_gmm_curves = plot_trellis_util(config, output_directory) 
+    store_gmm_curves = plot_trellis_util(config, output_directory, obs_data_fname) 
     
     return store_gmm_curves
                 
