@@ -35,7 +35,14 @@ from openquake.hazardlib import valid
 AVAILABLE_GSIMS = get_available_gsims()
 
 # Regular expression to get a GMPETable from string:
-_gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
+_GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
+
+# GEM Global Flatfile Mappings
+GEM_FF_MAPPINGS = {
+    "repi": "epi_dist",
+    "rjb": "JB_dist",
+    "rrup": "rup_dist"
+    } # Don't add rhypo as not present (easy to compute though if required)
 
 
 ### General utils for value validation
@@ -351,7 +358,7 @@ def check_gsim_list(gsim_list):
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
         else:
-            match = _gmpetable_regex.match(gs) # GMPETable ?
+            match = _GMPETABLE_REGEX.match(gs) # GMPETable ?
             if match:
                 filepath = match.group(1).split("=")[1] # Get table filename
                 output_gsims[gs] = GMPETable(gmpe_table=filepath)
@@ -365,7 +372,7 @@ def _get_gmpe_name(gsim):
     """
     Returns the name of the GMPE given an instance of the class
     """
-    match = _gmpetable_regex.match(str(gsim)) # GMPETable ?
+    match = _GMPETABLE_REGEX.match(str(gsim)) # GMPETable ?
     if match:
         filepath = match.group(1).split("=")[1][1:-1]
         return 'GMPETable(gmpe_table=%s)' % filepath

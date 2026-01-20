@@ -29,17 +29,30 @@ from scipy import interpolate
 
 from openquake.smt.comparison.sammons import sammon
 from openquake.hazardlib.imt import from_string
-from openquake.smt.utils import clean_gmm_label
+from openquake.smt.utils import clean_gmm_label, GEM_FF_MAPPINGS
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
                                                   gmpe_check)
 
 
-def plot_trellis_util(config, output_directory):
+# Thresholds for filtering to appropriate data for plotting vs GMPEs
+MAG_LIM = 0.25 # Mw
+DEP_LIM = 15 # km
+DIST_LIM = 25 # km (dist type used is dependent on dist type in config file)
+VS30_LIM = 150 # m/s
+
+
+def plot_trellis_util(config, output_directory, obs_data_fname):
     """
     Generate trellis plots for given run configuration.
     """    
+    # Load observed data if provided
+    if obs_data_fname is not None:
+        data = pd.read_csv(obs_data_fname, low_memory=False)
+    else:
+        data = None
+
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= {lt: [{}, {}, {}] for lt in config.lt_mapping.keys()}
 
@@ -62,6 +75,8 @@ def plot_trellis_util(config, output_directory):
     for i, imt in enumerate(config.imt_list):
         store_per_mag = {}
         for m, mag in enumerate(config.mag_list):
+
+            # Add the axis
             ax = fig.add_subplot(len(config.imt_list), len(config.mag_list), m+1+i*len(config.mag_list))
             axs.append(ax)
 
@@ -78,6 +93,13 @@ def plot_trellis_util(config, output_directory):
                                                      config.rake,
                                                      config.aratio,
                                                      config.trt) 
+            
+            # If plotting data get the appropriate subset
+            if data is not None:
+                subset = filter_obs_data(data, imt, mag, depth_g, config.vs30)
+            else:
+                subset = None
+            breakpoint()
 
             # Per GMPE get attenuation curves
             lt_vals_gmc = {lt: {} for lt in lt_weights}
@@ -192,6 +214,13 @@ def plot_trellis_util(config, output_directory):
             # Add grid
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
+            # Plot data too if required AND any appropriate data retrieved
+            if subset is not None:
+                pyplot.scatter(x=data[GEM_FF_MAPPINGS[config.dist_type]],
+                               y=data[GEM_FF_MAPPINGS[imt]],
+                               marker="x", color="r", label="Observations")
+            breakpoint()
+
         # Store per imt
         store_per_imt[str(imt)] = store_per_mag
     
@@ -1548,3 +1577,45 @@ def update_ratio_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list, 
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
+
+def filter_obs_data(data, imt, mag, depth, vs30, dist=None, dist_type=None):
+    """
+    Filter the dataframe of the provided flatfile for the given imt,
+    magnitude, focal depth, vs30 and (if response spectra are
+    being plotted) distance.
+
+    NOTE: We return RotD50 values.
+    """
+    # Filter by magnitude, depth and vs30 first
+    subset = data.loc[
+        (data.Mw.between(mag - MAG_LIM, mag + MAG_LIM)) &
+        (data.ev_depth_km.between(depth - DEP_LIM, depth + DEP_LIM)) & 
+        (data.vs30_m_sec.between(vs30 - VS30_LIM, vs30 + VS30_LIM))
+        ].reset_index(drop=True)
+    
+    # If dist is not None must be response spectra plotting
+    if dist is not None:
+        assert dist_type is not None
+        # Need to filter by distance too in this case
+        if dist_type != "rhypo":
+            dcol = GEM_FF_MAPPINGS[dist_type]
+        else:
+            # Need to add rhypo if required
+            subset["rhypo"] = np.sqrt(subset["repi"]**2 + subset["ev_depth_km"]**2)
+            dcol = "rhypo"
+        subset = subset.loc[subset[dcol].between(
+            dist - DIST_LIM, dist + DIST_LIM)].reset_index(drop=True)    
+
+    # Filter lastly by IMT
+    if imt not in GEM_FF_MAPPINGS.keys():
+        # Might not be a column with RotD50 values for this IMT
+        raise ValueError(f'"{imt}" is not an IMT supported in the GEM Global Flatfile.')
+    subset = subset.loc[subset[GEM_FF_MAPPINGS[imt]].notnull()].reset_index(drop=True)
+
+    # Made it to the end of filtering - there is suitable data for plotting
+    if len(subset) > 0:
+        print(f"{len(subset)} records retrieved for plotting against GMPEs.")
+        return subset
+    else:
+        print("No appropriate records retrieved for plotting against GMPEs.")
+        return None
