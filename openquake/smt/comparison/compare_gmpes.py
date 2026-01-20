@@ -428,7 +428,7 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
                              "specify 1 magnitude and depth combination for " \
                              "response spectra plotting in the toml file.")
 
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data)
+    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
 
     return store_gmc_lts
 
