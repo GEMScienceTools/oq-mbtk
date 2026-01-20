@@ -40,10 +40,6 @@ def plot_trellis_util(config, output_directory):
     """
     Generate trellis plots for given run configuration.
     """    
-    # Get mag and dep lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-    
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= {lt: [{}, {}, {}] for lt in config.lt_mapping.keys()}
 
@@ -61,16 +57,16 @@ def plot_trellis_util(config, output_directory):
     store_gmm_curves[cfg_key] = {}
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = {}
     store_gmm_curves[cfg_key]['gmc logic tree curves per imt-mag'] = {}
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.imt_list)*4))
     max_pred, min_pred, axs = [], [], []
     for i, imt in enumerate(config.imt_list):
         store_per_mag = {}
-        for m, mag in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
+        for m, mag in enumerate(config.mag_list):
+            ax = fig.add_subplot(len(config.imt_list), len(config.mag_list), m+1+i*len(config.mag_list))
             axs.append(ax)
 
             # Get depth params
-            depth_g = dep_list[m]
+            depth_g = config.depth_list[m]
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -220,11 +216,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     observed spectrum and the corresponding predictions by the specified
     GMPEs.
     """
-    # Get mag and depth lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-    dist_list = config.dist_list
-    if len(dist_list) < 1:
+    # Check distances have been provided in the input TOML
+    if len(config.dist_list) < 1:
         raise ValueError("Response spectra have been requested but no distance "
                          "intervals have been specified in the input toml.")
 
@@ -243,7 +236,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
     lt_vals = {
@@ -273,14 +266,14 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         }
 
     # Plot the data
-    for d, dist in enumerate(dist_list):
-        for m, mag in enumerate(mag_list):
+    for d, dist in enumerate(config.dist_list):
+        for m, mag in enumerate(config.mag_list):
             
             ax1 = fig.add_subplot(
-                len(config.dist_list), len(mag_list), m+1+d*len(mag_list))
+                len(config.dist_list), len(config.mag_list), m+1+d*len(config.mag_list))
 
             # Get depth params
-            depth_g = dep_list[m]         
+            depth_g = config.depth_list[m]         
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -380,8 +373,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                      obs_spectra,
                                      g,
                                      config.gmpes_list,
-                                     mag_list,
-                                     dep_list,
+                                     config.mag_list,
+                                     config.depth_list,
                                      config.dist_list,
                                      config.dist_type,
                                      config.vs30,
@@ -411,7 +404,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 ax1.semilogy()
 
     # Finalise the plots and save fig
-    if len(mag_list) * len(dist_list) == 1:
+    if len(config.mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
     else:
@@ -431,23 +424,19 @@ def plot_ratios_util(config, output_directory):
     NOTE: The ratios of any specified GMC logic trees against
     the baseline GMM are not computed/plotted.
     """
-    # Get mag and dep lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
     # Compute ratio curves
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.imt_list)*4))
     ratio_store, axs = [], []
     for i, imt in enumerate(config.imt_list):
-        for m, mag in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
+        for m, mag in enumerate(config.mag_list):
+            ax = fig.add_subplot(len(config.imt_list), len(config.mag_list), m+1+i*len(config.mag_list))
             axs.append(ax)
             
             # Get depth params
-            depth_g = dep_list[m] 
+            depth_g = config.depth_list[m] 
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -619,7 +608,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                 wt = None
 
             medians = []
-            for m, mag in enumerate(config.mags_eucl): # Iterate though mag_list
+            for m, mag in enumerate(config.mags_eucl): # Iterate though mags
             
                 # Perform gmpe check
                 gmm = gmpe_check(gmpe)
