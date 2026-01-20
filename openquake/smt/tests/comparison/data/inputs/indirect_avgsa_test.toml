@@ -1,7 +1,7 @@
-# Test input file for checking execution and values of conditional GMPEs requiring build_mgmpe function found in openquake.smt.comparison.utils_gmpes.py
+# Test input file for checking execution and values of indirect AvgSA GMPEs requiring build_mgmpe function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
-imt_list = ['IA', 'PGV'] # IMTs to compute attenuation curves for
+imt_list = ["PGA", "AvgSA(0.2)", 'AvgSA(1.0)'] # IMTs to compute attenuation curves for
 max_period = 0.5 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
 minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
@@ -37,19 +37,13 @@ gmpe_labels = ['NA', 'NA']
 # Specify GMMs
 [models]
 
-[models.0-ModifiableGMPE] # Base GMPE and conditional GMPE both with multiple inputs
-gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=True' 
-conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+[models.0-ModifiableGMPE] # Indirect approach 1 - t_low and t_high with n_per
+gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
+GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
 
-[models.1-ModifiableGMPE] # Checking works with multiple conditional GMPEs where one has no inputs
-gmpe = "AbrahamsonGulerce2020SInter"
-conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan\nrho_pga_sa1=0.52', 'PGV': 'AbrahamsonBhasin2020'}"
-
-[ratios_baseline_gmm.ModifiableGMPE] # This one is a bit complex: it is using the IA predicted by the MacedoEtAl2019SInter
-                                     # GMPE with KuehnEtAl2020SInter as the underlying GMM, and then computing ratios against
-                                     # against the IA predicted by the two conditional GMPEs specified above.
-gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
-conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+[models.1-ModifiableGMPE] # Indirect approach 2 - list of averaging periods
+gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
 
 [custom_plotting]
 custom_colors_flag = false # Set to true for custom colours

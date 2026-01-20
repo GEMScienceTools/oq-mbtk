@@ -486,6 +486,8 @@ def plot_ratios_util(config, output_directory):
                                  config.up_or_down_dip,
                                  config.volc_back_arc,
                                  config.eshm20_region)
+            
+            # Get baseline mean
             b_mean = results[0][0][0]
             if np.all(b_mean) == 0:
                 # Should only occur in case of using a conditional GMPE
