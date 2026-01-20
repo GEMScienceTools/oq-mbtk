@@ -412,7 +412,7 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods
-    :param obs_spectra:
+    :param  obs_spectra:
         CSV of an observed spectra to plot (contains intensity value per
         period, EQ ID and station ID). An example of this file can be
         found in oq-mbtk.openquake.smt.tests.comparison.data.inputs for the
