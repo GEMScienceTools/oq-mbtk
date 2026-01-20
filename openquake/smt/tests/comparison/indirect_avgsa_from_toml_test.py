@@ -73,9 +73,6 @@ class IndirectAvgSAGroundMotionsTestCase(unittest.TestCase):
         # Now check matrix dfs
         pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
 
-        # Check that regular plots work with the indirect AvgSA GMPEs
-        
-
     @classmethod
     def tearDownClass(self):
         """
