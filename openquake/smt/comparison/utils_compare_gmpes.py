@@ -99,7 +99,6 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
                 subset = filter_obs_data(data, imt, mag, depth_g, config.vs30)
             else:
                 subset = None
-            breakpoint()
 
             # Per GMPE get attenuation curves
             lt_vals_gmc = {lt: {} for lt in lt_weights}
@@ -214,12 +213,12 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
             # Add grid
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
-            # Plot data too if required AND any appropriate data retrieved
+            # Plot data too if required/any retrieved
             if subset is not None:
+                # NOTE: Units converted to OQ GSIM units in helper function
                 pyplot.scatter(x=data[GEM_FF_MAPPINGS[config.dist_type]],
-                               y=data[GEM_FF_MAPPINGS[imt]],
+                               y=data[GEM_FF_MAPPINGS[imt]], 
                                marker="x", color="r", label="Observations")
-            breakpoint()
 
         # Store per imt
         store_per_imt[str(imt)] = store_per_mag
@@ -1606,11 +1605,15 @@ def filter_obs_data(data, imt, mag, depth, vs30, dist=None, dist_type=None):
         subset = subset.loc[subset[dcol].between(
             dist - DIST_LIM, dist + DIST_LIM)].reset_index(drop=True)    
 
-    # Filter lastly by IMT
+    # Check there are values for the given IMT
     if imt not in GEM_FF_MAPPINGS.keys():
         # Might not be a column with RotD50 values for this IMT
         raise ValueError(f'"{imt}" is not an IMT supported in the GEM Global Flatfile.')
-    subset = subset.loc[subset[GEM_FF_MAPPINGS[imt]].notnull()].reset_index(drop=True)
+    imt_col = GEM_FF_MAPPINGS[imt]["col"]
+    subset = subset.loc[subset[imt_col].notnull()].reset_index(drop=True)
+
+    # Convert from flatfile units to those of GMPEs in OQ for given IMT
+    subset[imt_col] = subset[imt_col] * GEM_FF_MAPPINGS[imt]["conv_factor"]
 
     # Made it to the end of filtering - there is suitable data for plotting
     if len(subset) > 0:
