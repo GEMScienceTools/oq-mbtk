@@ -73,6 +73,9 @@ class IndirectAvgSAGroundMotionsTestCase(unittest.TestCase):
         # Now check matrix dfs
         pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
 
+        # Also, check the indirect AvgSA ratio plotting works
+        comp.plot_ratios(self.input_file, self.output_directory)
+
     @classmethod
     def tearDownClass(self):
         """

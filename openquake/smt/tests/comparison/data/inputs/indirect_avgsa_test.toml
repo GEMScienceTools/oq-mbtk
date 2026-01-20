@@ -1,7 +1,7 @@
 # Test input file for checking execution and values of indirect AvgSA GMPEs requiring build_mgmpe function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
-imt_list = ["PGA", "AvgSA(0.2)", 'AvgSA(1.0)'] # IMTs to compute attenuation curves for
+imt_list = ["SA(0.2)", "SA(1.0)", "AvgSA(0.2)", 'AvgSA(1.0)'] # IMTs to compute attenuation curves for
 max_period = 0.5 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
 minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
@@ -42,6 +42,15 @@ gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
 GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
 
 [models.1-ModifiableGMPE] # Indirect approach 2 - list of averaging periods
+gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
+[ratios_baseline_gmm.ModifiableGMPE] # Use as baseline for computing ratios against the predictions of
+                                     # the other GMPEs specified here (the ratios for AvgSA will be computed
+                                     # from indirect approach, and the non-AvgSA IMTs (here PGA) will be the
+                                     # ratios of the underlying GMPEs predictions (NB inherently the predictions
+                                     # against indirect approach 2 configuration will all equal 1.0 because the 
+                                     # baseline GMPE specified here is identical)
 gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
 GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
 
