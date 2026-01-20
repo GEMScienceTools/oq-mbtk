@@ -688,6 +688,27 @@ Comparing GMPEs
         gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
         conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
 
+11. Using indirect-approach AvgSA GMPEs within an SMT Comparison ``.toml``. 
+
+   Indirect-approach AvgSA GMPEs can also be specified within the SMT's Comparison module. The SMT permits specified of the averaging periods as either a list (i.e., using the ``GenericGmpeAvgSA`` GSIM class) OR by constructing an array from a specified lower averaging period, upper averaging period and
+   a required number of periods (i.e., using the ``GmpeIndirectAvgSA`` GSIM class). The user must also specify an inter-period (cross) correlation model available within the Engine (see ``oq-engine\openquake\hazardlib\gsim\mgmpe\generic_gmpe_avgsa.py`` for the available models and also more info on the
+   ``GenericGmpeAvgSA`` and ``GmpeIndirectAvgSA`` indirect-approach AvgSA GSIM classes) and an underlying GMPE.
+   
+   NOTE: The user should be mindful that if a non-AvgSA intensity measure is specified within the ``.toml`` file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course again, if the underlying GMPE does not support a requested intensity measure then an error
+   is raised as within a "regular" GMPE).
+
+    .. code-block:: ini
+        [models]
+
+        [models.0-ModifiableGMPE]
+        gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
+        GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
+
+        [models.1-ModifiableGMPE]
+        gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+        GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
+
 References
 ==========
 
