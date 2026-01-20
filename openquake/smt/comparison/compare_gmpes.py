@@ -415,7 +415,7 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
     :param obs_spectra:
         CSV of an observed spectra to plot (contains intensity value per
         period, EQ ID and station ID). An example of this file can be
-        found in oq-mbtk.openquake.smt.tests.comparison.data for the
+        found in oq-mbtk.openquake.smt.tests.comparison.data.inputs for the
         1993 Chamoli earthquake.
     """
     config = Configurations(filename)
@@ -428,7 +428,7 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
                              "specify 1 magnitude and depth combination for " \
                              "response spectra plotting in the toml file.")
 
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
+    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data)
 
     return store_gmc_lts
 
