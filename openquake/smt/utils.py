@@ -37,6 +37,12 @@ AVAILABLE_GSIMS = get_available_gsims()
 # Regular expression to get a GMPETable from string:
 _GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
+# Fltering params for plotting observations against GMPEs
+MAG_LIM = 0.25 # Mw
+DEP_LIM = 15 # km
+DIST_LIM = 25 # km (dist type used is dependent on dist type in config file)
+VS30_LIM = 150 # m/s
+
 # GEM Global Flatfile Mappings
 CMS2_TO_G = 1/980.665
 CMS_TO_GSEC = 1/980.665
@@ -45,6 +51,7 @@ GEM_FF_MAPPINGS = {
     "repi": "epi_dist",
     "rjb": "JB_dist",
     "rrup": "rup_dist",
+    "rhypo": "rhypo_dist",
     # IMT strings: {col, units in flatfile, conversion to OQ gsim units --> found in oq-engine.openquake.hazardlib.imt}
     "CAV": {"col": "rotD50_CAV", "unit": "cm/s", "conv_factor": CMS_TO_GSEC},
     "IA": {"col": "rotD50_IA", "unit": "m/s", "conv_factor": 1},
@@ -90,7 +97,7 @@ GEM_FF_MAPPINGS = {
     }
 
 
-### General utils for value validation
+### Utils for value validation ###
 def get_float(xval):
     """
     Returns a float value, or none
@@ -285,7 +292,7 @@ def full_dtype_gmm():
     return gmpe
 
 
-### General utils for time series
+### General utils for time series ###
 def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
     """
     Converts acceleration from/to different units
@@ -382,7 +389,7 @@ def nextpow2(nval):
     return int(2.0 ** m_i)
 
 
-### Utils for managing GMMs in the Residuals Module
+### Utils for managing GMMs in the Residuals Module ###
 def check_gsim_list(gsim_list):
     """
     Check the GSIM models or strings in `gsim_list`, and return a dict of
@@ -469,7 +476,7 @@ def clean_gmm_label(gmpe, drop_weight_info=False):
     return gmm_label
 
 
-### Vs30 to z1pt0 and z2pt5 relationships from GMMs
+### Vs30 to z1pt0 and z2pt5 relationships from GMMs ###
 def vs30_to_z1pt0_as08(vs30):
     """
     Extracts a depth to 1.0 km/s velocity layer using the relationship
@@ -548,3 +555,48 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
+
+
+### Utils for GEM Global Flatfile ###
+def filter_obs_data(data, imt, mag, depth, vs30, dist=None, dist_type=None):
+    """
+    Filter the dataframe of the provided flatfile for the given imt,
+    magnitude, focal depth, vs30 and (if response spectra are
+    being plotted) distance.
+
+    NOTE: We return RotD50 values.
+    """
+    # Add rhypo dist - need if dist_type is rhypo even if not plotting spectra
+    data["rhypo_dist"] = np.sqrt(data["epi_dist"]**2 + data["ev_depth_km"]**2)
+
+    # Filter by magnitude, depth and vs30 first
+    subset = data.loc[
+        (data.Mw.between(mag - MAG_LIM, mag + MAG_LIM)) &
+        (data.ev_depth_km.between(depth - DEP_LIM, depth + DEP_LIM)) & 
+        (data.vs30_m_sec.between(vs30 - VS30_LIM, vs30 + VS30_LIM))
+        ].reset_index(drop=True)
+    
+    # If dist is not None must be response spectra plotting
+    if dist is not None:
+        assert dist_type is not None
+        # Need to filter by distance too in this case
+        dcol = GEM_FF_MAPPINGS[dist_type]
+        subset = subset.loc[subset[dcol].between(
+            dist - DIST_LIM, dist + DIST_LIM)].reset_index(drop=True)    
+
+    # Check there are values for the given IMT
+    if imt not in GEM_FF_MAPPINGS.keys():
+        # Might not be a column with RotD50 values for this IMT
+        raise ValueError(f'"{imt}" is not an IMT supported in the GEM Global Flatfile.')
+    imt_col = GEM_FF_MAPPINGS[imt]["col"]
+    subset = subset.loc[subset[imt_col].notnull()].reset_index(drop=True)
+
+    # Convert from flatfile units to those of GMPEs in OQ for given IMT
+    subset[imt_col] = subset[imt_col] * GEM_FF_MAPPINGS[imt]["conv_factor"]
+
+    # End of flatfile filtering
+    if len(subset) > 0:
+        return subset
+    else:
+        return None
+    

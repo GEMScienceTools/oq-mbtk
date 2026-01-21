@@ -64,12 +64,13 @@ class ComparisonTestCase(unittest.TestCase):
     """
     @classmethod
     def setUpClass(self):
-        self.input_file = os.path.join(BASE, "inputs", "comparison_test.toml")
-        self.outdir = os.path.join(BASE, "expected", 'compare_gmpes_test')
-        self.input_file_plot_obs_spectra = os.path.join(
+        self.config_file = os.path.join(BASE, "inputs", "comparison_test.toml")
+        self.plot_obs_spectra = os.path.join(
             BASE, "inputs", 'Chamoli_1999_03_28_EQ.toml')
-        self.input_file_obs_spectra_csv = os.path.join(
+        self.obs_spectra_csv = os.path.join(
             BASE, "inputs", 'Chamoli_1999_03_28_EQ_UKHI_rec.csv')
+        self.flatfile = os.path.join(BASE, "inputs", "gem_flatfile_sample.csv")
+        self.outdir = os.path.join(BASE, "expected", 'compare_gmpes_test')
         self.exp_curves = os.path.join(BASE, "expected", 'exp_curves.csv')
         self.exp_spectra = os.path.join(BASE, "expected", 'exp_spectra.csv')
         self.rup_xml = os.path.join(BASE, "inputs", 'rup.xml')
@@ -87,7 +88,7 @@ class ComparisonTestCase(unittest.TestCase):
         each run.
         """
         # Load config
-        config = comp.Configurations(self.input_file)
+        config = comp.Configurations(self.config_file)
 
         # Check for target TRT
         self.assertEqual(config.trt, TARGET_TRT)
@@ -127,6 +128,125 @@ class ComparisonTestCase(unittest.TestCase):
         # Check baseline GMPE used to compute ratios
         self.assertEqual(config.baseline_gmm, TARGET_BASELINE_GMPE)
 
+    def test_trellis_and_spectra_functions(self):
+        """
+        Check execution of trellis and response spectra plotting functions
+        and correctness of values.
+        
+        The plotting of appropriate data extracted automatically from a
+        flatfile against the GMPEs is also tested here within both the
+        trellis and spectra plotting.
+        """
+        # Trellis plots
+        att_curves = comp.plot_trellis(
+            self.config_file, self.outdir, obs_data_fname=self.flatfile)
+        if not os.path.exists(self.exp_curves):
+            # Write to CSV the expected results if missing
+            reformat_att_curves(att_curves, self.exp_curves)
+        exp_curves = pd.read_csv(self.exp_curves)
+        # Same function writing expected can reformat the observed
+        obs_curves = reformat_att_curves(att_curves)
+        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
+
+        # Spectra plots
+        spectra = comp.plot_spectra(
+            self.config_file, self.outdir, obs_spectra_fname=None)
+        if not os.path.exists(self.exp_spectra):
+            # Write if doesn't exist
+            reformat_spectra(spectra, self.exp_spectra)
+        exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
+        obs_spectra = reformat_spectra(spectra) 
+        # Same function writing expected can reformat the observed
+        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
+
+        # Check target file created and outputted in expected location
+        target_file_trellis = (os.path.join(self.outdir, 'TrellisPlots.png'))
+        target_file_spectra = (os.path.join(self.outdir, 'ResponseSpectra.png'))
+        self.assertTrue(target_file_trellis)
+        self.assertTrue(target_file_spectra)
+
+    def test_plot_observed_spectra(self):
+        """
+        Test execution of plotting an observed spectra from a csv against
+        predictions from GMPEs.
+        """
+        # Spectra plots including obs spectra
+        comp.plot_spectra(self.plot_obs_spectra,
+                          self.outdir,
+                          obs_spectra_fname=self.obs_spectra_csv)
+        
+        # Specify target files
+        target_file_spectra = (os.path.join(
+            self.outdir, 'ResponseSpectraPlotObserved.png'))
+        
+        # Check target file created and outputted in expected location
+        self.assertTrue(target_file_spectra)
+
+    def test_plot_ratios(self):
+        """
+        Test execution of plotting ratios (median GMPE attenuation/median
+        baseline GMPE attenuation). Correctness of values is not examined.
+        """
+        # Plot the ratios
+        comp.plot_ratios(self.config_file, self.outdir)
+
+    def test_rup_file(self):
+        """
+        Check that the provision of an OQ rupture in XML or CSV format is
+        usable within the Comparison module. Correctness of values is not
+        examined.
+        """
+        # Add the "rup_file" key to the config to override source params key
+        tmp = toml.load(self.config_file)
+        tmp['rup_file'] = {}
+
+        # For XML and CSV formats
+        for file in [self.rup_xml, self.rup_csv]:
+
+            # Set the file
+            tmp['rup_file']['fname'] = file
+
+            # Write back to temp
+            tmp_pth = os.path.join(
+                tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
+            with open(tmp_pth, 'w', encoding='utf-8') as f:
+                toml.dump(tmp, f)
+
+            # Check the rup read from file works correctly
+            comp.plot_trellis(tmp_pth, self.outdir)
+
+    def test_xml_gmc(self):
+        """
+        Check that a set of GMCs can be reconstructed correctly from an
+        XML for use within the Comparison module. Correctness of values
+        is not examined.
+        """
+        # Add the "gmc_xml" key to the config to override the "models" key
+        tmp = toml.load(self.config_file)
+        tmp['gmc_xml'] = {}
+        tmp['gmc_xml']['fname'] = self.gmc_xml
+        
+        # Test for only ASCR and then all LTs
+        for trt in ["Active Shallow Crust", "all"]:
+
+            # Set the TRT
+            tmp['gmc_xml']['trt'] = trt
+            
+            # Test for plotting of both individual GMMs and only LTs
+            for val in [True, False]:
+                
+                # Set the plotting option
+                tmp['gmc_xml']['plot_lt_only'] = val
+
+                # Write back to temp
+                tmp_pth = os.path.join(
+                    tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
+                with open(tmp_pth, 'w', encoding='utf-8') as f:
+                    toml.dump(tmp, f)
+
+                # Check the GMCs read from XML work correctly
+                comp.plot_trellis(tmp_pth, self.outdir)
+
     def test_sammons(self):
         """
         Check execution of Sammon maps plotting functions when considering
@@ -134,7 +254,7 @@ class ComparisonTestCase(unittest.TestCase):
         of predicted ground-motion from the considered GMPEs.
         """
         # Load config
-        config = comp.Configurations(self.input_file)
+        config = comp.Configurations(self.config_file)
 
         # For each percentile test the clustering plots
         for perc in ["16th_perc", "median", "84th_perc"]:
@@ -166,7 +286,7 @@ class ComparisonTestCase(unittest.TestCase):
         predicted ground-motion from the considered GMPEs.
         """
         # Load config
-        config = comp.Configurations(self.input_file)
+        config = comp.Configurations(self.config_file)
 
         # For each percentile test the clustering plots
         for perc in ["16th_perc", "median", "84th_perc"]:
@@ -196,7 +316,7 @@ class ComparisonTestCase(unittest.TestCase):
         distributions of predicted ground-motion from the considered GMPEs.
         """
         # Load config
-        config = comp.Configurations(self.input_file)
+        config = comp.Configurations(self.config_file)
 
         # For each percentile test the matrix plots
         for perc in ["16th_perc", "median", "84th_perc"]:
@@ -219,121 +339,6 @@ class ComparisonTestCase(unittest.TestCase):
             # Check correct number of GMPEs within matrix_dist for each IMT
             for imt in config.imt_list:
                 self.assertEqual(len(matrix_dist[imt]), TARGET_EUCL)
-
-    def test_trellis_and_spectra_functions(self):
-        """
-        Check trellis and response spectra plotting functions are correctly
-        executed. Also checks correct values are returned for the GMPE
-        attenuation curves and spectra.
-        """
-        # Trellis plots
-        att_curves = comp.plot_trellis(self.input_file, self.outdir)
-        if not os.path.exists(self.exp_curves):
-            # Write to CSV the expected results if missing
-            reformat_att_curves(att_curves, self.exp_curves)
-        exp_curves = pd.read_csv(self.exp_curves)
-        # Same function writing expected can reformat the observed
-        obs_curves = reformat_att_curves(att_curves)
-        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
-
-        # Spectra plots
-        spectra = comp.plot_spectra(
-            self.input_file, self.outdir, obs_spectra_fname=None)
-        if not os.path.exists(self.exp_spectra):
-            # Write if doesn't exist
-            reformat_spectra(spectra, self.exp_spectra)
-        exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
-        obs_spectra = reformat_spectra(spectra) 
-        # Same function writing expected can reformat the observed
-        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
-
-        # Check target file created and outputted in expected location
-        target_file_trellis = (os.path.join(self.outdir, 'TrellisPlots.png'))
-        target_file_spectra = (os.path.join(self.outdir, 'ResponseSpectra.png'))
-        self.assertTrue(target_file_trellis)
-        self.assertTrue(target_file_spectra)
-
-    def test_plot_observed_spectra(self):
-        """
-        Test execution of plotting an observed spectra from a csv against
-        predictions from GMPEs
-        """
-        # Spectra plots including obs spectra
-        comp.plot_spectra(self.input_file_plot_obs_spectra,
-                          self.outdir,
-                          self.input_file_obs_spectra_csv)
-        
-        # Specify target files
-        target_file_spectra = (os.path.join(
-            self.outdir, 'ResponseSpectraPlotObserved.png'))
-        
-        # Check target file created and outputted in expected location
-        self.assertTrue(target_file_spectra)
-
-    def test_plot_ratios(self):
-        """
-        Test execution of plotting ratios (median GMPE attenuation/median
-        baseline GMPE attenuation). Correctness of values is not examined.
-        """
-        # Plot the ratios
-        comp.plot_ratios(self.input_file, self.outdir)
-
-    def test_rup_file(self):
-        """
-        Check that the provision of an OQ rupture in XML or CSV format is
-        usable within the Comparison module. Correctness of values is not
-        examined.
-        """
-        # Add the "rup_file" key to the config to override source params key
-        tmp = toml.load(self.input_file)
-        tmp['rup_file'] = {}
-
-        # For XML and CSV formats
-        for file in [self.rup_xml, self.rup_csv]:
-
-            # Set the file
-            tmp['rup_file']['fname'] = file
-
-            # Write back to temp
-            tmp_pth = os.path.join(
-                tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
-            with open(tmp_pth, 'w', encoding='utf-8') as f:
-                toml.dump(tmp, f)
-
-            # Check the rup read from file works correctly
-            comp.plot_trellis(tmp_pth, self.outdir)
-
-    def test_xml_gmc(self):
-        """
-        Check that a set of GMCs can be reconstructed correctly from an
-        XML for use within the Comparison module. Correctness of values
-        is not examined.
-        """
-        # Add the "gmc_xml" key to the config to override the "models" key
-        tmp = toml.load(self.input_file)
-        tmp['gmc_xml'] = {}
-        tmp['gmc_xml']['fname'] = self.gmc_xml
-        
-        # Test for only ASCR and then all LTs
-        for trt in ["Active Shallow Crust", "all"]:
-
-            # Set the TRT
-            tmp['gmc_xml']['trt'] = trt
-            
-            # Test for plotting of both individual GMMs and only LTs
-            for val in [True, False]:
-                
-                # Set the plotting option
-                tmp['gmc_xml']['plot_lt_only'] = val
-
-                # Write back to temp
-                tmp_pth = os.path.join(
-                    tempfile.mkdtemp(), 'input_with_gmc_xml.toml')
-                with open(tmp_pth, 'w', encoding='utf-8') as f:
-                    toml.dump(tmp, f)
-
-                # Check the GMCs read from XML work correctly
-                comp.plot_trellis(tmp_pth, self.outdir)
 
     @classmethod
     def tearDownClass(self):

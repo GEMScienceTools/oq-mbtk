@@ -401,15 +401,17 @@ def plot_trellis(filename, output_directory, obs_data_fname=None):
         plotting methods
     :param  obs_data_fname:
         GEM-flatfile format CSV file - the (appropriate) data from this
-        flatfile will be plotted on the attenuation curves:
-        --> Data within Mw +/- 0.25 of given magnitude
-        --> Data within +/- 25 km of specified distance type
-        --> Data within +/- 150 m/s of specified Vs30
-        --> Data within +/- 15 km of given focal depth
+        flatfile will be plotted on the attenuation curves. The data is
+        selected if it falls within the following HARDCODED boundaries:
+        --> Within Mw +/- 0.25 of given magnitude
+        --> Within +/- 15 km of given focal depth
+        --> Within +/- 150 m/s of specified Vs30
+        --> NOTE: The user must provide a geographically and tectonic
+            region filtered flatfile (this filtering is not done here).
     """ 
     config = Configurations(filename)
     
-    store_gmm_curves = plot_trellis_util(config, output_directory, obs_data_fname) 
+    store_gmm_curves = plot_trellis_util(config, output_directory, obs_data_fname)
     
     return store_gmm_curves
                 
