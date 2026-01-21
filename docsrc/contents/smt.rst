@@ -488,6 +488,9 @@ Comparing GMPEs
     Trellis plots for input parameters specified in toml file:
        .. image:: /contents/smt_images/TrellisPlots.png
    
+   The user can also automatically plot observations from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which must be the path to a CSV file
+   containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within ``openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv``.
+
 4. Spectra Plots
 
    We can also plot response spectra:
@@ -664,7 +667,7 @@ Comparing GMPEs
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"
         site_term = "BA08SiteTerm" # Arbitrary for testing execution of this capability
         
-10. Using conditional GMPEs within an SMT Comparison ``.toml``. 
+11. Using conditional GMPEs within an SMT Comparison ``.toml``. 
 
    Conditional GMPEs can also be specified within the SMT's Comparison module. Like within the OpenQuake Engine, these leverage ModifiableGMPE to make it possible to specify a different conditional GMPE for each intensity measure we want to compute predictions for in combination with an "underlying" GMPE.
    
@@ -688,7 +691,7 @@ Comparing GMPEs
         gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
         conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
 
-11. Using indirect-approach AvgSA GMPEs within an SMT Comparison ``.toml``. 
+12. Using indirect-approach AvgSA GMPEs within an SMT Comparison ``.toml``. 
 
    Indirect-approach AvgSA GMPEs can also be specified within the SMT's Comparison module. The SMT permits specified of the averaging periods as either a list (i.e., using the ``GenericGmpeAvgSA`` GSIM class) OR by constructing an array from a specified lower averaging period, upper averaging period and
    a required number of periods (i.e., using the ``GmpeIndirectAvgSA`` GSIM class). The user must also specify an inter-period (cross) correlation model available within the Engine (see ``oq-engine\openquake\hazardlib\gsim\mgmpe\generic_gmpe_avgsa.py`` for the available models and also more info on the
