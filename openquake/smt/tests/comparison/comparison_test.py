@@ -133,9 +133,8 @@ class ComparisonTestCase(unittest.TestCase):
         Check execution of trellis and response spectra plotting functions
         and correctness of values.
         
-        The plotting of appropriate data extracted automatically from a
-        flatfile against the GMPEs is also tested here within both the
-        trellis and spectra plotting.
+        The plotting of appropriate data extracted automatically from the
+        GEM flatfile against the GMPE attenuation curves is also tested here.
         """
         # Trellis plots
         att_curves = comp.plot_trellis(
@@ -149,8 +148,9 @@ class ComparisonTestCase(unittest.TestCase):
         pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
 
         # Spectra plots
-        spectra = comp.plot_spectra(
-            self.config_file, self.outdir, obs_spectra_fname=None)
+        spectra = comp.plot_spectra(self.config_file,
+                                    self.outdir,
+                                    obs_spectra_fname=None)
         if not os.path.exists(self.exp_spectra):
             # Write if doesn't exist
             reformat_spectra(spectra, self.exp_spectra)

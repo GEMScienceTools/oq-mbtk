@@ -89,7 +89,8 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
             
             # If plotting data get the appropriate subset
             if data is not None:
-                subset = filter_obs_data(data, imt, mag, depth_g, config.vs30)
+                subset = filter_obs_data(
+                    data, imt, mag, depth_g, config.vs30, config.dist_type)
             else:
                 subset = None
 
@@ -248,7 +249,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     else:
         max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
-        
+
     # Get gmc lt weights
     gmc_weights = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
 
@@ -321,7 +322,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 gmm = gmpe_check(gmpe)
                 
                 for i, imt in enumerate(imt_list): 
-                        
+
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
                                                            mag,

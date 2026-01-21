@@ -40,7 +40,6 @@ _GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
 # Fltering params for plotting observations against GMPEs
 MAG_LIM = 0.25 # Mw
 DEP_LIM = 15 # km
-DIST_LIM = 25 # km (dist type used is dependent on dist type in config file)
 VS30_LIM = 150 # m/s
 
 # GEM Global Flatfile Mappings
@@ -558,16 +557,17 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
 
 
 ### Utils for GEM Global Flatfile ###
-def filter_obs_data(data, imt, mag, depth, vs30, dist=None, dist_type=None):
+def filter_obs_data(data, imt, mag, depth, vs30, dist_type):
     """
     Filter the dataframe of the provided flatfile for the given imt,
-    magnitude, focal depth, vs30 and (if response spectra are
-    being plotted) distance.
+    magnitude, focal depth and vs30.
 
     NOTE: We return RotD50 values.
     """
-    # Add rhypo dist - need if dist_type is rhypo even if not plotting spectra
-    data["rhypo_dist"] = np.sqrt(data["epi_dist"]**2 + data["ev_depth_km"]**2)
+    # Add rhypo dist
+    if dist_type == "rhypo":
+        data["rhypo_dist"] = np.sqrt(
+            data["epi_dist"]**2 + data["ev_depth_km"]**2)
 
     # Filter by magnitude, depth and vs30 first
     subset = data.loc[
@@ -575,14 +575,6 @@ def filter_obs_data(data, imt, mag, depth, vs30, dist=None, dist_type=None):
         (data.ev_depth_km.between(depth - DEP_LIM, depth + DEP_LIM)) & 
         (data.vs30_m_sec.between(vs30 - VS30_LIM, vs30 + VS30_LIM))
         ].reset_index(drop=True)
-    
-    # If dist is not None must be response spectra plotting
-    if dist is not None:
-        assert dist_type is not None
-        # Need to filter by distance too in this case
-        dcol = GEM_FF_MAPPINGS[dist_type]
-        subset = subset.loc[subset[dcol].between(
-            dist - DIST_LIM, dist + DIST_LIM)].reset_index(drop=True)    
 
     # Check there are values for the given IMT
     if imt not in GEM_FF_MAPPINGS.keys():
