@@ -27,13 +27,27 @@ from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
 
+from openquake.hazardlib.imt import PGA, SA
 from openquake.smt.comparison.sammons import sammon
-from openquake.hazardlib.imt import from_string
 from openquake.smt.utils import clean_gmm_label, filter_obs_data, GEM_FF_MAPPINGS
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
                                                   gmpe_check)
+
+
+# Periods used in spectra plotting (truncated based on max_period in config)
+PERIODS = [PGA(), SA(0.01), SA(0.025) ,SA(0.05),
+           SA(0.1), SA(0.15), SA(0.2), SA(0.25),
+           SA(0.3), SA(0.35), SA(0.4), SA(0.45),
+           SA(0.5), SA(0.6), SA(0.7), SA(0.8), SA(0.9),
+           SA(1.0), SA(1.1), SA(1.2), SA(1.3), SA(1.4),
+           SA(1.5), SA(1.6), SA(1.7), SA(1.8), SA(1.9),
+           SA(2.0), SA(2.2), SA(2.4), SA(2.6), SA(2.8),
+           SA(3.0), SA(3.2), SA(3.4), SA(3.6), SA(3.8),
+           SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0),
+           SA(6.5), SA(7.0), SA(7.5), SA(8.0), SA(8.5),
+           SA(9.0), SA(9.5), SA(10.0)]
 
 
 def plot_trellis_util(config, output_directory, obs_data_fname):
@@ -250,11 +264,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
 
+    # Truncate periods to max_period
+    imt_list = [imt for imt in PERIODS if imt.period <= max_period]
+    periods = np.array([imt.period for imt in PERIODS if imt.period <= max_period])
+    
     # Get gmc lt weights
     gmc_weights = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
-
-    # Get imts and max period
-    imt_list, periods = _get_imts(max_period)
     
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
@@ -341,7 +356,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                            config.z2pt5,
                                                            500, # Assume record dist < 500 km
                                                            1,   # Step of 1 km for site spacing
-                                                           imt,
+                                                           imt.string,
                                                            config.dist_type,
                                                            config.up_or_down_dip,
                                                            config.volc_back_arc,
@@ -1238,71 +1253,6 @@ def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list
     
 
 ### Spectra utils
-def _update_period_spacing(period, threshold, spacing, max_period):
-    """
-    Update period spacing based on maximum period provided.
-    """
-    period = pd.Series(period)
-    if max(period) > threshold:
-        for SA in range(0, len(period)):
-            if period[SA] > threshold:
-                period = period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(1, max_period, spacing))
-        period_df = pd.DataFrame({'periods': period,
-                                  'periods_to_re_add': periods_to_re_add,
-                                  'max_period': max_period})
-        return period_df.melt().value.dropna().unique()
-    else:
-        return period
-
-
-def _get_period_values_for_spectra_plots(max_period):
-    """
-    Get list of periods based on maximum period specified in comparison .toml
-    
-    :param max_period:
-        Maximum period to compute plots for (note an error will be returned if
-        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
-    """
-    # Set initial periods with constant spacing of 0.1
-    period = list(np.round(np.arange(0, max_period, 0.1), 1))
-    period.append(max_period)
-
-    # If period extends beyond 1 s reduce interval to 0.2 s
-    period = _update_period_spacing(period, 1, 0.2, max_period)
-    
-    # If period extends beyond 2 s then reduce interval to 0.5 s
-    period = _update_period_spacing(period, 2, 0.5, max_period)
-    
-    # If period extends beyond 5 s then reduce interval to 1 s
-    period = _update_period_spacing(period, 5, 1.0, max_period)
-
-    return period
-
-
-def _get_imts(max_period):
-    """
-    Convert period floats to imt classes.
-    """
-    # Get periods
-    periods = _get_period_values_for_spectra_plots(max_period)
-    
-    # Convert from float to imt
-    period = np.round(periods,1)
-    base_SA_string = 'SA(_)'
-    imt_list = []
-    for imt in range(0, len(period)):
-        if imt == 0:
-            SA_string = 'PGA'
-        else:
-            SA_string = base_SA_string.replace('_', str(period[imt]))
-        imt_list.append(SA_string)
-    for imt in range(0,len(imt_list)):
-        imt_list[imt] = from_string(str(imt_list[imt]))
-    
-    return imt_list, periods
-
-
 def spectra_data(gmpe,
                  nstd,
                  gmc_weights,
