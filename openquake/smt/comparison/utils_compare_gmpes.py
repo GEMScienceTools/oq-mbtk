@@ -1065,7 +1065,7 @@ def get_colors(custom_color_flag, custom_color_list):
         return colors
 
 
-### Trellis utils
+### Trellis Utils ###
 def trellis_data(gmpe,
                  r_vals,
                  mean,
@@ -1252,7 +1252,7 @@ def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list
     pyplot.loglog()
     
 
-### Spectra utils
+### Spectra Utils ###
 def spectra_data(gmpe,
                  nstd,
                  gmc_weights,
@@ -1481,7 +1481,7 @@ def raise_spectra_dist_error(dist, dist_type, r_vals):
                      f"shaking scenario (min = {r_min} km, max = {r_max} km)")
 
 
-### Utils for other plots
+### Utils for Other Plots ###
 def get_dist_label(dist_type):
     """
     Return string representing required distance type.
