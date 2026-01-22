@@ -114,7 +114,7 @@ def make_multifault_source(
     name: str = "Test Source",
     tectonic_region_type: str = "Active Shallow Crust",
     investigation_time=1.0,
-    infer_occur_rates: bool = False,
+    infer_occur_rates: bool = True,
     surface_type="kite",
     ruptures_for_output='all',
     rupture_occurrence_rates=None,

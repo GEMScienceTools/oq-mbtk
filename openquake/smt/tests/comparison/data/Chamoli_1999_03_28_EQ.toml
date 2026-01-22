@@ -7,7 +7,7 @@ minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'rrup' # Specify distance metric for trellis/spectra
 dist_list = [26.7] # Distance intervals for use in spectra plots
-Nstd = 1 # Truncation for GMM sigma distribution
+Nstd = 0 # Truncation for GMM sigma distribution
 
 [site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 vs30 = 800
@@ -29,13 +29,6 @@ ztor = -999 # Set to -999 to NOT consider
 aratio = -999 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
 trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
 
-[euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
-mmin = 5
-mmax = 7
-spacing = 0.1
-depths = [[5, 20], [6, 20], [7, 20]] # [[mag, depth], [mag, depth], [mag, depth]] 
-gmpe_labels = ['ASK14', 'C14', 'CY14']
-
 [models] # Specify GMMs
 
 [models.AbrahamsonEtAl2014RegCHN]
@@ -47,6 +40,6 @@ lt_weight_gmc1 = 0.33
 [models.ChiouYoungs2014]
 lt_weight_gmc1 = 0.33
 
-[custom_colors]
-custom_colors_flag = 'False' #(set to "True" for custom colours in plots)
+[custom_plotting]
+custom_colors_flag = true #(set to true for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

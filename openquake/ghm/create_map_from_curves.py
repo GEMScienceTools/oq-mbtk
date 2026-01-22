@@ -27,10 +27,10 @@
 
 import re
 import os
-import sys
 import glob
 import numpy as np
 import geopandas as gpd
+
 from openquake.baselib import sap
 from openquake.man.tools import csv_output as csvt
 
