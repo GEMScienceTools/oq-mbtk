@@ -127,7 +127,7 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _get_sites(model, folder_out, conf, crs= 'epsg:3857', root_path=''):
+def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     """
     Tool for creating an equally spaced set of points covering a model in the
     global hazard mosaic.
