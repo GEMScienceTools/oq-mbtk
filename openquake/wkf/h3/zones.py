@@ -50,6 +50,9 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
 
     # Select point in polygon
     fout = open(fname_out, 'w')
+
+    hexagons = []
+
     for idx, poly in polygons_gdf.iterrows():
     
         if len(use) > 0 and poly.id not in use:
@@ -61,18 +64,22 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
             from shapely.geometry import shape, mapping
             # Check that there are no polygons inside
             multipoly = shape(geojson_poly)
-            try:
-                assert len(multipoly.geoms) == 1
+            if len(multipoly.geoms) == 1:
                 geojson_poly = mapping(multipoly.geoms[0])
-            except:
-                print(poly.id)
+                hexagons = list(h3.polyfill(geojson_poly, h3_level, geo_json_conformant=True))
+            else:
+                print("found multipolygon for source ", poly.id)
+                for i in range(len(multipoly.geoms)):
+                    poly_comp = mapping(multipoly.geoms[i])
+                    hex_comp = list(h3.polyfill(poly_comp, h3_level, geo_json_conformant=True))
+                    hexagons = hexagons + hex_comp
 
         # Revert the positions of lons and lats
         #coo = [[c[1], c[0]] for c in geojson_poly['coordinates'][0]]
         #geojson_poly['coordinates'] = [coo]
 
         # Discretizing
-        hexagons = list(h3.polyfill(geojson_poly, h3_level, geo_json_conformant=True))
+        
         for hxg in hexagons:
             if isinstance(poly.id, str):
                 fout.write("{:s},{:s}\n".format(hxg, poly.id))

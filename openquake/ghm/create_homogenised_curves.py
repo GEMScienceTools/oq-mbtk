@@ -326,14 +326,14 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
 
         # Fixing an issue at the border between waf and ssa
         # TODO can we remove this now?
-        if key in ['waf', 'ssa']:
-            from shapely.geometry import Polygon
-            coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
-            df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
-            dft = gpd.GeoDataFrame(df, geometry='geo')
-            idx = map_gdf.geometry.intersects(dft.geometry[0])
-            xdf = copy.deepcopy(map_gdf[idx])
-            map_gdf = xdf
+        #if key in ['waf', 'ssa']:
+        #    from shapely.geometry import Polygon
+        #    coo = get_poly_from_str(mosaic.SUBSETS['GID_0'][key]['AGO'][0])
+        #    df = pd.DataFrame({'name': ['tmp'], 'geo': [Polygon(coo)]})
+        #    dft = gpd.GeoDataFrame(df, geometry='geo')
+        #    idx = map_gdf.geometry.intersects(dft.geometry[0])
+        #    xdf = copy.deepcopy(map_gdf[idx])
+        #    map_gdf = xdf
 
         # Read the shapefile with the polygons of countries. The explode
         # function converts multipolygons into a single multipolygon.
@@ -357,6 +357,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
         map_gdf_pro = map_gdf.to_crs(crs=aeqd)
 
         # Now we process the polygons composing the selected model
+        oceans = ['OPA', 'OAT', 'OIN'] 
         for poly in one_polygon.geometry:
 
             tmp = gpd.GeoSeries([poly], crs='epsg:4326')
@@ -367,6 +368,11 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
             c = 0
             for la, lb, geo in zip(contacts_df.modelA, contacts_df.modelB,
                                    contacts_df.geometry):
+                if la not in ['SSA', 'OAT']:
+                    continue
+                if lb not in ['SSA', 'OAT']:
+                    continue
+
                 if key.upper() in [la, lb]:
                     print('    ', la, lb)
 
@@ -395,8 +401,9 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                     # and save the distance of each point frotmpdfm the border
                     tmpdf = copy.deepcopy(map_gdf[idx])
                     tmpdf = tmpdf.set_crs('epsg:4326')
-                    tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
-                                      predicate='intersects')
+#                    if not (la in oceans) and not (lb in oceans):
+#                        tmpdf = gpd.sjoin(tmpdf, inland_df, how='inner',
+#                                      predicate='intersects')
                     p_geo = gpd.GeoDataFrame({'geometry': [geo]})
                     p_geo = p_geo.set_crs('epsg:4326')
 
@@ -563,7 +570,8 @@ def buffer_processing(outpath, imt_str, models_list, poelabs, buf, vs30_flag, su
         # Skip models not included in the list.
         # comment out these lines if wanting to join 
         # all the models, but some have been produced in former runs
-        if re.sub('[0-9]+', '', key) not in models_list and sub==True:
+        if re.sub('[0-9]+', '', key) not in models_list and sub==False:
+            #if re.sub('[0-9]+', '', key) not in models_list and sub==True:
             continue
         if key == 'gld' and vs30_flag == 1:
             continue

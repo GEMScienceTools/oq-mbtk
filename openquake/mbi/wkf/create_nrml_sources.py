@@ -43,7 +43,7 @@ def _get_hypocenter_distribution(data):
     return PMF(out)
 
 
-def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+def write_as_multipoint_sources(df, model, src_id, subzones,
                                 model_subz, mmin, bwid, rms, tom, folder_out):
     """
     Write a set of point sources to NRML as a multi-point
@@ -54,9 +54,6 @@ def write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
         A dictionary with the model representation
     :param src_id:
         A string with the ID of the source
-    :param msr_dict:
-        A dictionary created with  the `get_available_magnitude_scalerel`
-        function available in OQ Engine
     :param subzones:
         Must be false since we do not support this feature
     :param model_subz:
@@ -250,7 +247,7 @@ def create_nrml_sources(fname_input_pattern: str, fname_config: str,
             df = gpd.sjoin(gdf, tdf, op='within')
 
         if as_multipoint:
-            write_as_multipoint_sources(df, model, src_id, msr_dict, subzones,
+            write_as_multipoint_sources(df, model, src_id, subzones,
                                         model_subz, mmin, bwid, rms, tom,
                                         folder_out)
         else:
