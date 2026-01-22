@@ -28,9 +28,13 @@
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+import time
+import logging
 
 import pandas as pd
 import numpy as np
+
+from scipy.sparse import dok_array, issparse
 
 import numba
 from numba import jit, prange
@@ -39,18 +43,42 @@ from numba.core import types
 
 from openquake.fnm.inversion.utils import slip_vector_azimuth
 
-from openquake.fnm.rupture_connections import get_multifault_rupture_distances
+from openquake.fnm.fault_modeler import (
+    get_trace_from_sf_rupture,
+)
+
+from openquake.fnm.rupture_connections import (
+    get_multifault_rupture_distances,
+    get_proximal_rup_angles,
+)
+
+
+def logistic(x, k=1.0, x0=0.0, L=1.0):
+    return L / (1 + np.exp(-k * (x - x0)))
+
+
+def compact_cosine_sigmoid(angle, midpoint):
+    cutoff = 2 * midpoint
+    is_scalar = np.isscalar(angle)
+    angle_arr = np.asarray(angle, dtype=float)
+    vals = 0.5 * (1 + np.cos(np.pi * angle_arr / cutoff))
+    vals = np.where(angle_arr >= cutoff, 0.0, vals)
+    if is_scalar:
+        return float(vals)
+    return vals
 
 
 def connection_angle_plausibility(
-    connection_angles, function_type="cosine", no_connection_val=1
+    connection_angles,
+    function_type="cosine",
+    no_connection_val=1,
+    midpoint=90.0,
 ):
     conns = np.array(connection_angles)
     conns[conns == no_connection_val] = 0.0
 
     if function_type == "cosine":
-        # values between 1 and 0 for angles 0-180.
-        plausibilities = np.cos(np.radians(conns / 2.0))
+        plausibilities = compact_cosine_sigmoid(conns, midpoint)
 
     else:
         raise NotImplementedError(
@@ -87,19 +115,24 @@ def find_decay_exponent(y, x):
 def connection_distance_plausibility(
     connection_distances,
     function_type="exponent",
-    dist_threshold=15.0,
-    prob_threshold=0.1,
     no_connection_val=-1,
+    midpoint=None,
 ):
+    if midpoint is None:
+        return 1.0
     conns = np.array(connection_distances)
     conns[conns == no_connection_val] = 0.0
 
     if function_type == "exponent":
-        decay_exp = find_decay_exponent(prob_threshold, dist_threshold)
+        decay_exp = np.log(2.0) / midpoint
         plausibilities = np.exp(-decay_exp * conns)
 
     elif function_type == "linear":
-        plausibilities = 1 - (conns / dist_threshold)
+        # midpoint => plausibility of 0.5, zero at 2*midpoint
+        plausibilities = 1 - (conns / (2 * midpoint))
+        plausibilities = np.clip(plausibilities, 0.0, None)
+    elif function_type == "cosine":
+        plausibilities = compact_cosine_sigmoid(conns, midpoint)
 
     else:
         raise NotImplementedError(
@@ -113,7 +146,11 @@ def connection_distance_plausibility(
 def slip_azimith_plausibility(
     slip_azimuths,
     function_type="cosine",
+    midpoint=90.0,
 ):
+    if midpoint is None:
+        return 1.0
+
     if len(slip_azimuths) == 1:
         return 1.0
 
@@ -121,8 +158,9 @@ def slip_azimith_plausibility(
     slip_azimuth_diffs = np.diff(slip_azimuths)
 
     if function_type == "cosine":
-        # allow
-        plausibilities = np.abs(np.cos(np.radians(slip_azimuth_diffs)))
+        plausibilities = compact_cosine_sigmoid(
+            np.abs(slip_azimuth_diffs), midpoint
+        )
 
     else:
         raise NotImplementedError(
@@ -133,33 +171,242 @@ def slip_azimith_plausibility(
     return total_prob
 
 
+def _padded_array_from_sequences(
+    sequences, dtype=np.float64, fill_value=0.0, replace=None
+):
+    seqs = list(sequences)
+    n_rups = len(seqs)
+    max_len = 0
+    for seq in seqs:
+        if seq is None:
+            continue
+        if not isinstance(seq, (list, tuple, np.ndarray)):
+            seq = [seq]
+        L = len(seq)
+        if L > max_len:
+            max_len = L
+
+    arr = np.full((n_rups, max_len), fill_value, dtype=dtype)
+    if max_len == 0:
+        return arr
+
+    for i, seq in enumerate(seqs):
+        if seq is None:
+            continue
+        if not isinstance(seq, (list, tuple, np.ndarray)):
+            seq = [seq]
+        seq_arr = np.asarray(seq, dtype=dtype)
+        if replace is not None:
+            old_val, new_val = replace
+            seq_arr = seq_arr.copy()
+            seq_arr[seq_arr == old_val] = new_val
+        if seq_arr.size:
+            arr[i, : seq_arr.size] = seq_arr
+
+    return arr
+
+
+def _matrix_to_rupture_series(rupture_df, matrix):
+    if matrix is None:
+        return None
+
+    mat = matrix.todok() if issparse(matrix) else np.asarray(matrix)
+    is_sparse = issparse(mat)
+    seqs = []
+    for row in rupture_df.itertuples():
+        rup_indices = getattr(row, "ruptures")
+        if len(rup_indices) == 1:
+            seqs.append(np.zeros(1, dtype=np.float64))
+            continue
+
+        vals = []
+        for idx in range(len(rup_indices) - 1):
+            i, j = rup_indices[idx], rup_indices[idx + 1]
+            vals.append(float(mat[i, j] if is_sparse else mat[i][j]))
+        seqs.append(np.asarray(vals, dtype=np.float64))
+
+    return pd.Series(seqs, index=rupture_df.index)
+
+
+def _compute_distance_plausibility(
+    rupture_df,
+    distances,
+    connection_distance_function,
+    connection_distance_midpoint,
+    no_connection_val,
+):
+    n_rups = rupture_df.shape[0]
+    if connection_distance_midpoint is None:
+        return np.ones(n_rups, dtype=np.float64)
+
+    dist_seqs = list(distances.values)
+    dist_arr = _padded_array_from_sequences(
+        dist_seqs,
+        dtype=np.float64,
+        fill_value=0.0,
+        replace=(no_connection_val, 0.0),
+    )
+
+    if dist_arr.shape[1] == 0:
+        return np.ones(n_rups, dtype=np.float64)
+
+    if connection_distance_function == "exponent":
+        decay_exp = np.log(2.0) / connection_distance_midpoint
+        conn_plaus = np.exp(-decay_exp * dist_arr)
+    elif connection_distance_function == "linear":
+        conn_plaus = 1.0 - (dist_arr / (2 * connection_distance_midpoint))
+        conn_plaus = np.clip(conn_plaus, 0.0, None)
+    elif connection_distance_function == "cosine":
+        conn_plaus = compact_cosine_sigmoid(
+            dist_arr, connection_distance_midpoint
+        )
+    else:
+        raise NotImplementedError(
+            f"Function type {connection_distance_function} not implemented."
+        )
+
+    return np.prod(conn_plaus, axis=1)
+
+
+def _compute_angle_plausibility(
+    rupture_df,
+    angles,
+    angle_matrix,
+    bin_adj_mat,
+    single_rup_df,
+    subfaults,
+    connection_angle_function,
+    connection_angle_midpoint,
+    no_connection_val=-1.0,
+):
+    n_rups = rupture_df.shape[0]
+    if connection_angle_midpoint is None:
+        return np.ones(n_rups, dtype=np.float64)
+
+    angle_series = angles
+    angle_matrix_input = angle_matrix
+
+    if angle_series is None and angle_matrix_input is None:
+        if "connection_angles" in rupture_df.columns:
+            angle_series = rupture_df["connection_angles"]
+        elif (
+            bin_adj_mat is not None
+            and single_rup_df is not None
+            and subfaults is not None
+        ):
+            angle_matrix_input = _build_angle_matrix_from_pairs(
+                single_rup_df, subfaults, bin_adj_mat
+            )
+
+    if angle_series is None and angle_matrix_input is not None:
+        if issparse(angle_matrix_input):
+            angle_matrix_input = angle_matrix_input.todok()
+        else:
+            angle_matrix_input = dok_array(
+                np.asarray(angle_matrix_input), dtype=np.float64
+            )
+        angle_series = _matrix_to_rupture_series(
+            rupture_df, angle_matrix_input
+        )
+
+    if angle_series is None:
+        return np.ones(n_rups, dtype=np.float64)
+
+    angle_arr = _padded_array_from_sequences(
+        list(angle_series.values),
+        dtype=np.float64,
+        fill_value=0.0,
+        replace=(no_connection_val, 0.0),
+    )
+
+    if angle_arr.size == 0 or angle_arr.shape[1] == 0:
+        return np.ones(n_rups, dtype=np.float64)
+
+    if connection_angle_function == "cosine":
+        conn_angle_plaus = compact_cosine_sigmoid(
+            angle_arr, connection_angle_midpoint
+        )
+    else:
+        raise NotImplementedError(
+            f"Function type {connection_angle_function} not implemented."
+        )
+    return np.prod(conn_angle_plaus, axis=1)
+
+
+def _compute_slip_az_plausibility(
+    rupture_df, slip_azimuth_function, slip_azimuth_midpoint
+):
+    if slip_azimuth_midpoint is None:
+        return 1.0
+    return rupture_df["slip_azimuth"].apply(
+        slip_azimith_plausibility,
+        function_type=slip_azimuth_function,
+        midpoint=slip_azimuth_midpoint,
+    )
+
+
+def _build_angle_matrix_from_pairs(single_rup_df, subfaults, binary_matrix):
+    if binary_matrix is None:
+        return None
+
+    if not issparse(binary_matrix):
+        raise TypeError("binary_matrix must be a sparse adjacency matrix")
+    binary = binary_matrix.todok()
+
+    sf_traces = get_trace_from_sf_rupture(single_rup_df, subfaults)
+
+    rup_angles = get_proximal_rup_angles(sf_traces, binary)
+
+    angle_matrix = dok_array(binary.shape, dtype=np.float64)
+    for (i, j), angle_data in rup_angles.items():
+        angle_val = (
+            angle_data[1] if isinstance(angle_data, tuple) else angle_data
+        )
+        angle_matrix[i, j] = angle_val
+        angle_matrix[j, i] = angle_val
+
+    return angle_matrix
+
+
 def get_single_rupture_plausibilities(
     rupture,
     connection_angle_function="cosine",
     connection_distance_function="exponent",
     slip_azimuth_function="cosine",
-    connection_angle_threshold=1.0,
-    connection_distance_threshold=15.0,
-    connection_distance_plausibility_threshold=0.1,
+    connection_distance_midpoint=15.0,
+    connection_angle_midpoint=90.0,
+    slip_azimuth_midpoint=90.0,
 ):
     plausibilities = {}
 
-    plausibilities["connection_angle"] = connection_angle_plausibility(
-        rupture["connection_angles"],
-        function_type=connection_angle_function,
-        no_connection_val=connection_angle_threshold,
-    )
+    if connection_angle_midpoint is not None:
+        plausibilities["connection_angle"] = connection_angle_plausibility(
+            rupture["connection_angles"],
+            function_type=connection_angle_function,
+            midpoint=connection_angle_midpoint,
+        )
+    else:
+        plausibilities["connection_angle"] = 1.0
 
-    plausibilities["connection_distance"] = connection_distance_plausibility(
-        rupture["connection_distances"],
-        function_type=connection_distance_function,
-        dist_threshold=connection_distance_threshold,
-        prob_threshold=connection_distance_plausibility_threshold,
-    )
+    if connection_distance_midpoint is not None:
+        plausibilities["connection_distance"] = (
+            connection_distance_plausibility(
+                rupture["connection_distances"],
+                function_type=connection_distance_function,
+                midpoint=connection_distance_midpoint,
+            )
+        )
+    else:
+        plausibilities["connection_distance"] = 1.0
 
-    plausibilities["slip_azimuth"] = slip_azimith_plausibility(
-        rupture["slip_azimuths"], function_type=slip_azimuth_function
-    )
+    if slip_azimuth_midpoint is not None:
+        plausibilities["slip_azimuth"] = slip_azimith_plausibility(
+            rupture["slip_azimuths"],
+            function_type=slip_azimuth_function,
+            midpoint=slip_azimuth_midpoint,
+        )
+    else:
+        plausibilities["slip_azimuth"] = 1.0
 
     plausibilities["total"] = np.prod(list(plausibilities.values()))
 
@@ -173,11 +420,25 @@ def get_rupture_plausibilities(
     connection_angle_function="cosine",
     connection_distance_function="exponent",
     slip_azimuth_function="cosine",
-    connection_angle_threshold=1.0,
-    connection_distance_threshold=15.0,
-    connection_distance_plausibility_threshold=0.1,
+    angles=None,
+    angle_matrix=None,
+    bin_adj_mat=None,
+    single_rup_df=None,
+    subfaults=None,
+    connection_angle_midpoint=90.0,
+    connection_distance_midpoint=15.0,
+    slip_azimuth_midpoint=90.0,
 ):
-    # connection angle filtering not currently implemented
+    no_connection_val = -1.0
+    columns = [
+        "connection_angle",
+        "connection_distance",
+        "slip_azimuth",
+        "total",
+    ]
+
+    if rupture_df.shape[0] == 0:
+        return pd.DataFrame(index=rupture_df.index, columns=columns)
 
     if distances is None:
         if distance_matrix is None:
@@ -188,42 +449,42 @@ def get_rupture_plausibilities(
             rupture_df, distance_matrix
         )
 
-    plausibilities = pd.DataFrame(
-        index=rupture_df.index,
-        columns=[
-            # "connection_angle",
-            "connection_distance",
-            "slip_azimuth",
-            "total",
-        ],
-        dtype=np.float64,
+    conn_total = _compute_distance_plausibility(
+        rupture_df,
+        distances,
+        connection_distance_function,
+        connection_distance_midpoint,
+        no_connection_val,
     )
 
-    for i, rupture in rupture_df.iterrows():
-        # plausibilities.loc[i][
-        #    "connection_angle"
-        # ] = connection_angle_plausibility(
-        #    rupture["connection_angles"],
-        #    function_type=connection_angle_function,
-        #    no_connection_val=connection_angle_threshold,
-        # )
+    conn_angle_total = _compute_angle_plausibility(
+        rupture_df,
+        angles,
+        angle_matrix,
+        bin_adj_mat,
+        single_rup_df,
+        subfaults,
+        connection_angle_function,
+        connection_angle_midpoint,
+    )
 
-        plausibilities.loc[i, "connection_distance"] = \
-            connection_distance_plausibility(
-            distances.loc[i],
-            function_type=connection_distance_function,
-            dist_threshold=connection_distance_threshold,
-            prob_threshold=connection_distance_plausibility_threshold,
-        )
+    slip_plaus = _compute_slip_az_plausibility(
+        rupture_df, slip_azimuth_function, slip_azimuth_midpoint
+    )
 
-        plausibilities.loc[i, "slip_azimuth"] = slip_azimith_plausibility(
-            rupture["slip_azimuth"], function_type=slip_azimuth_function
-        )
+    plausibilities = pd.DataFrame(
+        index=rupture_df.index,
+        columns=columns,
+        dtype=np.float64,
+    )
+    plausibilities["connection_angle"] = conn_angle_total
+    plausibilities["connection_distance"] = conn_total
+    plausibilities["slip_azimuth"] = slip_plaus
 
     plausibilities["total"] = (
-        # plausibilities.connection_angle
-        plausibilities.connection_distance
-        * plausibilities.slip_azimuth
+        plausibilities["connection_angle"]
+        * plausibilities["connection_distance"]
+        * plausibilities["slip_azimuth"]
     )
 
     return plausibilities
@@ -334,8 +595,8 @@ def filter_proportionally_to_plausibility(rup_df, plausibility, seed=None):
     if seed is not None:
         np.random.seed(seed)
     rnds = np.random.rand(rup_df.shape[0])
+    rup_df["plausibility"] = plausibility
 
     keep_df = rup_df[plausibility >= rnds]
-    keep_df["plausibility"] = plausibility[plausibility >= rnds]
 
     return keep_df

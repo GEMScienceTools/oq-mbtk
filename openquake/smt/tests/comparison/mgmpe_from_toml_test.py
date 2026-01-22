@@ -17,52 +17,41 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution and expected values from mgmpe features when specified in
-an SMT format toml input file
+Tests for execution and expected values from ModifiableGMPEs
+specified in an SMT Comparison toml.
 """
 import os
 import pandas as pd
-import numpy as np
 import shutil
 import unittest
 
 from openquake.smt.comparison import compare_gmpes as comp
 from openquake.smt.comparison.utils_compare_gmpes import compute_matrix_gmpes
+from openquake.smt.comparison.utils_gmpes import matrix_to_df
 
 
 # Base path
-base = os.path.join(os.path.dirname(__file__), "data")
-
-
-def matrix_to_df(matrix):
-    """
-    Convert matrix of ground-motions to dataframe.
-    """
-    store = {}
-    for imt in matrix.keys():
-        store[str(imt)] = np.array(matrix[imt]).flatten()
-
-    return pd.DataFrame(store)
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ModifyGroundMotionsTestCase(unittest.TestCase):
     """
-    Test case for the execution and expected values from mgmpe features when
-    specified within an SMT format TOML input file
+    Test cases for use of ModifiableGMPEs in the SMT's
+    Comparison module.
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(base, "mgmpe_inputs.toml")
-        self.output_directory = os.path.join(base, 'mgmpe_test')
-        self.exp_mgmpe = os.path.join(base, "exp_mgmpe.csv")
-        # Set the output
+        self.input_file = os.path.join(BASE, "mgmpe_test.toml")
+        self.output_directory = os.path.join(BASE, 'mgmpe_test')
+        self.exp_mgmpe = os.path.join(BASE, "exp_mgmpe.csv")
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
     
     def test_mgmpe_from_toml(self):
         """
-        Check GMPEs modified using mgmpe features specified within the toml
-        are executed correctly and the expected values are returned
+        Check ModifiableGMPEs specified within an SMT Comparison
+        toml are executed correctly and that the expected values
+        are returned.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -70,23 +59,26 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         # Get matrices of predicted ground-motions per GMM
         obs_matrix = compute_matrix_gmpes(config, mtxs_type='median')
         del obs_matrix['gmpe_list']
-
+        
         # Load the matrices of expected ground-motions per GMM         
         if not os.path.exists(self.exp_mgmpe):
             # Write if doesn't exist
-            df = matrix_to_df(obs_matrix)
+            df = matrix_to_df(obs_matrix, len(config.gmpes_list))
             df.to_csv(self.exp_mgmpe)
         exp_df = pd.read_csv(self.exp_mgmpe, index_col=0)
 
         # Load obs into dataframe
-        obs_df = matrix_to_df(obs_matrix)
+        obs_df = matrix_to_df(obs_matrix, len(config.gmpes_list))
 
         # Now check matrix dfs
         pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
 
+        # Also, check the baseline ratio with mgmpe plotting works
+        comp.plot_ratios(self.input_file, self.output_directory)
+
     @classmethod
     def tearDownClass(self):
         """
-        Remove the test outputs
+        Remove the test outputs.
         """
         shutil.rmtree(self.output_directory)

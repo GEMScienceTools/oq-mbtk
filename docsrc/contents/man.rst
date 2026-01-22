@@ -1,21 +1,15 @@
 Model ANalysis (man) module
 ###########################
 
-The :index:`Model Analysis` module contains a number of tools for analyzing various characteristics of hazard input models. Below we provide a description of the main functionalities available. We start with a brief description of the structure of a Probabilistic Seismic Hazard Analysis (PSHA) Input Model for the OpenQuake Engine. 
+The :index:`Model Analysis` module contains a suite of capabilities for examining an OpenQuake format PSHA input model, and also
+for exploring several of the most commonly used outputs of such models, such as disaggregation results, or hazard curves.
 
-The structure of a PSHA input model for the OpenQuake engine
-************************************************************
+The capabilities here can be divided into 3 key groups.
 
-A PSHA Input Model contains two main components: The seismic source characterization and the ground-motion characterization.
+The first of set of capabilitiesis found within `checking_utils`, which provides tools for the examination of specific components of a
+PSHA input model, like checking the faults within a model, or examining the MFDs of the  sources within a model.
 
-The Seismic Source Characterization
-===================================
+The second set of capabilities is found within `single_source_utils`, which provides utility functions for specific OpenQuake source typologies.
 
-The :index:`Seismic Source Characterisation` (SSC)  contains the information necessary to describe the location of the earthquake sources, their geometries, the process with which they generate earthquakes and the associated (epistemic) uncertainties.
-
-In its simplest form, the Seismic Source Characterisation contains a Seismic Source Model (i.e. a list of earthquake sources) and the Seismic Source Logic Tree with one Branch Set containing one Branch.
-
-The Ground-Motion Characterization
-==================================
-
-The :index:`Ground-Motion Characterisation` contains the information necessary to describe the models used to compute shaking at the investigated sites for all ruptures admitted by the SSC and the associated epistemic uncertainties.
+The third set of capabilities is found within `tools`, which contains general utility functions, such as for the plotting of disaggregation
+results, or the extracting of hazard curves from an OQ datastore.

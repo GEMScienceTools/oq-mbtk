@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of the GEM globally homogenised flatfile using the parser
+Tests parsing of the GEM globally homogenised flatfile.
 """
 import os
 import shutil
@@ -27,7 +27,7 @@ from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals.parsers.gem_flatfile_parser import GEMFlatfileParser
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -40,22 +40,26 @@ TARGET_IDS = [
 
 class GEMFlatfileParserTestCase(unittest.TestCase):
     """
-    Tests the parsing of the GEM global flatfile
+    Tests the parsing of the GEM global flatfile.
     """
     @classmethod
     def setUpClass(cls):
         cls.GEM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "GEM_flatfile_test.csv")
+            BASE, "gem_flatfile_test_file.csv")
         cls.db_file = os.path.join(
-            BASE_DATA_PATH, "GEM_conversion_test_metadata")       
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+            BASE, "gem_conversion_test_metadata")       
+        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
     def test_gem_flatfile_parser(self):
-        parser = GEMFlatfileParser.autobuild("000", "GEM_conversion_test",
+        # Parse
+        parser = GEMFlatfileParser.autobuild(
+                                             "000",
+                                             "gem_conversion_test",
                                              self.db_file,
-                                             self.GEM_flatfile_directory)
+                                             self.GEM_flatfile_directory
+                                             )
         with open(self.metadata_pth, "rb") as f:
             db = pickle.load(f)
         
@@ -74,4 +78,7 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        """
+        Remove the database.
+        """
         shutil.rmtree(cls.db_file)
