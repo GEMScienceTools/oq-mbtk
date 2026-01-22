@@ -127,7 +127,7 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _get_sites(model, conf, crs= 'epsg:3857', root_path=''):
+def _get_sites(model, folder_out, conf, crs= 'epsg:3857', root_path=''):
     """
     Tool for creating an equally spaced set of points covering a model in the
     global hazard mosaic.
@@ -142,7 +142,6 @@ def _get_sites(model, conf, crs= 'epsg:3857', root_path=''):
         reference for specifying the relative paths in the configuration
         dictionary
     """
-
     if not os.path.isabs(conf['main']['borders_fname']):
         in_file = os.path.join(root_path, conf['main']['borders_fname'])
     else:
