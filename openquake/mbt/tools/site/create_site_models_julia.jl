@@ -77,8 +77,8 @@ end
 
       
 function write_site_file(ncfile, lons, lats, vs30)
-    z1pt0 = get_z1pt0(vs30)
-    z2pt5 = get_z2pt5(vs30)
+    z1pt0 = repeat([-999], size(lons)[1])
+    z2pt5 = repeat([-999], size(lons)[1])
     f = open(ncfile, "w")
     write(f, "lon,lat,vs30,z1pt0,z2pt5,vs30measured\n")
     c = 0
