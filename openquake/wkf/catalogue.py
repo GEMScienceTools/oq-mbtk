@@ -128,7 +128,7 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
     earthquakes with epicenters in the polygon.
 
     :param fname_polygons:
-        The name of the gis file containing the polygons.
+        The name of the gis file containing the polygons. 
     :param fname_cat:
         The name of the file with the catalogue (hmtk formatted)
     :param folder_out:
@@ -158,29 +158,35 @@ def create_subcatalogues(fname_polygons: str, fname_cat: str, folder_out: str,
     
     # explode for any multipolygons
     polygons_gdf = polygons_gdf.explode()
+    unique_srcs = np.unique(polygons_gdf.id)    
     
-    # Iterate over sources
-    # actually this should maybe iterate over *sources* rather than the polygons, because then we could 
-    # handle the multipolygons more smoothly
+    # Iterate over sources to catch any multipolygons
+    # These can be sneaky! Might not be clear in QGIS
+    
     out_fnames = []
-    for idx, poly in polygons_gdf.iterrows():
-
-        if len(source_ids) > 0 and poly.id not in source_ids:
-            continue
-            
-        df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
-        gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
-        within = gpd.sjoin(gdf, gdf_poly, predicate='within')
+    for src in unique_srcs:
+        polys = polygons_gdf[polygons_gdf.id == src]
         
-        # check if there are other polygons for this source
+        # Check if we care about this source
+        if len(source_ids) > 0 and src not in source_ids:
+            continue
+        
+        all_within = gpd.GeoDataFrame(columns=gdf.columns, geometry='geometry')
+        for idx, poly in polys.iterrows():
+            df = pd.DataFrame({'Name': [poly.id], 'Polygon': [poly.geometry]})
+            gdf_poly = gpd.GeoDataFrame(df, geometry='Polygon', crs='epsg:4326')
+            within = gpd.sjoin(gdf, gdf_poly, predicate='within')
+            all_within = pd.concat([all_within, within])
+        
         # Create output file
         if isinstance(poly.id, int):
             fname = f'subcatalogue_zone_{poly.id:d}.csv'
         else:
             fname = f'subcatalogue_zone_{poly.id}.csv'
-        out_fname = os.path.join(folder_out, fname)
+        
+        out_fname = os.path.join(folder_out, fname)       
         out_fnames.append(out_fname)
-        within.to_csv(out_fname, index=False)
+        all_within.to_csv(out_fname, index=False)
 
     return out_fnames
 
