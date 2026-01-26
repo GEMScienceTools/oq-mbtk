@@ -503,6 +503,9 @@ Comparing GMPEs
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
 
+   Similarly to within the trellis plotting, the user can also automatically observations (spectra) from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which represents the path to a CSV file
+   a GEM-format ground-motion flatfile.
+
 5. Plot of Spectra from a Record
 
    The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the

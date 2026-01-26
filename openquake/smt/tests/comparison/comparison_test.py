@@ -150,7 +150,8 @@ class ComparisonTestCase(unittest.TestCase):
         # Spectra plots
         spectra = comp.plot_spectra(self.config_file,
                                     self.outdir,
-                                    obs_spectra_fname=None)
+                                    obs_spectra_fname=None,
+                                    obs_data_fname=self.flatfile)
         if not os.path.exists(self.exp_spectra):
             # Write if doesn't exist
             reformat_spectra(spectra, self.exp_spectra)
