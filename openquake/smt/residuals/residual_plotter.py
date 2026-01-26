@@ -31,6 +31,7 @@ from cycler import cycler
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
+from openquake.smt.utils import COLORS
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
@@ -39,10 +40,6 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_with_distance,
                                                     residuals_with_depth,
                                                     _get_residual_means_and_stds)
-
-
-COLORS = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
-          'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
 
 
 ### General Utils

@@ -29,7 +29,7 @@ from scipy import interpolate
 
 from openquake.hazardlib.imt import PGA, SA
 from openquake.smt.comparison.sammons import sammon
-from openquake.smt.utils import clean_gmm_label, GEM_FF_MAPPINGS
+from openquake.smt.utils import clean_gmm_label, COLORS, GEM_FF_MAPPINGS
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
@@ -1051,51 +1051,10 @@ def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots.
     """
-    colors = [
-        '#0000FF',  # blue
-        '#008000',  # green
-        '#FF0000',  # red
-        '#00FFFF',  # cyan
-        '#FF00FF',  # magenta
-        '#FFFF00',  # yellow
-        '#DAA520',  # goldenrod
-        '#708090',  # slategray
-        '#A0522D',  # sienna
-        '#FF4500',  # orange red
-        '#32CD32',  # lime green
-        '#FF8C00',  # dark orange
-        '#9400D3',  # dark violet
-        '#20B2AA',  # light sea green
-        '#F0E68C',  # khaki
-        '#FF69B4',  # hot pink
-        '#BA55D3',  # medium orchid
-        '#7CFC00',  # lawn green
-        '#CD853F',  # peru
-        '#9ACD32',  # yellow green
-        '#3CB371',  # medium sea green
-        '#4B0082',  # indigo
-        '#FFFF00',  # yellow
-        '#1E90FF',  # dodger blue
-        '#FFB6C1',  # light pink
-        '#4682B4',  # steel blue
-        '#8FBC8F',  # dark sea green
-        '#B22222',  # firebrick
-        '#00CED1',  # dark turquoise
-        '#FFD700',  # gold
-        '#6A5ACD',  # slate blue
-        '#D2691E',  # chocolate
-        '#00BFFF',  # deep sky blue
-        '#FF6347',  # tomato
-        '#40E0D0',  # turquoise
-        '#C71585',  # medium violet red
-        '#E9967A',  # dark salmon
-        '#A9A9A9',  # dark gray
-        ]
-    
     if custom_color_flag is True:
         return custom_color_list
     else:
-        return colors
+        return COLORS
 
 
 ### Trellis Utils ###
