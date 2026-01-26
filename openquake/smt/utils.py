@@ -37,11 +37,6 @@ AVAILABLE_GSIMS = get_available_gsims()
 # Regular expression to get a GMPETable from string:
 _GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
 
-# Fltering params for plotting observations against GMPEs
-MAG_LIM = 0.25 # Mw
-DEP_LIM = 15 # km
-VS30_LIM = 150 # m/s
-
 # GEM Global Flatfile Mappings
 CMS2_TO_G = 1/980.665
 CMS_TO_GSEC = 1/980.665
@@ -554,41 +549,3 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
-
-
-### Utils for GEM Global Flatfile ###
-def filter_obs_data(data, imt, mag, depth, vs30, dist_type):
-    """
-    Filter the dataframe of the provided flatfile for the given imt,
-    magnitude, focal depth and vs30.
-
-    NOTE: We return RotD50 values.
-    """
-    # Add rhypo dist
-    if dist_type == "rhypo":
-        data["rhypo_dist"] = np.sqrt(
-            data["epi_dist"]**2 + data["ev_depth_km"]**2)
-
-    # Filter by magnitude, depth and vs30 first
-    subset = data.loc[
-        (data.Mw.between(mag - MAG_LIM, mag + MAG_LIM)) &
-        (data.ev_depth_km.between(depth - DEP_LIM, depth + DEP_LIM)) & 
-        (data.vs30_m_sec.between(vs30 - VS30_LIM, vs30 + VS30_LIM))
-        ].reset_index(drop=True)
-
-    # Check there are values for the given IMT
-    if imt not in GEM_FF_MAPPINGS.keys():
-        # Might not be a column with RotD50 values for this IMT
-        raise ValueError(f'"{imt}" is not an IMT supported in the GEM Global Flatfile.')
-    imt_col = GEM_FF_MAPPINGS[imt]["col"]
-    subset = subset.loc[subset[imt_col].notnull()].reset_index(drop=True)
-
-    # Convert from flatfile units to those of GMPEs in OQ for given IMT
-    subset[imt_col] = subset[imt_col] * GEM_FF_MAPPINGS[imt]["conv_factor"]
-
-    # End of flatfile filtering
-    if len(subset) > 0:
-        return subset
-    else:
-        return None
-    

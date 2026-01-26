@@ -415,7 +415,7 @@ def plot_trellis(filename, output_directory, obs_data_fname=None):
     
     return store_gmm_curves
                 
-def plot_spectra(filename, output_directory, obs_spectra_fname=None):
+def plot_spectra(filename, output_directory, obs_spectra_fname=None, obs_data_fname=None):
     """
     Plot response spectra and GMPE predictions for given run configuration.
     :param  filename:
@@ -426,6 +426,17 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
         period, EQ ID and station ID). An example of this file can be
         found in oq-mbtk.openquake.smt.tests.comparison.data.inputs for the
         1993 Chamoli earthquake.
+    :param  obs_data_fname:
+        GEM-flatfile format CSV file - the (appropriate) data from this
+        flatfile will be plotted on the attenuation curves. The data is
+        selected if it falls within the following HARDCODED boundaries:
+        --> Within Mw +/- 0.25 of given magnitude
+        --> Within +/- 15 km of given focal depth
+        --> Within +/- 150 m/s of specified Vs30
+        --> Within +/- a distance-dependent threshold (km) of the given
+            distance type specified in the toml file.
+        --> NOTE: The user must provide a geographically and tectonic
+            region filtered flatfile (this filtering is not done here).
     """
     config = Configurations(filename)
 
@@ -437,7 +448,8 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
                              "specify 1 magnitude and depth combination for " \
                              "response spectra plotting in the toml file.")
 
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
+    store_gmc_lts = plot_spectra_util(
+        config, output_directory, obs_spectra_fname, obs_data_fname)
 
     return store_gmc_lts
 
