@@ -50,10 +50,7 @@ from openquake.fnm.inversion.fastmath import (
 )
 
 
-def weight_from_error(
-    error,
-    min_error=1e-10,
-):
+def weight_from_error(error, min_error=1e-10, zero_error=None, max_weight=None):
     """
     Convert an uncertainty-like value (error / sigma) into a row weight.
 
@@ -61,24 +58,37 @@ def weight_from_error(
     ----------
     error : float
         Error/sigma value.
-    zero_error : float
-        Replacement error when `error` is exactly zero.
-
+    min_error : float
+        Floor applied to errors to prevent excessively large weights.
+    zero_error : float or None
+        Replacement error when `error` is exactly zero. If None, the zero value
+        is handled by `min_error`.
+    max_weight : float or None
+        Optional cap on the returned weight.
     """
     error = float(error)
-    if error < min_error:
-        error = min_error
+    if error == 0.0 and zero_error is not None:
+        error = float(zero_error)
+    if error < float(min_error):
+        error = float(min_error)
 
     weight = 1.0 / error  # **2
+    if max_weight is not None and weight > float(max_weight):
+        weight = float(max_weight)
     return weight
 
 
-def weights_from_errors(
-    errors,
-    min_error=1e-10,
-):
+def weights_from_errors(errors, min_error=1e-10, zero_error=None, max_weight=None):
     return np.array(
-        [weight_from_error(error, min_error=min_error) for error in errors]
+        [
+            weight_from_error(
+                error,
+                min_error=min_error,
+                zero_error=zero_error,
+                max_weight=max_weight,
+            )
+            for error in errors
+        ]
     )
 
 

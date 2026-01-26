@@ -51,6 +51,207 @@ from .utils import (
 from .solver import weights_from_errors
 
 
+def _round_mag(mag, mag_decimals):
+    if mag_decimals is None:
+        return float(mag)
+    return round(float(mag), mag_decimals)
+
+
+def _cumulative_to_incremental_rates(occ_rates: dict) -> dict:
+    mags = sorted(occ_rates.keys())
+    inc = {}
+    for i, mag in enumerate(mags):
+        if i < len(mags) - 1:
+            inc[mag] = float(occ_rates[mag]) - float(occ_rates[mags[i + 1]])
+        else:
+            inc[mag] = float(occ_rates[mag])
+    return inc
+
+
+def make_rup_rate_prior_for_fault_abs_mfd(
+    fault_abs_mfd_component: dict,
+    rups: list,
+    mag_decimals: int | None = 1,
+    cumulative: bool = False,
+    default_rate: float = 0.0,
+):
+    """
+    Build a per-rupture prior rate vector for a *single* fault/subfault MFD
+    component dict (with keys 'mfd', 'rups_include', 'rup_fractions').
+
+    Returns an array aligned with `rups_include` (same length/order).
+    """
+    if not isinstance(fault_abs_mfd_component, dict):
+        raise TypeError("fault_abs_mfd_component must be a dict")
+
+    mfd = fault_abs_mfd_component.get("mfd")
+    rups_include = fault_abs_mfd_component.get("rups_include") or []
+    rup_fractions = fault_abs_mfd_component.get("rup_fractions")
+
+    if len(rups_include) == 0:
+        return np.zeros(0, dtype=float)
+
+    if rup_fractions is None:
+        rup_fractions = [1.0] * len(rups_include)
+    if len(rup_fractions) != len(rups_include):
+        raise ValueError("rup_fractions must align with rups_include")
+
+    rup_mags = np.array(
+        [_round_mag(rups[i]["M"], mag_decimals) for i in rups_include],
+        dtype=float,
+    )
+    include_w = np.asarray(rup_fractions, dtype=float)
+
+    occ = get_mfd_occurrence_rates(
+        mfd, mag_decimals=mag_decimals, cumulative=cumulative
+    )
+    if cumulative:
+        occ = _cumulative_to_incremental_rates(occ)
+
+    r0 = np.full(len(rups_include), float(default_rate), dtype=float)
+    for mag in np.unique(rup_mags):
+        bin_rate = float(occ.get(float(mag), 0.0))
+        in_bin = rup_mags == mag
+        w_sum = float(include_w[in_bin].sum())
+        if w_sum <= 0.0:
+            continue
+        r0[in_bin] = bin_rate / w_sum
+
+    return r0
+
+
+def make_rup_rate_prior_from_fault_abs_mfds(
+    fault_abs_mfds: dict,
+    rups: list,
+    mag_decimals: int | None = 1,
+    cumulative: bool = False,
+    default_rate: float = 0.0,
+):
+    """
+    Build per-fault prior vectors from an outer dict keyed by fault/subfault id.
+
+    Returns
+    -------
+    dict
+        Mapping fault_id -> prior array aligned with that fault's `rups_include`.
+    """
+    priors = {}
+    for fault_id, comp in (fault_abs_mfds or {}).items():
+        if not isinstance(comp, dict):
+            continue
+        priors[fault_id] = make_rup_rate_prior_for_fault_abs_mfd(
+            comp,
+            rups=rups,
+            mag_decimals=mag_decimals,
+            cumulative=cumulative,
+            default_rate=default_rate,
+        )
+    return priors
+
+
+def make_ridge_regularization_eqns_from_fault_abs_mfds(
+    fault_abs_mfds: dict,
+    rups: list,
+    ridge: float = 1.0,
+    mag_decimals: int | None = 1,
+    cumulative: bool = False,
+    default_rate: float = 0.0,
+    ridge_weight: float = 1.0,
+):
+    """
+    Create a ridge (Tikhonov) regularization block derived from per-fault MFD
+    components.
+
+    For each fault/subfault, we add rows selecting just the ruptures that appear
+    in that component:
+
+        sqrt(ridge) * (r[idx] - r0_fault[idx]) ≈ 0
+
+    so multi-fault ruptures contribute multiple ridge rows (one per fault they
+    appear in), which is often what you want when trying to prevent overly-sparse
+    NNLS PG solutions.
+    """
+    n_rups = len(rups)
+    if ridge is None or ridge <= 0.0 or n_rups == 0:
+        return None, None, None, None
+
+    lhs_blocks = []
+    rhs_blocks = []
+    err_blocks = []
+    per_fault = []
+    current = 0
+
+    priors = make_rup_rate_prior_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        mag_decimals=mag_decimals,
+        cumulative=cumulative,
+        default_rate=default_rate,
+    )
+
+    for fault_id, comp in (fault_abs_mfds or {}).items():
+        if not isinstance(comp, dict):
+            continue
+        rups_include = comp.get("rups_include") or []
+        if len(rups_include) == 0:
+            continue
+        include_idx = np.asarray(rups_include, dtype=int)
+
+        # Selection matrix for this fault: one row per included rupture.
+        rows = np.arange(include_idx.size, dtype=int)
+        cols = include_idx
+        data = np.ones(include_idx.size, dtype=float)
+        lhs_f = ssp.csr_array(
+            (data, (rows, cols)), shape=(include_idx.size, n_rups)
+        )
+
+        rhs_f = np.asarray(
+            priors.get(fault_id, np.zeros(include_idx.size)), dtype=float
+        )
+
+        errs_f = np.full(
+            include_idx.size,
+            np.sqrt(float(ridge)) * float(ridge_weight),
+            dtype=float,
+        )
+
+        lhs_blocks.append(lhs_f)
+        rhs_blocks.append(rhs_f)
+        err_blocks.append(errs_f)
+
+        per_fault.append(
+            {
+                "fault_id": fault_id,
+                "n_eqs": int(include_idx.size),
+                "start_idx": int(current),
+                "end_idx": int(current + include_idx.size),
+            }
+        )
+        current += include_idx.size
+
+    if not lhs_blocks:
+        return None, None, None, None
+
+    lhs = ssp.vstack(lhs_blocks).tocsr()
+    rhs = np.concatenate(rhs_blocks).astype(float, copy=False)
+    errs = np.concatenate(err_blocks).astype(float, copy=False)
+
+    metadata = {
+        "type": "ridge_fault_mfd_prior",
+        "n_eqs": int(lhs.shape[0]),
+        "details": {
+            "ridge": float(ridge),
+            "ridge_weight": float(ridge_weight),
+            "mag_decimals": mag_decimals,
+            "cumulative": cumulative,
+            "default_rate": float(default_rate),
+            "per_fault": per_fault,
+        },
+    }
+
+    return lhs, rhs, errs, metadata
+
+
 def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     slip_rate_lhs = ssp.dok_array((len(faults), len(rups)), dtype=float)
 
@@ -69,7 +270,7 @@ def make_slip_rate_eqns(rups, faults, seismic_slip_rate_frac=1.0):
     # )
     slip_rate_err = weights_from_errors(
         [fault["slip_rate_err"] * 1e-3 for fault in faults],
-        min_error=1.0,
+        zero_error=1.0,
     )
 
     slip_rate_rhs *= seismic_slip_rate_frac
@@ -807,6 +1008,11 @@ def make_eqns(
     regional_abs_mfds=None,
     regional_rel_mfds=None,
     fault_abs_mfds=None,
+    fault_abs_mfd_mode: str = "eqns",
+    ridge: float = 1.0,
+    ridge_weight: float = 1.0,
+    ridge_cumulative: bool = False,
+    ridge_default_rate: float = 0.0,
     fault_rel_mfds=None,
     mfd_abs_normalize=False,
     slip_rate_smoothing=False,
@@ -826,7 +1032,11 @@ def make_eqns(
     metadata_set = []
     current_eq_idx = 0
 
-    if fault_abs_mfds is not None:
+    fault_abs_mfd_mode = (fault_abs_mfd_mode or "eqns").lower()
+    if fault_abs_mfd_mode not in {"eqns", "ridge"}:
+        raise ValueError("fault_abs_mfd_mode must be 'eqns' or 'ridge'")
+
+    if fault_abs_mfds is not None and fault_abs_mfd_mode == "eqns":
         if regional_abs_mfds is None:
             regional_abs_mfds = fault_abs_mfds
         else:
@@ -857,16 +1067,16 @@ def make_eqns(
         fault_moment = get_fault_moment(faults, shear_modulus=shear_modulus)
         mfd_moment = get_mfd_moment(mfd)
         seismic_slip_rate_frac = mfd_moment / fault_moment
-        logging.info("fault_moment", fault_moment)
-        logging.info("mfd_moment", mfd_moment)
+        logging.info(f"fault_moment: {float(fault_moment)}")
+        logging.info(f"mfd_moment: {float(mfd_moment)}")
         logging.info(
-            "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
+            f"Setting seismic_slip_rate_frac to {float(seismic_slip_rate_frac)}"
         )
     elif seismic_slip_rate_frac is None and mfd is None:
-        logging.info(
-            "Setting seismic_slip_rate_frac to: ", seismic_slip_rate_frac
-        )
         seismic_slip_rate_frac = 1.0
+        logging.info(
+            f"Setting seismic_slip_rate_frac to {float(seismic_slip_rate_frac)}"
+        )
 
     if slip_rate_eqns is True:
         logging.info("Making slip rate eqns")
@@ -1040,6 +1250,28 @@ def make_eqns(
                         err_set.append(errs)
                         metadata_set.append(metadata)
 
+    if fault_abs_mfds is not None and fault_abs_mfd_mode == "ridge":
+        logging.info("Making ridge regularization eqns from fault_abs_mfds")
+        ridge_result = make_ridge_regularization_eqns_from_fault_abs_mfds(
+            fault_abs_mfds=fault_abs_mfds,
+            rups=rups,
+            ridge=ridge,
+            mag_decimals=1,
+            cumulative=ridge_cumulative,
+            default_rate=ridge_default_rate,
+            ridge_weight=ridge_weight,
+        )
+        if ridge_result is not None and ridge_result[-1] is not None:
+            lhs, rhs, errs, metadata = ridge_result
+            metadata["start_idx"] = current_eq_idx
+            metadata["end_idx"] = current_eq_idx + metadata["n_eqs"]
+            current_eq_idx += metadata["n_eqs"]
+
+            lhs_set.append(lhs)
+            rhs_set.append(rhs)
+            err_set.append(errs)
+            metadata_set.append(metadata)
+
     if slip_rate_smoothing is True:
         raise NotImplementedError("Smoothing not implemented")
         # logging.info("Making slip rate smoothing eqns")
@@ -1077,7 +1309,7 @@ def make_eqns(
     errs = np.hstack(err_set)
 
     if verbose:
-        logging.info("lhs total:", lhs.shape)
+        logging.info(f"lhs total: {lhs.shape}")
 
     if return_metadata:
         return lhs, rhs, errs, metadata_set
