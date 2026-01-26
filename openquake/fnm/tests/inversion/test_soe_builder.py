@@ -46,6 +46,8 @@ from openquake.fnm.inversion.soe_builder import (
     get_slip_rate_fraction,
     make_fault_mfd_equation_components,
     make_fault_rel_mfd_equation_components,
+    make_rup_rate_prior_from_fault_abs_mfds,
+    make_ridge_regularization_eqns_from_fault_abs_mfds,
     make_eqns,
     hz,
 )
@@ -280,6 +282,105 @@ def test_make_abs_mfd_eqns_applies_min_mfd_error_floor_for_zero_rates():
     _, rhs, err, _ = make_abs_mfd_eqns(rups, mfd, mag_decimals=1)
     np.testing.assert_array_almost_equal(rhs, np.array([0.0]))
     np.testing.assert_array_almost_equal(err, np.array([1.0e5]))
+
+
+def test_make_rup_rate_prior_from_fault_abs_mfds_simple():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    priors = make_rup_rate_prior_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds, rups=rups
+    )
+    np.testing.assert_allclose(priors["f1"], np.array([2.0e-4, 1.0e-4, 2.0e-4]))
+    np.testing.assert_allclose(priors["f2"], np.array([2.0e-4, 1.0e-4, 2.0e-4]))
+
+
+def test_make_ridge_regularization_eqns_from_fault_abs_mfds():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs, rhs, err, meta = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+    assert meta["type"] == "ridge_fault_mfd_prior"
+    np.testing.assert_allclose(
+        lhs.todense(),
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],  # f1: A
+                [0.0, 0.0, 1.0, 0.0],  # f1: C
+                [0.0, 0.0, 0.0, 1.0],  # f1: D
+                [0.0, 1.0, 0.0, 0.0],  # f2: B
+                [0.0, 0.0, 1.0, 0.0],  # f2: C
+                [0.0, 0.0, 0.0, 1.0],  # f2: D
+            ]
+        ),
+    )
+    np.testing.assert_allclose(
+        rhs, np.array([2.0e-4, 1.0e-4, 2.0e-4, 2.0e-4, 1.0e-4, 2.0e-4])
+    )
+    np.testing.assert_allclose(err, np.full(6, 2.0))
+
+
+def test_make_eqns_fault_abs_mfds_ridge_mode_only():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs0, rhs0, err0, _ = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+
+    lhs, rhs, err = make_eqns(
+        rups=rups,
+        faults=None,
+        slip_rate_eqns=False,
+        mfd=None,
+        fault_abs_mfds=fault_abs_mfds,
+        fault_abs_mfd_mode="ridge",
+        ridge=4.0,
+        return_sparse=False,
+    )
+
+    np.testing.assert_allclose(lhs, lhs0.todense())
+    np.testing.assert_allclose(rhs, rhs0)
+    np.testing.assert_allclose(err, err0)
 
 
 def test_make_abs_mfd_eqns_faults():
