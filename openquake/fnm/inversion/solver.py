@@ -394,6 +394,9 @@ def nnls_pg(
         z = ATAz / norm2(ATAz)
     L = np.dot(z, ATAz)
     alpha = 1.0 / L
+
+    stall_window = 500
+
     for k in range(maxit):
         # gradient g = A^T(A y - b)  (note r reused)
         mat_vec_mul(A_data, A_indices, A_indptr, y, r)
@@ -420,9 +423,10 @@ def nnls_pg(
             print("gradient below threshold")
             return y, misfit_history
 
-        if k > 10:
-            if (misfit_history[k - 10] - misfit_history[k]) < stall_val:
-                print("inversion stalled (up against zero boundary?)")
+        if k > stall_window:
+            w = misfit_history[k - stall_window:k]
+            if float(np.max(w) - np.min(w)) < stall_val:
+                print(f"inversion stalled at {k}")
                 return y, misfit_history
 
         x, y, t = y, x_next, t_next
@@ -441,8 +445,8 @@ def get_obs_equalization_weights(rhs, eps=None):
 def solve_nnls_pg(
     A,
     b,
-    min=0.0,
     x0=None,
+    min=0.0,
     weights=None,
     max_iters=1000,
     accept_grad=1e-6,
