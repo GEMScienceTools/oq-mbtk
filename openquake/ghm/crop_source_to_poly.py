@@ -2,6 +2,7 @@ import os
 import geopandas as gpd
 import pandas as pd
 import numpy as np
+from openquake.baselib import sap
 from openquake.hazardlib.nrml import to_python
 from openquake.hazardlib.sourceconverter import SourceConverter
 from openquake.hazardlib.geo.mesh import Mesh
@@ -10,7 +11,7 @@ from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.wkf.distributed_seismicity import _get_point_sources, from_list_ps_to_multipoint
 
 
-def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id = []):
+def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, src_conv, poly_id = []):
     '''
     Function to crop multipoint sources down to specified polygons by extracting all points within the polygon
     and making a new source. 
@@ -40,7 +41,11 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id =
         poly_proj = poly_proj[poly_proj.id == poly_id]
 
     # Get the point sources used to model distributed seismicity
-    tssm = to_python(src_xml_fname, src_conv)
+    if src_conv:
+        tssm = to_python(src_xml_fname, src_conv)
+    else:
+        tssm = to_python(src_xml_fname)
+
     wsrc = _get_point_sources(tssm)
 
     # List point sources 
@@ -73,17 +78,21 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id =
         # Create the multi-point source
         tmpsrc = from_list_ps_to_multipoint(ip2_idx_list, 'pnts_{}'.format(poly_id))
         # Make out_name from id in input
-        fname_out = os.path.join(out_folder, 'src_{}.xml'.format(poly_id))
+        fname_out = os.path.join(out_folder, f'{src_xml_fname.replace('.xml','')}_{poly_id}.xml')
+        #fname_out = os.path.join(out_folder, 'src_{}.xml'.format(poly_id))
         print('saving source to ', fname_out)
 
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity {}'.format(poly_id))
-        
-def crop_mps (src_xml_fname, fname_poly, src_conv, out_folder, poly_id = []):
+
+#one day we might add so that the src_conv can be a command line or toml object
+#but for now it's not possible to run from command line 
+
+def crop_mps (src_xml_fname, fname_poly, out_folder, src_conv=None, poly_id = []):
     """
     crop multipoint source to given polygon
     source will retain original mmax, nodal plane distribution etc
     """
-    crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id)
+    crop_mps_to_poly (src_xml_fname, fname_poly, out_folder, src_conv, poly_id)
 
 crop_mps.src_xml = 'Source xml file to be cropped'
 crop_mps.fname_poly = 'file name of source polygon'
