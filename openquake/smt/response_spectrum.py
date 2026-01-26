@@ -17,7 +17,7 @@
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
 Simple Python Script to integrate a strong motion record using the
-Newmark-Beta method
+Newmark-Beta method.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,7 +38,7 @@ PLOT_TYPE = {
 
 class ResponseSpectrum(object):
     """
-    Base class to implement a response spectrum calculation
+    Base class to implement a response spectrum calculation.
     """
     def __init__(self,
                  acceleration,
@@ -47,7 +47,8 @@ class ResponseSpectrum(object):
                  damping=0.05,
                  units="cm/s/s"):
         """
-        Setup the response spectrum calculator
+        Setup the response spectrum calculator.
+
         :param numpy.ndarray time_hist:
             Acceleration time history [Time, Acceleration]
         :param numpy.ndarray periods:
@@ -71,7 +72,8 @@ class ResponseSpectrum(object):
 
     def __call__(self):
         """
-        Evaluates the response spectrum
+        Evaluates the response spectrum.
+
         :returns:
             Response Spectrum - Dictionary containing all response spectrum
                                 data
@@ -101,7 +103,7 @@ class ResponseSpectrum(object):
 
 class NewmarkBeta(ResponseSpectrum):
     """
-    Evaluates the response spectrum using the Newmark-Beta methodology
+    Evaluates the response spectrum using the Newmark-Beta methodology.
     """
     def __call__(self):
         """
@@ -206,7 +208,8 @@ class NewmarkBeta(ResponseSpectrum):
 class NigamJennings(ResponseSpectrum):
     """
     Evaluate the response spectrum using the algorithm of Nigam & Jennings
-    (1969)
+    (1969).
+
     In general this is faster than the classical Newmark-Beta method, and
     can provide estimates of the spectra at frequencies higher than that
     of the sampling frequency.
@@ -259,7 +262,8 @@ class NigamJennings(ResponseSpectrum):
     def _get_time_series(self, const, omega2):
         """
         Calculates the acceleration, velocity and displacement time
-        series for the SDOF oscillator
+        series for the SDOF oscillator.
+        
         :param dict const:
             Constants of the algorithm
         :param np.ndarray omega2:
@@ -327,7 +331,7 @@ def plot_response_spectra(spectra, filename, axis_type="loglog"):
     """
     Creates a plot of the suite of response spectra (Acceleration,
     Velocity, Displacement, Pseudo-Acceleration, Pseudo-Velocity) derived
-    from a particular ground motion record
+    from a particular ground motion record.
     """
     fig = plt.figure()
     fig.set_tight_layout(True)
@@ -368,7 +372,7 @@ def plot_time_series(acceleration,
                      units="cm/s/s"):
     """
     Creates a plot of acceleration, velocity and displacement for a specific
-    ground motion record
+    ground motion record.
     """
     acceleration = convert_accel_units(acceleration, units)
     accel_time = get_time_vector(time_step, len(acceleration))
