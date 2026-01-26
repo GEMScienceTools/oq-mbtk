@@ -428,8 +428,8 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None, obs_data_fn
         1993 Chamoli earthquake.
     :param  obs_data_fname:
         GEM-flatfile format CSV file - the (appropriate) data from this
-        flatfile will be plotted on the attenuation curves. The data is
-        selected if it falls within the following HARDCODED boundaries:
+        flatfile will be plotted on the spectra plots. The data is selected
+        if it falls within the following HARDCODED boundaries:
         --> Within Mw +/- 0.25 of given magnitude
         --> Within +/- 15 km of given focal depth
         --> Within +/- 150 m/s of specified Vs30
