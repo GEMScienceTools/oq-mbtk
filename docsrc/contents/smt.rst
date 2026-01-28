@@ -17,7 +17,7 @@ Within a residual analysis, the information provided in each ground-motion recor
 
 When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance types required for each GMPE (e.g. rjb, rrup) can be computed relative to each site (i.e. station) in the flatfile if missing for the given record. NOTE: The distance metrics in the flatfile will inherently be the result of a different finite rupture from that modelled within OpenQuake Engine for distance metric computation - if the user requires complete consistency between the considered distance metrics, the user can just remove all distance metrics provided apriori within the inputted flatfile/ground-motion database to ensure all of the metrics are computed using OpenQuake Engine instead.
 
-Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the ``ASADatabaseMetadataReader`` (found in ``oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser``) can be used to parse ASA format files to construct an equivalent ground-motion database.
+Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the ``ASADatabaseMetadataReader`` (found in ``oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser.py``) can be used to parse ASA format files to construct an equivalent ground-motion database.
 
 In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.
    
@@ -488,6 +488,9 @@ Comparing GMPEs
     Trellis plots for input parameters specified in toml file:
        .. image:: /contents/smt_images/TrellisPlots.png
    
+   The user can also automatically plot observations from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which must be the path to a CSV file
+   containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within ``openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv``.
+
 4. Spectra Plots
 
    We can also plot response spectra:
@@ -500,10 +503,13 @@ Comparing GMPEs
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
 
+   Similarly to within the trellis plotting, the user can also automatically observations (spectra) from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which represents the path to a CSV file
+   a GEM-format ground-motion flatfile.
+
 5. Plot of Spectra from a Record
 
    The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the
-   Comparison module (``oq-mbtk\openquake\smt\tests\comparison\data``). A comparison of a record's spectra against some GMPEs can be generated as follows:
+   Comparison module (``oq-mbtk\openquake\smt\tests\comparison\data\inputs``). A comparison of a record's spectra against some GMPEs can be generated as follows:
 
     .. code-block:: ini
     
@@ -664,7 +670,7 @@ Comparing GMPEs
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"
         site_term = "BA08SiteTerm" # Arbitrary for testing execution of this capability
         
-10. Using conditional GMPEs within an SMT Comparison ``.toml``. 
+11. Using conditional GMPEs within an SMT Comparison ``.toml``. 
 
    Conditional GMPEs can also be specified within the SMT's Comparison module. Like within the OpenQuake Engine, these leverage ModifiableGMPE to make it possible to specify a different conditional GMPE for each intensity measure we want to compute predictions for in combination with an "underlying" GMPE.
    
@@ -687,6 +693,27 @@ Comparing GMPEs
                                              # against the IA predicted by the two conditional GMPEs specified above.
         gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
         conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+
+12. Using indirect-approach AvgSA GMPEs within an SMT Comparison ``.toml``. 
+
+   Indirect-approach AvgSA GMPEs can also be specified within the SMT's Comparison module. The SMT permits specified of the averaging periods as either a list (i.e., using the ``GenericGmpeAvgSA`` GSIM class) OR by constructing an array from a specified lower averaging period, upper averaging period and
+   a required number of periods (i.e., using the ``GmpeIndirectAvgSA`` GSIM class). The user must also specify an inter-period (cross) correlation model available within the Engine (see ``oq-engine\openquake\hazardlib\gsim\mgmpe\generic_gmpe_avgsa.py`` for the available models and also more info on the
+   ``GenericGmpeAvgSA`` and ``GmpeIndirectAvgSA`` indirect-approach AvgSA GSIM classes) and an underlying GMPE.
+   
+   NOTE: The user should be mindful that if a non-AvgSA intensity measure is specified within the ``.toml`` file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course again, if the underlying GMPE does not support a requested intensity measure then an error
+   is raised as within a "regular" GMPE).
+
+    .. code-block:: ini
+        [models]
+
+        [models.0-ModifiableGMPE]
+        gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
+        GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
+
+        [models.1-ModifiableGMPE]
+        gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+        GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
 
 References
 ==========
