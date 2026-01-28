@@ -1,4 +1,4 @@
-# Test input file for checking execution of GMPEs requiring mgmpe_check function found in openquake.smt.comparison.utils_gmpes.py
+# Test input file for checking execution and values of ModifiableGMPEs requiring build_mgmpe function found in openquake.smt.comparison.utils_gmpes.py
 
 [general]
 imt_list = ['PGA','SA(0.1)','SA(0.5)'] # IMTs to compute attenuation curves for

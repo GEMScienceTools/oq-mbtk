@@ -27,23 +27,45 @@ from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
 from scipy import interpolate
 
+from openquake.hazardlib.imt import PGA, SA
 from openquake.smt.comparison.sammons import sammon
-from openquake.hazardlib.imt import from_string
-from openquake.smt.utils import clean_gmm_label
+from openquake.smt.utils import clean_gmm_label, COLORS, GEM_FF_MAPPINGS
 from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
                                                   att_curves,
                                                   get_rup_pars,
                                                   gmpe_check)
 
 
-def plot_trellis_util(config, output_directory):
+# Periods used in spectra plotting (truncated based on max_period in config)
+PERIODS = [PGA(), SA(0.01), SA(0.025), SA(0.04), SA(0.05), SA(0.07), SA(0.1),
+           SA(0.15), SA(0.2), SA(0.25), SA(0.3), SA(0.35), SA(0.4), SA(0.45),
+           SA(0.5), SA(0.6), SA(0.7), SA(0.8), SA(0.9), SA(1.0), SA(1.1), SA(1.2),
+           SA(1.3), SA(1.4), SA(1.5), SA(1.6), SA(1.7), SA(1.8), SA(1.9), SA(2.0),
+           SA(2.2), SA(2.4), SA(2.6), SA(2.8), SA(3.0), SA(3.2), SA(3.4), SA(3.6),
+           SA(3.8), SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0), SA(6.5), SA(7.0),
+           SA(7.5), SA(8.0), SA(8.5), SA(9.0), SA(9.5), SA(10.0)]
+
+# Fltering params for plotting observations against GMPEs
+MAG_LIM = 0.25 # Mw
+DEP_LIM = 15 # km
+VS30_LIM = 150 # m/s
+DIST_LIM_LOW = 5 # km (near-source distance window)
+DIST_LIM_MID = 10 # km (intermediate distance window)
+DIST_LIM_MAX = 20 # km (far-source distance window)
+
+
+### Main Plotting Functions ###
+def plot_trellis_util(config, output_directory, obs_data_fname):
     """
     Generate trellis plots for given run configuration.
     """    
-    # Get mag and dep lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-    
+    # Load observed data if provided
+    no_obs = True
+    if obs_data_fname is not None:
+        data = pd.read_csv(obs_data_fname, low_memory=False)
+    else:
+        data = None
+
     # Median, plus sigma, minus sigma per gmc for up to 4 gmc logic trees
     gmc_p= {lt: [{}, {}, {}] for lt in config.lt_mapping.keys()}
 
@@ -61,16 +83,18 @@ def plot_trellis_util(config, output_directory):
     store_gmm_curves[cfg_key] = {}
     store_gmm_curves[cfg_key]['gmm att curves per imt-mag'] = {}
     store_gmm_curves[cfg_key]['gmc logic tree curves per imt-mag'] = {}
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.imt_list)*4))
     max_pred, min_pred, axs = [], [], []
     for i, imt in enumerate(config.imt_list):
         store_per_mag = {}
-        for m, mag in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
+        for m, mag in enumerate(config.mag_list):
+
+            # Add the axis
+            ax = fig.add_subplot(len(config.imt_list), len(config.mag_list), m+1+i*len(config.mag_list))
             axs.append(ax)
 
             # Get depth params
-            depth_g = dep_list[m]
+            depth_g = config.depth_list[m]
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -82,6 +106,13 @@ def plot_trellis_util(config, output_directory):
                                                      config.rake,
                                                      config.aratio,
                                                      config.trt) 
+            
+            # If plotting data get the appropriate subset
+            if data is not None:
+                subset = filter_flatfile_trellis(
+                    data, imt, mag, depth_g, config.vs30, config.dist_type)
+            else:
+                subset = None
 
             # Per GMPE get attenuation curves
             lt_vals_gmc = {lt: {} for lt in lt_weights}
@@ -196,6 +227,15 @@ def plot_trellis_util(config, output_directory):
             # Add grid
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
+            # Plot data too if required/any retrieved
+            if subset is not None:
+                # Set no_obs to False to ensure legend entry added at end of loops
+                no_obs = False
+                # NOTE: Units are converted to OQ GSIM units in helper functions
+                pyplot.scatter(x=subset[GEM_FF_MAPPINGS[config.dist_type]],
+                               y=subset[GEM_FF_MAPPINGS[imt]["col"]], 
+                               color="k", marker="x", zorder=0)
+
         # Store per imt
         store_per_imt[str(imt)] = store_per_mag
     
@@ -207,6 +247,9 @@ def plot_trellis_util(config, output_directory):
     miny = np.min(min_pred)
     for ax in axs: ax.set_ylim(miny, 2*maxy) # Small buffer in log-space
     output = os.path.join(output_directory, 'TrellisPlots.png')
+    if no_obs is False:
+        # If any suitable data plotted add to legend
+        ax.scatter([], [], color='k', marker='x', label='Flatfile Data')
     pyplot.legend(loc="center left", bbox_to_anchor=(1.1, 1.05), fontsize='16')
     pyplot.savefig(output, bbox_inches='tight', dpi=200, pad_inches=0.2)
     pyplot.close()
@@ -214,17 +257,14 @@ def plot_trellis_util(config, output_directory):
     return store_gmm_curves
     
 
-def plot_spectra_util(config, output_directory, obs_spectra_fname):
+def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fname):
     """
     Plot response spectra for given run configuration. Can also plot an
     observed spectrum and the corresponding predictions by the specified
     GMPEs.
     """
-    # Get mag and depth lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-    dist_list = config.dist_list
-    if len(dist_list) < 1:
+    # Check distances have been provided in the input TOML
+    if len(config.dist_list) < 1:
         raise ValueError("Response spectra have been requested but no distance "
                          "intervals have been specified in the input toml.")
 
@@ -234,16 +274,24 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
     else:
         max_period = config.max_period
         obs_spectra, eq_id, st_id = None, None, None
-        
+
+    # Load observed data if provided
+    no_obs = True
+    if obs_data_fname is not None:
+        data = pd.read_csv(obs_data_fname, low_memory=False)
+    else:
+        data = None
+
+    # Truncate periods to max_period
+    imt_list = [imt for imt in PERIODS if imt.period <= max_period]
+    periods = np.array([imt.period for imt in PERIODS if imt.period <= max_period])
+    
     # Get gmc lt weights
     gmc_weights = {gmc: getattr(config, config.lt_mapping[gmc]['wei']) for gmc in config.lt_mapping.keys()}
-
-    # Get imts and max period
-    imt_list, periods = _get_imts(max_period)
     
     # Get colours and make the figure
     colors = get_colors(config.custom_color_flag, config.custom_color_list)     
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.dist_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.dist_list)*4))
     
     # Set dicts to store values
     lt_vals = {
@@ -273,14 +321,14 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
         }
 
     # Plot the data
-    for d, dist in enumerate(dist_list):
-        for m, mag in enumerate(mag_list):
+    for d, dist in enumerate(config.dist_list):
+        for m, mag in enumerate(config.mag_list):
             
-            ax1 = fig.add_subplot(
-                len(config.dist_list), len(mag_list), m+1+d*len(mag_list))
+            ax = fig.add_subplot(
+                len(config.dist_list), len(config.mag_list), m+1+d*len(config.mag_list))
 
             # Get depth params
-            depth_g = dep_list[m]         
+            depth_g = config.depth_list[m]         
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -292,6 +340,13 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                      config.rake,
                                                      config.aratio,
                                                      config.trt)
+
+            # If plotting data get the appropriate subset
+            if data is not None:
+                subset = filter_flatfile_spectra(
+                    data, imt_list, mag, depth_g, config.vs30, dist, config.dist_type)
+            else:
+                subset = None
 
             # Scenario key
             sk = f"{config.dist_type}={dist}km, Mw={mag}, depth={depth_g}km, vs30={config.vs30}m/s"
@@ -307,7 +362,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 gmm = gmpe_check(gmpe)
                 
                 for i, imt in enumerate(imt_list): 
-                        
+
                     # Get mean and sigma
                     mu, std, r_vals, tau, phi = att_curves(gmm,
                                                            mag,
@@ -326,7 +381,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                                                            config.z2pt5,
                                                            500, # Assume record dist < 500 km
                                                            1,   # Step of 1 km for site spacing
-                                                           imt,
+                                                           imt.string,
                                                            config.dist_type,
                                                            config.up_or_down_dip,
                                                            config.volc_back_arc,
@@ -354,15 +409,15 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
 
                 # Plot individual GMPEs
                 if 'plot_lt_only' not in str(gmpe):
-                    ax1.plot(periods,
-                             rs_50p,
-                             color=col,
-                             linewidth=2,
-                             linestyle='-',
-                             label=clean_gmm_label(gmpe))
+                    ax.plot(periods,
+                            rs_50p,
+                            color=col,
+                            linewidth=2,
+                            linestyle='-',
+                            label=clean_gmm_label(gmpe))
                     if config.nstd > 0:
-                        ax1.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
-                        ax1.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
                 gmc_vals = spectra_data(gmpe,
@@ -376,12 +431,12 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
 
                 # Plot obs spectra if required
                 if obs_spectra is not None:
-                    plot_obs_spectra(ax1,
+                    plot_obs_spectra(ax,
                                      obs_spectra,
                                      g,
                                      config.gmpes_list,
-                                     mag_list,
-                                     dep_list,
+                                     config.mag_list,
+                                     config.depth_list,
                                      config.dist_list,
                                      config.dist_type,
                                      config.vs30,
@@ -390,35 +445,49 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname):
                 
                 # Update plots
                 update_spectra_plots(
-                    ax1, mag, depth_g, dist, config.vs30, d, m, config.dist_list, config.dist_type)
-            
+                    ax, mag, depth_g, dist, config.vs30, d, m, config.dist_list, config.dist_type)
+
             # Plot logic trees if required
             for key_gmc in gmc_weights:
                 if gmc_vals[key_gmc][0] != {}: # If none empty LT
                     lt_vals[key_gmc][sk] = spectra_logic_trees(config,
-                                                               ax1,
+                                                               ax,
                                                                config.gmpes_list,
                                                                config.nstd,
                                                                periods,
                                                                key_gmc,
                                                                gmc_vals[key_gmc],
                                                                sk)
-                
+
+            # Plot data too if required/any retrieved
+            if subset is not None:
+                # Set no_obs to False to ensure legend entry added at end of loops
+                no_obs = False
+                # NOTE: Units are converted to OQ GSIM units in helper functions
+                for idx_rec, rec in subset.iterrows():
+                    ax.plot(rec["spectra_periods"], rec["spectra_rotD50"],
+                            color='k', linewidth=1.5, zorder=0)
+
             # Add grid and set xlims
-            ax1.set_xlim(min(periods), max(periods))
-            ax1.grid(True)
+            ax.set_xlim(min(periods), max(periods))
+            ax.grid(True)
             if config.nstd > 0:
-                ax1.semilogy()
+                ax.semilogy()
 
     # Finalise the plots and save fig
-    if len(mag_list) * len(dist_list) == 1:
+    if len(config.mag_list) * len(config.dist_list) == 1:
         bbox_coo = (1.1, 0.5)
         fs = '10'
     else:
         bbox_coo = (1.1, 1.05)
         fs = '16'
-    ax1.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
-    save_spectra_plot(fig, obs_spectra, output_directory, eq_id, st_id)
+    if no_obs is False:
+        # If any suitable data plotted add to legend
+        ax.plot([], [], color='k', linewidth=1.5, label='Flatfile Spectra')
+    out = os.path.join(output_directory, 'ResponseSpectra.png')
+    ax.legend(loc="center left", bbox_to_anchor=bbox_coo, fontsize=fs)
+    fig.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
+    pyplot.close()
 
     return lt_vals
 
@@ -431,23 +500,19 @@ def plot_ratios_util(config, output_directory):
     NOTE: The ratios of any specified GMC logic trees against
     the baseline GMM are not computed/plotted.
     """
-    # Get mag and dep lists
-    mag_list = config.mag_list
-    dep_list = config.depth_list
-
     # Get colours
     colors = get_colors(config.custom_color_flag, config.custom_color_list) 
     
     # Compute ratio curves
-    fig = pyplot.figure(figsize=(len(mag_list)*5, len(config.imt_list)*4))
+    fig = pyplot.figure(figsize=(len(config.mag_list)*5, len(config.imt_list)*4))
     ratio_store, axs = [], []
     for i, imt in enumerate(config.imt_list):
-        for m, mag in enumerate(mag_list):
-            ax = fig.add_subplot(len(config.imt_list), len(mag_list), m+1+i*len(mag_list))
+        for m, mag in enumerate(config.mag_list):
+            ax = fig.add_subplot(len(config.imt_list), len(config.mag_list), m+1+i*len(config.mag_list))
             axs.append(ax)
             
             # Get depth params
-            depth_g = dep_list[m] 
+            depth_g = config.depth_list[m] 
             if config.ztor != -999:
                 ztor_g = config.ztor[m]
             else:
@@ -486,6 +551,8 @@ def plot_ratios_util(config, output_directory):
                                  config.up_or_down_dip,
                                  config.volc_back_arc,
                                  config.eshm20_region)
+            
+            # Get baseline mean
             b_mean = results[0][0][0]
             if np.all(b_mean) == 0:
                 # Should only occur in case of using a conditional GMPE
@@ -586,18 +653,13 @@ def compute_matrix_gmpes(config, mtxs_type):
     lts = {gmc: getattr(config, config.lt_mapping[gmc]['wei'])
            for gmc in config.lt_mapping.keys()}
 
-    # Get mag, imt and depth lists
-    mag_list = config.mags_eucl
-    dep_list = config.depths_eucl
-    imt_list = config.imt_list
-
     mtxs_median = {}
-    for i, imt in enumerate(imt_list): # Iterate through imt_list
+    for i, imt in enumerate(config.imt_list): # Iterate through imt_list
 
         # Dict for storing medians
         matrix_medians = np.zeros(
             (len(config.gmpes_list),
-            (len(mag_list)*int((config.maxR-config.minR)/1))))
+            (len(config.mags_eucl)*int((config.maxR-config.minR)/1))))
 
         # Need to also store GMM LT weighted medians
         lt_preds = {
@@ -622,13 +684,13 @@ def compute_matrix_gmpes(config, mtxs_type):
                 wt = None
 
             medians = []
-            for m, mag in enumerate(mag_list): # Iterate though mag_list
+            for m, mag in enumerate(config.mags_eucl): # Iterate though mags
             
                 # Perform gmpe check
                 gmm = gmpe_check(gmpe)
 
                 # Get depth param
-                depth_g = dep_list[m] 
+                depth_g = config.depths_eucl[m] 
                 ztor_g = None # NOTE: No hypo depth constraint used here
 
                 # Get rupture params
@@ -886,7 +948,7 @@ def plot_cluster_util(imt_list, gmpe_list, mtxs, namefig, mtxs_type):
         axs[1].set_visible(False)
     
     # Save
-    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.4)
+    pyplot.savefig(namefig, bbox_inches='tight', dpi=200, pad_inches=0.5)
     pyplot.tight_layout() 
     pyplot.close()
     
@@ -989,60 +1051,13 @@ def get_colors(custom_color_flag, custom_color_list):
     """
     Get list of colors for plots.
     """
-    colors = [
-        '#0000FF',  # blue
-        '#008000',  # green
-        '#FF0000',  # red
-        '#00FFFF',  # cyan
-        '#FF00FF',  # magenta
-        '#FFFF00',  # yellow
-        '#000000',  # black
-        '#DAA520',  # goldenrod
-        '#708090',  # slategray
-        '#A0522D',  # sienna
-        '#FF4500',  # orange red
-        '#32CD32',  # lime green
-        '#FF8C00',  # dark orange
-        '#9400D3',  # dark violet
-        '#20B2AA',  # light sea green
-        '#F0E68C',  # khaki
-        '#FF69B4',  # hot pink
-        '#BA55D3',  # medium orchid
-        '#7CFC00',  # lawn green
-        '#CD853F',  # peru
-        '#9ACD32',  # yellow green
-        '#3CB371',  # medium sea green
-        '#8B008B',  # dark magenta
-        '#DC143C',  # crimson
-        '#4B0082',  # indigo
-        '#FFFF00',  # yellow
-        '#1E90FF',  # dodger blue
-        '#00FF7F',  # spring green
-        '#FFB6C1',  # light pink
-        '#4682B4',  # steel blue
-        '#8FBC8F',  # dark sea green
-        '#B22222',  # firebrick
-        '#00CED1',  # dark turquoise
-        '#FFD700',  # gold
-        '#6A5ACD',  # slate blue
-        '#D2691E',  # chocolate
-        '#00BFFF',  # deep sky blue
-        '#ADFF2F',  # green yellow
-        '#FF6347',  # tomato
-        '#40E0D0',  # turquoise
-        '#C71585',  # medium violet red
-        '#E9967A',  # dark salmon
-        '#A9A9A9',  # dark gray
-        '#F08080',  # light coral
-        ]
-    
     if custom_color_flag is True:
         return custom_color_list
     else:
-        return colors
+        return COLORS
 
 
-### Trellis utils
+### Trellis Utils ###
 def trellis_data(gmpe,
                  r_vals,
                  mean,
@@ -1137,18 +1152,18 @@ def trellis_logic_trees(config,
 
 
 def lt_trellis_plot(config,
-            r_vals,
-            nstd,
-            i,
-            m,
-            dep,
-            dip,
-            rake,
-            key_gmc,
-            lt_vals_gmc,
-            median_gmc,
-            plus_sig_gmc,
-            minus_sig_gmc):
+                    r_vals,
+                    nstd,
+                    i,
+                    m,
+                    dep,
+                    dip,
+                    rake,
+                    key_gmc,
+                    lt_vals_gmc,
+                    median_gmc,
+                    plus_sig_gmc,
+                    minus_sig_gmc):
     """
     If required plot trellis from the given GMPE logic tree.
     """
@@ -1229,72 +1244,34 @@ def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list
     pyplot.loglog()
     
 
-### Spectra utils
-def _update_period_spacing(period, threshold, spacing, max_period):
+def filter_flatfile_trellis(data, imt, mag, depth, vs30, dist_type):
     """
-    Update period spacing based on maximum period provided.
+    Filter the dataframe of the provided flatfile for the given imt,
+    magnitude, focal depth and vs30 for use in trellis plotting.
+
+    NOTE: We return RotD50 values which have consistency with OQ units.
     """
-    period = pd.Series(period)
-    if max(period) > threshold:
-        for SA in range(0, len(period)):
-            if period[SA] > threshold:
-                period = period.drop(SA)
-        periods_to_re_add = pd.Series(np.arange(1, max_period, spacing))
-        period_df = pd.DataFrame({'periods': period,
-                                  'periods_to_re_add': periods_to_re_add,
-                                  'max_period': max_period})
-        return period_df.melt().value.dropna().unique()
+    # Filter first by magnitude, depth and vs30 first
+    subset = filter_flatfile(data, mag, depth, vs30, dist_type)
+
+    # Check there are values for the given IMT
+    if imt not in GEM_FF_MAPPINGS.keys():
+        # Might not be a column with RotD50 values for this IMT
+        raise ValueError(f'"{imt}" is not an IMT supported in the GEM Global Flatfile.')
+    imt_col = GEM_FF_MAPPINGS[imt]["col"]
+    subset = subset.loc[subset[imt_col].notnull()].reset_index(drop=True)
+
+    # Convert from flatfile units to those of GMPEs in OQ for given IMT
+    subset[imt_col] = subset[imt_col] * GEM_FF_MAPPINGS[imt]["conv_factor"]
+
+    # End of flatfile filtering
+    if len(subset) > 0:
+        return subset
     else:
-        return period
-
-
-def _get_period_values_for_spectra_plots(max_period):
-    """
-    Get list of periods based on maximum period specified in comparison .toml
+        return None
     
-    :param max_period:
-        Maximum period to compute plots for (note an error will be returned if
-        this exceeds the maximum spectral period of a GMPE listed in gmpe_list)
-    """
-    # Set initial periods with constant spacing of 0.1
-    period = list(np.round(np.arange(0, max_period, 0.1), 1))
-    period.append(max_period)
 
-    # If period extends beyond 1 s reduce interval to 0.2 s
-    period = _update_period_spacing(period, 1, 0.2, max_period)
-    
-    # If period extends beyond 2 s then reduce interval to 0.5 s
-    period = _update_period_spacing(period, 2, 0.5, max_period)
-    
-    # If period extends beyond 5 s then reduce interval to 1 s
-    period = _update_period_spacing(period, 5, 1.0, max_period)
-
-    return period
-
-
-def _get_imts(max_period):
-    """
-    Convert period floats to imt classes.
-    """
-    # Get periods
-    periods = _get_period_values_for_spectra_plots(max_period)
-    
-    # Convert from float to imt
-    period = np.round(periods,1)
-    base_SA_string = 'SA(_)'
-    imt_list = []
-    for imt in range(0, len(period)):
-        if imt == 0:
-            SA_string = 'PGA'
-        else:
-            SA_string = base_SA_string.replace('_', str(period[imt]))
-        imt_list.append(SA_string)
-    for imt in range(0,len(imt_list)):
-        imt_list[imt] = from_string(str(imt_list[imt]))
-    
-    return imt_list, periods
-
-
+### Spectra Utils ###
 def spectra_data(gmpe,
                  nstd,
                  gmc_weights,
@@ -1353,7 +1330,7 @@ def spectra_data(gmpe,
 
 
 def spectra_logic_trees(config,
-                        ax1,
+                        ax,
                         gmpe_list,
                         nstd,
                         period,
@@ -1387,32 +1364,32 @@ def spectra_logic_trees(config,
         lt_min_sig = {}
 
     # Plot median logic tree 
-    ax1.plot(period,
-             list(lt_median.values()),
-             linewidth=2,
-             color=config.lt_mapping[key_gmc]["col"],
-             linestyle='--',
-             label=config.lt_mapping[key_gmc]['label'],
-             zorder=100)
+    ax.plot(period,
+            list(lt_median.values()),
+            linewidth=2,
+            color=config.lt_mapping[key_gmc]["col"],
+            linestyle='--',
+            label=config.lt_mapping[key_gmc]['label'],
+            zorder=100)
 
     # Plot plus sigma and minus sigma if required
     if nstd > 0:
 
         # Plus sigma
-        ax1.plot(period,
-                 list(lt_add_sig.values()),
-                 linewidth=0.75,
-                 color=config.lt_mapping[key_gmc]["col"],
-                 linestyle='-.',
-                 zorder=100)
+        ax.plot(period,
+                list(lt_add_sig.values()),
+                linewidth=0.75,
+                color=config.lt_mapping[key_gmc]["col"],
+                linestyle='-.',
+                zorder=100)
     
         # Minus sigma
-        ax1.plot(period,
-                 list(lt_min_sig.values()),
-                 linewidth=0.75,
-                 color=config.lt_mapping[key_gmc]["col"],
-                 linestyle='-.',
-                 zorder=100)
+        ax.plot(period,
+                list(lt_min_sig.values()),
+                linewidth=0.75,
+                color=config.lt_mapping[key_gmc]["col"],
+                linestyle='-.',
+                zorder=100)
 
     return [lt_median, lt_add_sig, lt_min_sig]
 
@@ -1438,7 +1415,7 @@ def load_obs_spectra(obs_spectra_fname):
     return obs_spectra, max_period, eq_id, st_id
 
 
-def plot_obs_spectra(ax1,
+def plot_obs_spectra(ax,
                      obs_spectra,
                      g,
                      gmpe_list,
@@ -1467,45 +1444,29 @@ def plot_obs_spectra(ax1,
             )
                       
         # Plot the observed spectra
-        ax1.plot(obs_spectra['Period (s)'],
-                 obs_spectra['SA (g)'],
-                 color='k',
-                 linewidth=3,
-                 linestyle='-',
-                 label=obs_string)    
+        ax.plot(obs_spectra['Period (s)'],
+                obs_spectra['SA (g)'],
+                color='k',
+                linewidth=3,
+                linestyle='-',
+                label=obs_string)    
         
         
-def update_spectra_plots(ax1, mag, depth_g, dist, vs30, d, m, dist_list, dist_type):
+def update_spectra_plots(ax, mag, depth_g, dist, vs30, d, m, dist_list, dist_type):
     """
     Add titles and axis labels to spectra.
     """
     # Title
-    ax1.set_title(f'Mw={mag}, depth={depth_g}km, {dist_type}={dist}km, vs30={vs30}m/s',
+    ax.set_title(f'Mw={mag}, depth={depth_g}km, {dist_type}={dist}km, vs30={vs30}m/s',
                   fontsize=9.5, y=1.0, pad=-16)
 
      # Bottom row only
     if d == len(dist_list)-1:
-        ax1.set_xlabel('Period (s)', fontsize=16)
+        ax.set_xlabel('Period (s)', fontsize=16)
     
     # Left column only
     if m == 0:
-        ax1.set_ylabel('SA (g)', fontsize=16) 
-
-
-def save_spectra_plot(f1, obs_spectra, output_dir, eq_id, st_id):
-    """
-    Save the plotted response spectra.
-    """
-    if obs_spectra is None:
-        out = os.path.join(output_dir, 'ResponseSpectra.png')
-        f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
-        pyplot.close()
-    else:
-        rec_str = str(eq_id) + '_recorded_at_' + str(st_id)
-        rec_str = rec_str.replace(' ', '_').replace('-', '_').replace(':', '_')
-        out = os.path.join(output_dir, 'ResponseSpectra_' + rec_str + '.png')
-        f1.savefig(out, bbox_inches='tight', dpi=200, pad_inches=0.2)
-        pyplot.close()
+        ax.set_ylabel('SA (g)', fontsize=16) 
 
 
 def raise_spectra_dist_error(dist, dist_type, r_vals):
@@ -1523,7 +1484,55 @@ def raise_spectra_dist_error(dist, dist_type, r_vals):
                      f"shaking scenario (min = {r_min} km, max = {r_max} km)")
 
 
-### Utils for other plots
+def filter_flatfile_spectra(data, imts, mag, depth, vs30, dist, dist_type):
+    """
+    Filter the dataframe of the provided flatfile for the given imt,
+    magnitude, focal depth, vs30 AND distance type for use in spectra
+    plotting.
+
+    NOTE: We return RotD50 values which have consistency with OQ units.
+    """
+    # Filter first by magnitude, depth and vs30 first
+    subset = filter_flatfile(data, mag, depth, vs30, dist_type)
+
+    # Filter by distance (smaller window when closer to source)
+    if dist <= 50:
+        dlim = DIST_LIM_LOW
+    elif dist > 50 and dist <= 100:
+        dlim = DIST_LIM_MID
+    else:
+        dlim = DIST_LIM_MAX
+    dcol = GEM_FF_MAPPINGS[dist_type]
+    subset = subset.loc[
+        subset[dcol].between(dist - dlim, dist + dlim)].reset_index(drop=True)
+    
+    # Get the column in flatfile corresponding to each period
+    imt_cols = [GEM_FF_MAPPINGS[imt.string]["col"] for imt in imts
+                if imt.string in GEM_FF_MAPPINGS]
+
+    # Make an array of each record's spectra
+    subset["spectra_rotD50"] = pd.Series()
+    subset["spectra_periods"] = pd.Series()
+    for idx_rec, rec in subset.iterrows():
+        # Get spectra in correct units
+        spectra = np.array([rec[col] for col in imt_cols]
+                            ) * GEM_FF_MAPPINGS["PGA"]["conv_factor"]
+        # Get periods for IMTs in flatfile
+        periods = np.array([imt.period for imt in imts if
+                             imt.string in GEM_FF_MAPPINGS])
+        # For each record build spectra with conversion to units of g
+        mask = ~np.isnan(spectra) 
+        subset.at[idx_rec, "spectra_rotD50"] = spectra[mask]
+        subset.at[idx_rec, "spectra_periods"] = periods[mask]
+
+    # End of flatfile filtering
+    if len(subset) > 0:
+        return subset
+    else:
+        return None
+
+
+### Utils for Other Plots ###
 def get_dist_label(dist_type):
     """
     Return string representing required distance type.
@@ -1562,3 +1571,24 @@ def update_ratio_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list, 
     min_r_val = min(r_vals[r_vals>=1])
     pyplot.xlim(np.max([min_r_val, minR]), maxR)
     
+
+def filter_flatfile(data, mag, depth, vs30, dist_type):
+    """
+    Filter by mag, depth, vs30 and distance type.
+
+    NOTE: Used for filtering of a provided GEM format flatfile for
+    both trellis and spectra plotting.
+    """
+    # Add rhypo dist
+    if dist_type == "rhypo":
+        data["rhypo_dist"] = np.sqrt(
+            data["epi_dist"]**2 + data["ev_depth_km"]**2)
+
+    # Filter by magnitude, depth and vs30
+    subset = data.loc[
+        (data.Mw.between(mag - MAG_LIM, mag + MAG_LIM)) &
+        (data.ev_depth_km.between(depth - DEP_LIM, depth + DEP_LIM)) & 
+        (data.vs30_m_sec.between(vs30 - VS30_LIM, vs30 + VS30_LIM))
+        ].reset_index(drop=True)
+    
+    return subset

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution and expected values from ModifiableGMPEs
+Tests for execution and expected values from indirect AvgSA GMPEs
 specified in an SMT Comparison toml.
 """
 import os
@@ -34,24 +34,24 @@ from openquake.smt.comparison.utils_gmpes import matrix_to_df
 BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
-class ModifyGroundMotionsTestCase(unittest.TestCase):
+class IndirectAvgSAGroundMotionsTestCase(unittest.TestCase):
     """
-    Test cases for use of ModifiableGMPEs in the SMT's
+    Test cases for use of indirect AvgSA GMPEs in the SMT's
     Comparison module.
     """
     @classmethod 
     def setUpClass(self):
-        self.input_file = os.path.join(BASE, "inputs", "mgmpe_test.toml")
-        self.output_directory = os.path.join(BASE, "expected", 'mgmpe_test')
-        self.exp_mgmpe = os.path.join(BASE, "expected", "exp_mgmpe.csv")
+        self.input_file = os.path.join(BASE, "inputs", "indirect_avgsa_test.toml")
+        self.output_directory = os.path.join(BASE, "expected", 'indirect_avgsa_test')
+        self.exp_cgmpe = os.path.join(BASE, "expected", "exp_indirect_avgsa.csv")
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
     
-    def test_mgmpe_from_toml(self):
+    def test_indirect_avgsa_from_toml(self):
         """
-        Check ModifiableGMPEs specified within an SMT Comparison
-        toml are executed correctly and that the expected values
-        are returned.
+        Check indirect AvgSA GMPEs specified within an SMT Comparison
+        toml using ModifiableGMPE are executed correctly and that
+        the expected values are returned.
         """
         # Check each parameter matches target
         config = comp.Configurations(self.input_file)
@@ -59,13 +59,13 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         # Get matrices of predicted ground-motions per GMM
         obs_matrix = compute_matrix_gmpes(config, mtxs_type='median')
         del obs_matrix['gmpe_list']
-        
+
         # Load the matrices of expected ground-motions per GMM         
-        if not os.path.exists(self.exp_mgmpe):
+        if not os.path.exists(self.exp_cgmpe):
             # Write if doesn't exist
             df = matrix_to_df(obs_matrix, len(config.gmpes_list))
-            df.to_csv(self.exp_mgmpe)
-        exp_df = pd.read_csv(self.exp_mgmpe, index_col=0)
+            df.to_csv(self.exp_cgmpe)
+        exp_df = pd.read_csv(self.exp_cgmpe, index_col=0)
 
         # Load obs into dataframe
         obs_df = matrix_to_df(obs_matrix, len(config.gmpes_list))
@@ -73,7 +73,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         # Now check matrix dfs
         pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
 
-        # Also, check the baseline ratio with mgmpe plotting works
+        # Also, check the indirect AvgSA ratio plotting works
         comp.plot_ratios(self.input_file, self.output_directory)
 
     @classmethod
