@@ -1,0 +1,561 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUBduction (sub) module &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Strong-Motion Tools (smt) module" href="smt.html" />
+    <link rel="prev" title="Model Building Toolkit (mbt) module" href="mbt.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SUBduction (sub) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#defining-the-geometry-of-the-top-of-the-slab">Defining the geometry of the top of the slab</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#first-approach">First approach</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#second-approach">Second approach</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-top-of-the-slab-geometry">Building the top of the slab geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#classifying-an-earthquake-catalog-using-the-top-of-the-slab-surface">Classifying an earthquake catalog using the top of the slab surface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-inslab-sources-for-the-openquake-engine">Creating inslab sources for the OpenQuake Engine</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">SUBduction (sub) module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/sub.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="subduction-sub-module">
+<h1>SUBduction (sub) module<a class="headerlink" href="#subduction-sub-module" title="Link to this heading"></a></h1>
+<p>The <span class="target" id="index-0"></span>Subduction module contains software for the construction of subduction earthquake sources for the <em>oq-engine</em>. The components of this model can be used either independently or within a workflow similarly to what is described in this section.</p>
+<section id="defining-the-geometry-of-the-top-of-the-slab">
+<h2>Defining the geometry of the top of the slab<a class="headerlink" href="#defining-the-geometry-of-the-top-of-the-slab" title="Link to this heading"></a></h2>
+<p>The modeling of earthquake subduction sources starts with the definition of the geometry of the slab. The mbtk subduction module contains tools for the definition of the top of the slab. Two are the approaches available. The first one, the most comprehensive, requires a tedious process of digititazion of the profiles describing the position of the top of the slab versus depth along each cross section (see <a class="reference external" href="https://sp.lyellcollection.org/content/early/2020/03/02/SP501-2019-120.abstract">Pagani et al. (2020)</a> for a description of the methodology). The second one uses the geometries of the slab proposed by <a class="reference external" href="https://science.sciencemag.org/content/362/6410/58">Hayes et al. (2018)</a> (<a class="reference external" href="https://www.sciencebase.gov/catalog/item/5aa1b00ee4b0b1c392e86467">dataset</a>).</p>
+<p>The result of these two procedures is a folder containing a set of .csv files each one describing a profile. In this context a profile is a curve that lays on top of the slab and, generally, has a direction parallel to the dip.</p>
+<section id="first-approach">
+<span id="id1"></span><h3>First approach<a class="headerlink" href="#first-approach" title="Link to this heading"></a></h3>
+<p>Herein we provide a brief description of the various steps. Note that we use the symbol <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> as the prompt in a terminal, hence every time you find some code starting with this symbol this indicate a command you must type in your terminal.</p>
+<ol class="arabic simple">
+<li><p>The first step entails the definition of a configuration file. An example is provided herein</p></li>
+</ol>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[data]</span>
+
+<span class="c1"># Path to the text file with the coordinates of the trench axis</span>
+<span class="na">trench_axis_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/subduction/trenches/kerton_trench.xy</span>
+
+<span class="c1"># Path to the pickled file (an instance of the hazard modeller&#39;s toolkit Catalogue)</span>
+<span class="na">catalogue_pickle_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/catalogues/locations/PI_cat_filt.p</span>
+
+<span class="c1"># Path to the Slab 1.0 text file with the coordinates of the top of the slab</span>
+<span class="na">slab1pt0_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/subduction/slab1pt0/ker_slab1.0_clip.xyz</span>
+
+<span class="c1"># Path to the Crust 1.0 text file (see)</span>
+<span class="na">crust1pt0_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/crustal_models/crust1pt0/crsthk.xyz</span>
+
+<span class="c1"># Path to the Litho 1.0 text file (see)</span>
+<span class="na">litho_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/crustal_models/litho1pt0/litho_moho.xyz</span>
+
+<span class="c1"># Path to the file containing the focal mechanisms from the Global Centroid Moment Tensor project</span>
+<span class="na">gcmt_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/catalogues/focal_mechanisms/GCMT_20151231.ndk</span>
+
+<span class="c1"># Path to the file with volcanoes</span>
+<span class="na">volc_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/volcanoes/volcano_list.xy</span>
+
+<span class="c1"># Path to the text topography file</span>
+<span class="na">topo_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/Users/kjohnson/GEM/Regions/paisl18/data/topography/GEBCO_2014/pacisl_topobath_nf.xyz</span>
+
+<span class="k">[section]</span>
+
+<span class="c1"># Length of each profile [km]</span>
+<span class="na">lenght</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">700</span>
+
+<span class="c1"># Spacing [km] between the profiles along the axis subduction trench</span>
+<span class="c1"># specified in the ariable `trench_axis_filename`</span>
+<span class="na">interdistance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span>
+
+<span class="c1"># Azimuth parameter. When equal to a real number in the range [0, 360] all</span>
+<span class="c1"># the profiles will follow that direction. Ortherwise, if `None` the</span>
+<span class="c1"># profiles will have a direction perpendicular to the trench axis</span>
+<span class="na">azimuth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">None</span>
+
+<span class="c1"># Maximum depth of each profile [km]</span>
+<span class="na">dep_max</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">700</span>
+</pre></div>
+</div>
+<ol class="arabic" start="2">
+<li><p>Create a pickled version of your hmtk formatted catalog (NB: the catalogue must be in a hmtk format):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt; pickle_catalogue.py ./catalogues/cac.cat`
+</pre></div>
+</div>
+</li>
+<li><p>Create a set of cross-sections from the subduction trench axis:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">create_multiple_cross_sections</span><span class="o">.</span><span class="n">py</span> <span class="o">./</span><span class="n">ini</span><span class="o">/</span><span class="n">central_america</span><span class="o">.</span><span class="n">ini</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Check the traces of the cross-sections in the map created. It’s possible to edit the traces or add new traces in the file <code class="docutils literal notranslate"><span class="pre">cs_traces.cs</span></code></p>
+<ol class="arabic" start="4">
+<li><p>Check the new set of traces in a map with the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">plot_multiple_cross_sections_map</span><span class="o">.</span><span class="n">py</span> <span class="o">./</span><span class="n">ini</span><span class="o">/</span><span class="n">central_america</span><span class="o">.</span><span class="n">ini</span> <span class="n">cs_traces</span><span class="o">.</span><span class="n">cs</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create one .pdf file for each cross-section with the available information: e.g., earthquake hypocentres, focal mechanism, slab 1.0 geometry, CRUST 1.0 Moho:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">plot_multiple_cross_sections</span><span class="o">.</span><span class="n">py</span> <span class="n">cs_traces</span><span class="o">.</span><span class="n">cs</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This command will produce as many <code class="docutils literal notranslate"><span class="pre">.pdf</span></code> files as the number of cross-sections specified in the <code class="docutils literal notranslate"><span class="pre">.cs</span></code> file</p>
+<ol class="arabic" start="6">
+<li><p>Digitize the contact between the overriding plate and the subducted plate in each cross-section. The information in the command below corresponds to the longitude and the latitude of the origin of the cross-section, the length [km], the azimuth [decimal degrees], the cross-section ID and the name of the <code class="docutils literal notranslate"><span class="pre">.ini</span></code> file. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plot_cross_section</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="mf">106.479700</span> <span class="mf">21.250800</span> <span class="mf">600.000000</span> <span class="mf">89.098531</span> <span class="mi">0</span> <span class="o">./</span><span class="n">ini</span><span class="o">/</span><span class="n">central_america</span><span class="o">.</span><span class="n">ini</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Once launched, by clicking on the image it is possible to digitize a sequence of points. Once completed the digitization, the points can be saved to a file whose name corresponds to <code class="docutils literal notranslate"><span class="pre">cs_&lt;section</span> <span class="pre">ID&gt;.csv</span></code> by pressing the <code class="docutils literal notranslate"><span class="pre">f</span></code> key on the keyboard. The points can be deleted with the key <code class="docutils literal notranslate"><span class="pre">d</span></code>.</p>
+</section>
+<section id="second-approach">
+<span id="id2"></span><h3>Second approach<a class="headerlink" href="#second-approach" title="Link to this heading"></a></h3>
+<p>The second approach proposed is simpler than the first one, but it uses directly subduction contours from Slab2.0 (Hayes et al).</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Set-up configuration files. This approach requires an input toml file describing the locations of the Slab2.0 data files and some other input parameters as below</p></li>
+</ol>
+<blockquote>
+<div><div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># Locations for strike and depth information from Slab2pt0</span>
+<span class="n">fname_str</span><span class="w"> </span><span class="o">=</span><span class="s1">&#39;./slab2pt0/Slab2Distribute_Mar2018/str_grd/kur_slab2_str_02.24.18.grd&#39;</span>
+<span class="n">fname_dep</span><span class="w"> </span><span class="o">=</span><span class="s1">&#39;./slab2pt0/Slab2Distribute_Mar2018/dep_grd/kur_slab2_dep_02.24.18.grd&#39;</span>
+<span class="c1"># Spacing to use for the profiles (in km)</span>
+<span class="n">spacing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span>
+<span class="c1"># Folder to save profiles to</span>
+<span class="n">folder_out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;./cs&#39;</span>
+<span class="c1"># Optional: filename to save a figure of the profiles</span>
+<span class="n">fname_fig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;kur.png&#39;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="arabic" start="2">
+<li><p>Create a pickled version of your hmtk formatted catalog and make sure this is located as in your toml file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&gt; pickle_catalogue.py ./catalogues/cac.cat`
+</pre></div>
+</div>
+</li>
+<li><p>Make subduction profiles. In this approach we have two choices for creating profiles across the subduction zone. The first is an automatic procedure that defines cross-sections perpendicular to the average strike of the subduction zone with the spacing specified in the toml:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">sub_get_profiles_from_slab2pt0</span> <span class="o">&lt;</span><span class="n">toml_fname</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<blockquote>
+<div><p>Alternatively, we can manually define a set of profiles from a geojson file. This method is necessary in areas where a subduction zone is curved, because parallel profiles defined by the first approach will cross the slab at strange angles and the resulting 3D geometry will be misshapen. In this case, the geojson file should be specified in the toml with <cite>fname_geojson</cite> and the function to create the profiles is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">sub</span> <span class="n">get_profiles_from_slab2pt0_geojson</span> <span class="o">&lt;</span><span class="n">toml_fname</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p>As with the first approach, you can plot maps and cross_sections with the same commands.</p></li>
+</ol>
+<blockquote>
+<div><p>Check the new set of traces in a map with the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">plot_multiple_cross_sections_map</span><span class="o">.</span><span class="n">py</span> <span class="o">./</span><span class="n">ini</span><span class="o">/</span><span class="n">central_america</span><span class="o">.</span><span class="n">ini</span> <span class="n">cs_traces</span><span class="o">.</span><span class="n">cs</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="arabic" start="5">
+<li><p>Create one .pdf file for each cross-section with the available information: e.g., earthquake hypocentres, focal mechanism, slab 1.0 geometry, CRUST 1.0 Moho:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">plot_multiple_cross_sections</span><span class="o">.</span><span class="n">py</span> <span class="n">cs_traces</span><span class="o">.</span><span class="n">cs</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This command will produce as many <code class="docutils literal notranslate"><span class="pre">.pdf</span></code> files as the number of cross-sections specified in the <code class="docutils literal notranslate"><span class="pre">.cs</span></code> file (which might take some time)</p>
+</div></blockquote>
+</section>
+</section>
+<section id="building-the-top-of-the-slab-geometry">
+<h2>Building the top of the slab geometry<a class="headerlink" href="#building-the-top-of-the-slab-geometry" title="Link to this heading"></a></h2>
+<p>Now that we have a set of profiles available, we will build the surface of subduction . The output of this procedure will be a new set of profiles and edges that can be used to define the surface of a complex fault modelling the subduction interface earthquakes and to create inslab sources.</p>
+<p>This part of the procedure can be completed by running the</p>
+<ol class="arabic">
+<li><p>Build the surface of the subduction interface using <code class="docutils literal notranslate"><span class="pre">create_2pt5_model.py</span></code>. The input information in this case is:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The name of the folder <code class="docutils literal notranslate"><span class="pre">&lt;cs_folder&gt;</span></code> containing the <code class="docutils literal notranslate"><span class="pre">cs_</span></code> files created using either the procedure described in the <a class="reference internal" href="#first-approach">first approach</a> or <a class="reference internal" href="#second-approach">second approach</a> section;</p></li>
+<li><p>The output profile folder <code class="docutils literal notranslate"><span class="pre">&lt;profile_folder&gt;</span></code>;</p></li>
+<li><p>The maximum sampling distance along a trace [km];</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">create_2pt5_model</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;</span><span class="n">cs_folder</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">profile_folder</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">sampl_distance</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The output is a set of interpolated profiles and edges that can be used to create a complex fault source for the OpenQuake engine.  The results of the code <code class="docutils literal notranslate"><span class="pre">create_2pt5_model.py</span></code> can be plotted using <code class="docutils literal notranslate"><span class="pre">plot_2pt5_model.py</span></code>. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">plot_2pt5_model</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;</span><span class="n">output_folder</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">configuration_file</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;configuration_file&gt;</span></code> is the configuration file used to build the cross-sections.</p>
+<ol class="arabic" start="2">
+<li><p>You can construct surfaces for both the interface and slab components using <code class="docutils literal notranslate"><span class="pre">build_complex_surface</span></code>, which takes the depth limits of each component. The profiles for the interface and slab components are then stored in two seperate files as specified in the function call:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">sub</span> <span class="n">build_complex_surface</span> <span class="o">&lt;</span><span class="n">profile_folder</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">sampl_distance</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">sfc_in</span><span class="o">&gt;</span> <span class="mi">0</span> <span class="mi">50</span>
+<span class="o">&gt;</span> <span class="n">sub</span> <span class="n">build_complex_surface</span> <span class="o">&lt;</span><span class="n">profile_folder</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">sampl_distance</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">sfc_sl</span><span class="o">&gt;</span> <span class="mi">50</span> <span class="mi">450</span>
+</pre></div>
+</div>
+</li>
+<li><p>You can plot the 3D geometry created here with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">sub</span> <span class="n">plot_geometries</span> <span class="p">{</span><span class="n">ini_fname</span><span class="p">}</span> <span class="kc">False</span> <span class="kc">False</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>where the first flag controls whether to plot the catalogue (as specified in the ini file below) and the second specifies whether or not to plot the classification (see next step).</p>
+</section>
+<section id="classifying-an-earthquake-catalog-using-the-top-of-the-slab-surface">
+<h2>Classifying an earthquake catalog using the top of the slab surface<a class="headerlink" href="#classifying-an-earthquake-catalog-using-the-top-of-the-slab-surface" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">create_2pt5_model.py</span></code> code produces a set of profiles and edges (i.e. .csv files with the 3D coordinates) describing the geometry of the top of the slab. With this information we can separate the seismicity in an earthquake catalog into a few subsets, each one representing a specific tectonic environment (e.g. <a class="reference external" href="https://pubs.geoscienceworld.org/ssa/srl/article/68/1/9/142158/overview">Abrahamson and Shedlock, 1997</a> or <a class="reference external" href="https://academic.oup.com/gji/article/213/2/1263/4794950?login=true">Chen et al., 2017</a> ). The procedure required to complete this task includes the following steps.</p>
+<ol class="arabic simple">
+<li><p>Create a configuration file that describes the tectonic environments</p></li>
+</ol>
+<p>The configuration file specifies the geometry of surfaces, along with buffer regions, that are used as references for each tectonic environment, and the catalogue to be classified. Additionally, the configuration includes a <code class="docutils literal notranslate"><span class="pre">priority</span> <span class="pre">list</span></code> that indicates how hypocenters that can occur in overlapping buffer regions should be labeled. An example configuration file is shown below. The format of the configuration is as follows.</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">[general]</span></code> section, which includes the following sections:</p>
+<ul>
+<li><p>the directory <code class="docutils literal notranslate"><span class="pre">distance_folder</span></code> where the Euclidean distance between each hypocenter and surface will be stored (NB: with the first method this folder must be manually created by the user, but using the second approach it will be automatically created when making the profiles)</p></li>
+<li><p>an .hdf5 file <code class="docutils literal notranslate"><span class="pre">treg_filename</span></code> that will store the results of the classfication</p></li>
+<li><p>the .pkl file <code class="docutils literal notranslate"><span class="pre">catalogue_filename</span></code>, which is the pickeled catalogue in HMTK format to be classified.</p></li>
+<li><p>an array <code class="docutils literal notranslate"><span class="pre">priority</span></code> lists the tectonic regions, sorting the labels in the order of increasing priority, and a later label overrides classification of a hypocenter to a previous label. For example, in the configuration file shown below, an earthquake that could be classified as both <code class="docutils literal notranslate"><span class="pre">crustal</span></code> and <code class="docutils literal notranslate"><span class="pre">int_prt</span></code> will be labeled as <code class="docutils literal notranslate"><span class="pre">int_prt</span></code>.</p></li>
+</ul>
+</li>
+<li><p>A geometry section for each labelled tectonic environment in the <code class="docutils literal notranslate"><span class="pre">priority</span></code> list in <code class="docutils literal notranslate"><span class="pre">[general]</span></code>. The labels should each contain one of the following four strings, which indicate the way that the surface will be used for classification.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">slab</span></code>: These strings indicate a surface related to subduction or similar. They require at least four configurations:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">label</span></code>, which will be used by <code class="docutils literal notranslate"><span class="pre">treg_filename</span></code> to indicate which earthquakes correspond to the given tectonic environment;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">folder</span></code>, which gives the relative path to the directory (see Step 2) with the geometry .csv files created by <code class="docutils literal notranslate"><span class="pre">create_2pt5_model</span></code> for the given surface; and</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distance_buffer_above</span></code> and</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distance_buffer_below</span></code>, which are the upper limits of Euclidean distances used to classify hypocenters above or below the surface to the respective tectonic environment. A user can additionally specify <code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">depth</span></code> to bound the surface and buffer region, and <code class="docutils literal notranslate"><span class="pre">low_year</span></code>, <code class="docutils literal notranslate"><span class="pre">upp_year</span></code>,  <code class="docutils literal notranslate"><span class="pre">low_mag</span></code>, and <code class="docutils literal notranslate"><span class="pre">upp_mag</span></code> to to select only from a given time period or magnitude range. These latter options are useful when hypocenters from a given bracket are known to include major assumptions, such as when historical earthquake are assigned a depth of 0 km.</p></li>
+</ol>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">crustal</span></code> or <code class="docutils literal notranslate"><span class="pre">volcanic</span></code>: These strings indicate a surface against which the classification compares the relative position of a hypocenter laterally and vertically, for example to isolate crustal or volcanic earthquakes. They require two configurations.</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">crust_filename</span></code>, which is a tab-delimited .xyz file listing longitude, latitude, and depth (as a negative value), which indicates the lateral extent of the tectonic environment and the depths above which all earthquakes should be classified to the respective tectonic environment; and</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distance_delta</span></code>, which specifies the vertical depth below a surface to be used as a buffer region.</p></li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[general]</span>
+<span class="na">root_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">/home/kbayliss/projects/geese/classification/kur</span>
+
+<span class="na">distance_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./model/catalogue/classification/distances/</span>
+<span class="na">treg_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./model/catalogue/classification/classified.hdf5</span>
+<span class="na">catalogue_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./model/catalogue/csv/catalogue.pkl</span>
+
+<span class="na">priority</span><span class="o">=</span><span class="s">[slab, crustal, int]</span>
+
+
+<span class="k">[crustal]</span>
+
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">crustal</span>
+<span class="na">distance_delta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20.</span>
+<span class="na">crust_filename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./model/litho1pt0/litho_crust3bottom.xyz</span>
+
+
+<span class="k">[int]</span>
+
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">int</span>
+<span class="na">folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./sfc_in</span>
+<span class="na">lower_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">60.</span>
+<span class="na">distance_buffer_above</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10.</span>
+<span class="na">distance_buffer_below</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10.</span>
+
+<span class="k">[slab]</span>
+
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">slab</span>
+<span class="na">folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">./sfc_sl</span>
+<span class="na">distance_buffer_above</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">30.</span>
+<span class="na">distance_buffer_below</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">30.</span>
+<span class="na">...</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Run the classification</p></li>
+</ol>
+<p>The classification algorithm is run using the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">cat_classify</span><span class="o">.</span><span class="n">py</span> <span class="o">&lt;</span><span class="n">configuration_file</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">distance_flag</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Where <code class="docutils literal notranslate"><span class="pre">configuration_file</span></code> is the name of the .ini configuration file and <code class="docutils literal notranslate"><span class="pre">distance_flag</span></code> is a flag indicating whether or not the distances to surfaces must be computed (i.e. <em>True</em> is used the first time a classification is run for a set of surfaces and tectonic environments, but <em>False</em> when only the buffer and delta distances are changed)</p>
+<ol class="arabic" start="3">
+<li><p>Check event classifications with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">sub</span> <span class="n">plot_geometries</span> <span class="p">{</span><span class="n">ini_fname</span><span class="p">}</span> <span class="kc">False</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Which will plot the 3D geometry with the events coloured by their classification.
+It may be necessary to manually classify some events (e.g. where the literature supports an event being in the slab despite it being very shallow etc.). Events can be manually re-classified using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ccl</span> <span class="n">change_class</span> <span class="n">cat</span><span class="o">.</span><span class="n">pkl</span> <span class="n">classified</span><span class="o">.</span><span class="n">hdf5</span> <span class="n">eqlist</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">eqlist</span></code> is a csv with eventIDs to be reassigned and the required classifications.</p>
+<ol class="arabic simple" start="4">
+<li><p>Separate the classified events into subcatalogues</p></li>
+</ol>
+<p>The user must decide the exact way in which they would like to separate the classified events into subcatalogues for each tectonic environment. For example, one may want to decluster the entire catalogue before separating the events, or to decluster each tectonic environment separately. To create subcatalogues based on the classifications, the function <code class="docutils literal notranslate"><span class="pre">create_sub_catalogues</span></code> can be used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ccl</span> <span class="n">create_sub_catalogues</span> <span class="n">cat</span><span class="o">.</span><span class="n">pkl</span> <span class="n">classified</span><span class="o">.</span><span class="n">hdf5</span> <span class="o">-</span><span class="n">p</span> <span class="n">subcats_folder</span>
+</pre></div>
+</div>
+<p>which will create subcatalogues with each label found in <code class="docutils literal notranslate"><span class="pre">classified.hdf5</span></code> which are in turn those supplied in the classification ini. These catalogues will be stored in the specified subcats_folder.</p>
+<p>Further, these catalogues can be declustered using the <code class="docutils literal notranslate"><span class="pre">decluster_multiple_TR</span></code> function. This function takes its own toml file (<code class="docutils literal notranslate"><span class="pre">decluster.toml</span></code>) that specifies the different subcatalogues that should be declustered together and the declustering algorithms from within the OQ engine to use, along with the necessary parameters.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[main]</span>
+
+<span class="na">catalogue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;cat.pkl&#39;</span>
+<span class="na">tr_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;classified_up.hdf5&#39;</span>
+<span class="na">output</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;subcats_folder/&#39;</span>
+
+<span class="na">create_subcatalogues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;true&#39;</span>
+<span class="na">save_aftershocks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;true&#39;</span>
+<span class="na">catalogue_add_defaults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;true&#39;</span>
+
+<span class="k">[method1]</span>
+<span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;GardnerKnopoffType1&#39;</span>
+<span class="na">params = {&#39;time_distance_window&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;UhrhammerWindow&#39;</span><span class="na">, &#39;fs_time_prop&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1}</span>
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;UH&#39;</span>
+
+<span class="k">[method2]</span>
+<span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;GardnerKnopoffType1&#39;</span>
+<span class="na">params = {&#39;time_distance_window&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;GardnerKnopoffWindow&#39;</span><span class="na">, &#39;fs_time_prop&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1}</span>
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;GK&#39;</span>
+
+<span class="k">[case1]</span>
+<span class="na">regions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;int&#39;, &#39;crustal&#39;]</span>
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;int_cru&#39;</span>
+
+<span class="k">[case2]</span>
+<span class="na">regions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;slab&#39;]</span>
+<span class="na">label</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;slab&#39;</span>
+</pre></div>
+</div>
+<p>This toml file specifies that the window declustering with parameters of Gardner and Knopoff and Uhrhammer should be used to decluster the interface and crustal events jointly, and the slab separately. This will result in four output declustered catalogues (one for each case and each method) stored in the subcats_folder. To run this declustering, we can simply use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">ccl</span> <span class="n">decluster_multiple_TR</span> <span class="n">decluster</span><span class="o">.</span><span class="n">toml</span>
+</pre></div>
+</div>
+</section>
+<section id="creating-inslab-sources-for-the-openquake-engine">
+<h2>Creating inslab sources for the OpenQuake Engine<a class="headerlink" href="#creating-inslab-sources-for-the-openquake-engine" title="Link to this heading"></a></h2>
+<p>The construction of subduction inslab sources involves the creation of <cite>virtual faults</cite> elongated along the stike of the slab surface and constrained within the slab volume. This requires a configuration file defining some parameters for generating the ruptures.</p>
+<ol class="arabic simple">
+<li><p>Create a configuration file</p></li>
+</ol>
+<div class="highlight-slab.ini notranslate"><div class="highlight"><pre><span></span>[main]
+
+reference_folder = /Users/kjohnson/GEM/Regions/paisl18u/
+
+profile_sd_topsl = 40.
+edge_sd_topsl = 40.
+
+# MFD
+agr = 5.945
+bgr = 1.057
+mmin = 6.5
+mmax = 7.80
+
+sampling = 10.
+
+float_strike = -0.5
+float_dip = -1.0
+
+slab_thickness = 70.
+hspa = 20.
+vspa = 20.
+
+#profile_folder contains: resampled profiles and edges for the slab
+profile_folder = ./sfc_sl
+
+# the pickled catalogue has the hmtk format
+catalogue_pickle_fname = ./cat.pkl
+
+# the file with labels identifying earthquakes belonging to a given class
+treg_fname = ./classified.hdf5
+label = slab
+
+# output folder
+out_hdf5_fname = ./tmp/ruptures/ruptures_inslab_kerton_1.hdf5
+
+# output smoothing folder
+out_hdf5_smoothing_fname = ./tmp/smoothing/smoothing_kerton_1.hdf5
+
+# this is a lists
+dips = [45, 135]
+
+# this is a dictionary
+aspect_ratios = {2.0: 0.4, 3.0: 0.3, 6.0: 0.2, 8.0: 0.1}
+
+# this is a dictionary
+uniform_fraction = 1.0
+
+# magnitude scaling relationship
+mag_scaling_relation = StrasserIntraslab
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">profile_sd_topsl</span></code> and <code class="docutils literal notranslate"><span class="pre">edge_sd_topsl</span></code> specify the profile and edge sampling distances for the mesh describing the slab. These parameters should be set by the modeller to balance the availability of data and the computational size of the problem.</p>
+<p>The MFD parameters should be set by the modeller and determined from some combination of the seismicity and tectonics. The <code class="docutils literal notranslate"><span class="pre">mmin</span></code> parameter defines the lower magnitude limit at which to generate slab ruptures. A lower <code class="docutils literal notranslate"><span class="pre">mmin</span></code> will result in many more smaller ruptures which will increase the size of the rupture object, so this parameter should be chosen carefully considering the size of ruptures at slab locations that might be relevant for hazard.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">sampling</span></code> parameter determines the spatial sampling to be used when simulating ruptures. The <code class="docutils literal notranslate"><span class="pre">float_strike</span></code> and <code class="docutils literal notranslate"><span class="pre">float_dip</span></code> parameters specify the strike and dip for floating ruptures, while the list of <code class="docutils literal notranslate"><span class="pre">dips</span></code> instead specifies dip angles used when creating virtual faults inside the rupture.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">uniform_fraction</span></code> determines the percentage of the ruptures to be uniformly distributed across the slab. A higher uniform fraction means that the distribution of ruptures will be randomly uniform, and a lower uniform fraction means that a larger percentage of ruptures will instead be distributed according to the smoothed distribution of seismicity in the slab. <code class="docutils literal notranslate"><span class="pre">hspa</span></code> and <code class="docutils literal notranslate"><span class="pre">vspa</span></code> refer to the horizontal and vertical spacing to be used in the smoothing.</p>
+<p>Ruptures can be created using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">calculate_ruptures</span> <span class="n">ini_fname</span> <span class="n">out_hdf5_fname</span> <span class="n">out_hdf5_smoothing_fname</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">ini_fname</span></code> is the name of our slab ini (example above). This will create two hdf5 files with the different ruptures. We then need to process these into xml files, which we can do using:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">create_inslab_nrml</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">out_hdf5_fname</span><span class="p">,</span> <span class="n">out_path</span><span class="p">,</span> <span class="n">investigation_t</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can plot the 3D model of the subduction zone with ruptures as below.</p>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span>    <span class="n">xml_fname</span> <span class="o">=</span> <span class="s2">&quot;./xml/mar_newrup_unif/6.55.xml&quot;</span>
+    <span class="n">ssm</span> <span class="o">=</span> <span class="n">to_python</span><span class="p">(</span><span class="n">xml_fname</span><span class="p">)</span>
+
+    <span class="n">hy_lo</span><span class="p">,</span> <span class="n">hy_la</span><span class="p">,</span> <span class="n">hy_d</span> <span class="o">=</span> <span class="p">[],[],[]</span>
+    <span class="n">mags</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rates</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">sg</span> <span class="ow">in</span> <span class="n">ssm</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">sg</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">rup</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">rup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">hypocenter</span>
+            <span class="n">hy_lo</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">longitude</span><span class="p">);</span> <span class="n">hy_la</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">latitude</span><span class="p">);</span> <span class="n">hy_d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">h</span><span class="o">.</span><span class="n">depth</span><span class="p">)</span>
+            <span class="n">mags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rup</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mag</span><span class="p">)</span>
+            <span class="n">prob1</span> <span class="o">=</span> <span class="n">rup</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">rate</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">prob1</span><span class="p">)</span>
+            <span class="n">rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;lons&#39;</span><span class="p">:</span> <span class="n">hy_lo</span><span class="p">,</span> <span class="s1">&#39;lats&#39;</span><span class="p">:</span> <span class="n">hy_la</span><span class="p">,</span> <span class="s1">&#39;depth&#39;</span><span class="p">:</span> <span class="n">hy_d</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="n">mags</span><span class="p">,</span> <span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="n">rates</span><span class="p">})</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">lons</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">lats</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">depth</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This process will create xml files for each magnitude bin, which is a little impractical. To combine these, we can do the following.</p>
+<div class="highlight-python3 notranslate"><div class="highlight"><pre><span></span><span class="n">path1</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;./xml/mar_newrup/*.xml&#39;</span><span class="p">)</span>
+<span class="n">data_all</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path1</span><span class="p">:</span>
+    <span class="n">ssm</span> <span class="o">=</span> <span class="n">to_python</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">sg</span> <span class="ow">in</span> <span class="n">ssm</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">sg</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">data_all</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<span class="n">src</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data_all</span>
+<span class="n">src</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;ruptures for src_slab&#39;</span>
+<span class="n">src</span><span class="o">.</span><span class="n">source_id</span> <span class="o">=</span> <span class="s1">&#39;src_slab&#39;</span>
+
+<span class="n">write_source_model</span><span class="p">(</span><span class="s1">&#39;./xml/mar_newrup/slab.xml&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">src</span><span class="p">],</span> <span class="n">investigation_time</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which creates a single <code class="docutils literal notranslate"><span class="pre">slab.xml</span></code> file containing all the ruptures across all magnitude bins. This file can then be used directly in OQ as a non-parametric rupture source. You will need to include both the final xml and hdf5 files in the source folder of your model.</p>
+<p>As with other functions in the mbtk, these commands can also be run directly from the command line.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mbt.html" class="btn btn-neutral float-left" title="Model Building Toolkit (mbt) module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="smt.html" class="btn btn-neutral float-right" title="Strong-Motion Tools (smt) module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+openquake.fnm package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.fnm.inversion
+   openquake.fnm.tests
+
+Submodules
+----------
+
+openquake.fnm.all\_together\_now module
+---------------------------------------
+
+.. automodule:: openquake.fnm.all_together_now
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.bbox module
+-------------------------
+
+.. automodule:: openquake.fnm.bbox
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.connections module
+--------------------------------
+
+.. automodule:: openquake.fnm.connections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.constants module
+------------------------------
+
+.. automodule:: openquake.fnm.constants
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.datastore module
+------------------------------
+
+.. automodule:: openquake.fnm.datastore
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.exporter module
+-----------------------------
+
+.. automodule:: openquake.fnm.exporter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.fault\_modeler module
+-----------------------------------
+
+.. automodule:: openquake.fnm.fault_modeler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.fault\_network\_serializer module
+-----------------------------------------------
+
+.. automodule:: openquake.fnm.fault_network_serializer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.fault\_system module
+----------------------------------
+
+.. automodule:: openquake.fnm.fault_system
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.importer module
+-----------------------------
+
+.. automodule:: openquake.fnm.importer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.mesh module
+-------------------------
+
+.. automodule:: openquake.fnm.mesh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.msr module
+------------------------
+
+.. automodule:: openquake.fnm.msr
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.multifault\_parallel module
+-----------------------------------------
+
+.. automodule:: openquake.fnm.multifault_parallel
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.plot module
+-------------------------
+
+.. automodule:: openquake.fnm.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.rupture module
+----------------------------
+
+.. automodule:: openquake.fnm.rupture
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.rupture\_connections module
+-----------------------------------------
+
+.. automodule:: openquake.fnm.rupture_connections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.rupture\_filtering module
+---------------------------------------
+
+.. automodule:: openquake.fnm.rupture_filtering
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.section module
+----------------------------
+
+.. automodule:: openquake.fnm.section
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.subduction module
+-------------------------------
+
+.. automodule:: openquake.fnm.subduction
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm
+   :members:
+   :show-inheritance:
+   :undoc-members:

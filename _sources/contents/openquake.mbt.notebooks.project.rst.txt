@@ -1,0 +1,29 @@
+openquake.mbt.notebooks.project package
+=======================================
+
+Submodules
+----------
+
+openquake.mbt.notebooks.project.project\_create module
+------------------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.project.project_create
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.mbt.notebooks.project.utils module
+--------------------------------------------
+
+.. automodule:: openquake.mbt.notebooks.project.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.notebooks.project
+   :members:
+   :show-inheritance:
+   :undoc-members:
