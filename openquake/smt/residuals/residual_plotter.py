@@ -392,7 +392,9 @@ class ResidualScatterPlot(BaseResidualPlot):
         
             ax.scatter(res_data['bin_midpoints'], res_data['mean_res'] + (res_data['sigma_res']),
                        marker='x', color='b', label='+/- 1 Std.', zorder=4)
-            
+
+        ax.axhline(0, color='k', linestyle='--', linewidth=1.25, zorder=100)
+
         ax.legend(loc='upper right', fontsize='xx-small')
 
 
@@ -1069,20 +1071,27 @@ class ResidualWithSite(ResidualPlot):
         """
         data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
+
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
+            
             total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
             total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
+            
             data[site_id]["Total"] = np.array(total_res) / np.array(total_exp)
+            
             if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
+                
                 inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
                 intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
                 inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
                 intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
+
                 keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
                 data[site_id]["Inter event"] = np.array(inter_res)[keep] / np.array(inter_exp)
                 data[site_id]["Intra event"] = np.array(intra_res) / np.array(intra_exp)
+            
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
             data[site_id]["x-val"] = (float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
