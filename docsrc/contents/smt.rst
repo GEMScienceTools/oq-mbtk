@@ -588,6 +588,7 @@ Comparing GMPEs
     Some examples of how the ModifiableGMPE can be used within the comparison module input ``.toml`` when specifying GMPEs is provided below. Note that ModifiableGMPE is not currently supported to be usable within the residuals input ``.toml`` (an error will be raised):
    
     .. code-block:: ini
+
         [models]
 
         [models.0-ModifiableGMPE]
@@ -678,6 +679,7 @@ Comparing GMPEs
    measure then an error is raised as within a "regular" GMPE).
 
     .. code-block:: ini
+
         [models]
 
         [models.0-ModifiableGMPE] # Base GMPE and conditional GMPE both with multiple inputs
@@ -704,6 +706,7 @@ Comparing GMPEs
    is raised as within a "regular" GMPE).
 
     .. code-block:: ini
+      
         [models]
 
         [models.0-ModifiableGMPE]
