@@ -471,7 +471,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
             # Add grid and set xlims
             ax.set_xlim(min(periods), max(periods))
             ax.grid(True)
-            if config.nstd > 0 or subset is not None:
+            if config.nstd > 0 or obs_data_fname is not None:
                 ax.semilogy()
 
     # Finalise the plots and save fig
