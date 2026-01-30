@@ -160,6 +160,7 @@ class BaseResidualPlot(object):
         principle not be overridden by sub-classes.
         """
         self.draw(ax, res_data, res_type)
+        ax.grid()
         ax.set_xlim(*self.get_axis_xlim(res_data, res_type))
         ax.set_ylim(*self.get_axis_ylim(res_data, res_type))
         ax.set_xlabel(res_data['xlabel'], **self.xlabel_styling_kwargs)
@@ -273,8 +274,7 @@ class ResidualHistogramPlot(BaseResidualPlot):
     def draw(self, ax, res_data, res_type):
         bin_width = self.bin_width
         x, y = res_data['x'], res_data['y']
-        ax.bar(x, y, width=0.95 * bin_width,
-               color="LightSteelBlue", edgecolor="k")
+        ax.bar(x, y, width=0.95 * bin_width, color="LightSteelBlue", edgecolor="k")
 
 
 class ResidualPlot(ResidualHistogramPlot):
@@ -353,12 +353,10 @@ class ResidualScatterPlot(BaseResidualPlot):
         return nrow, ncol
 
     def get_axis_xlim(self, res_data, res_type):
-        x = res_data['x']
-        return floor(np.min(x)), ceil(np.max(x))
+        return floor(np.min(res_data['x'])), ceil(np.max(res_data['x']))
 
     def get_axis_ylim(self, res_data, res_type):
-        y = res_data['y']
-        max_lim = ceil(np.nanmax(np.fabs(y)))
+        max_lim = ceil(np.nanmax(np.fabs(res_data['y'])))
         return -max_lim, max_lim
     
     def get_axis_title(self, res_data, res_type):
@@ -368,8 +366,6 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
-        x_zero = np.arange(np.floor(np.nanmin(x))-20, np.ceil(np.nanmax(x))+20, 0.001)
-        zero_line = np.zeros(len(x_zero))
         pts_styling_kwargs = dict(
             markeredgecolor='Gray', markerfacecolor='LightSteelBlue', label='residual')
         
@@ -379,31 +375,26 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
             
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
+                       marker='x', color='b', zorder=4)
             
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker='x', color='b',
-                label='+/- 1 Std.', zorder=4)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (res_data['sigma_res']),
+                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
             
-            ax.plot(x_zero, zero_line, color='k', linestyle='--',
-                    linewidth=1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
         
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
+            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
+                       marker='x', color='b', zorder=4)
         
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker='x', color='b',
-                label='+/- 1 Std.', zorder=4)
-            
-            ax.plot(x_zero, zero_line, color='k', linestyle='--',
-                    linewidth=1.25)
-            
+            ax.scatter(res_data['bin_midpoints'], res_data['mean_res'] + (res_data['sigma_res']),
+                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
+
+        ax.axhline(0, color='k', linestyle='--', linewidth=1.25, zorder=100)
+
         ax.legend(loc='upper right', fontsize='xx-small')
 
 
@@ -513,9 +504,11 @@ def plot_llh_with_period(residuals, filename):
         ax_llh.scatter(x_llh.imt_float, y_llh)
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_llh.plot(x_llh.imt_float, y_llh, label=tmp)
+    ax_llh.margins(x=0)
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('LLH', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
+    ax_llh.grid()
     plt.savefig(filename)
     plt.close()
     
@@ -549,9 +542,11 @@ def plot_edr_with_period(residuals, filename):
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
         ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp)
+    ax_EDR.margins(x=0)
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_EDR.grid()
     parts = filename.split(".")
     plt.savefig(parts[0] + "_value." + parts[1])
     plt.close()
@@ -566,9 +561,11 @@ def plot_edr_with_period(residuals, filename):
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp)
+    ax_kappa.margins(x=0)
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_kappa.grid()
     plt.savefig(parts[0] + "_kappa." + parts[1])
     plt.close()
 
@@ -582,9 +579,11 @@ def plot_edr_with_period(residuals, filename):
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
         ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp)
+    ax_MDE.margins(x=0)
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_MDE.grid()
     plt.savefig(parts[0] + "_MDE." + parts[1])
     plt.close()
 
@@ -618,9 +617,11 @@ def plot_sto_with_period(residuals, filename):
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
         ax_sto.scatter(x_with_imt.imt_float, y_sto)
         ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp)
+    ax_sto.margins(x=0)
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
+    ax_sto.grid()
     plt.savefig(os.path.join(filename))
     plt.close()
 
@@ -1070,20 +1071,27 @@ class ResidualWithSite(ResidualPlot):
         """
         data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
+
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
+            
             total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
             total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
+            
             data[site_id]["Total"] = np.array(total_res) / np.array(total_exp)
+            
             if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
+                
                 inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
                 intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
                 inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
                 intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
+
                 keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
                 data[site_id]["Inter event"] = np.array(inter_res)[keep] / np.array(inter_exp)
                 data[site_id]["Intra event"] = np.array(intra_res) / np.array(intra_exp)
+            
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
             data[site_id]["x-val"] = (float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
