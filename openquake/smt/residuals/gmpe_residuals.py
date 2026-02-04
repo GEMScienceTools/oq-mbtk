@@ -31,6 +31,8 @@ from scipy.stats import norm
 from openquake.hazardlib import imt, valid, nrml
 from openquake.baselib.node import Node as N
 from openquake.hazardlib.gsim_lt import GsimLogicTree
+from openquake.hazardlib.contexts import full_context, simple_cmaker
+from openquake.hazardlib import const
 
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils import convert_accel_units, check_gsim_list
@@ -355,6 +357,53 @@ class Residuals(object):
                 self.modelled[gmpe][imtx]["Mean"] = np.array(
                     self.modelled[gmpe][imtx]["Mean"])
 
+    def get_mean_and_stddevs(self, gsim, sites, rup, dists, imt, stddev_types):
+        """
+        Compute mean and standard deviations for given GMPE and context.
+
+        :param gsim:
+            Instance of :class:'GroundShakingIntensityModel'.
+        :param sites:
+            Instance of :class:`SitesContext`.
+        :param rup:
+            Instance of :class:`RuptureContext`.
+        :param dists:
+            Instance of :class:`DistancesContext`.
+        :param imt:
+            An instance (not a class) of intensity measure type - see
+            :mod:`openquake.hazardlib.imt`.
+        :param stddev_types:
+            List of standard deviation types, constants from
+            :class:`openquake.hazardlib.const.StdDev`.
+
+        :returns:
+            Arrays of mean and standard deviation for given GSIM and context.
+        """
+        # Make empty arrays for mean and std devs
+        N = len(sites)
+        mean, sig, tau, phi = (
+            np.zeros((1, N)), np.zeros((1, N)), np.zeros((1, N)), np.zeros((1, N)))
+        
+        # Convert three legacy contexts to a single context
+        ctx = full_context(sites, rup, dists)
+        mags = ['%.2f' % rup.mag]
+        ctx_final = simple_cmaker([gsim], [imt.string], mags=mags).recarray([ctx])
+        
+        # Compute method of gsim
+        gsim.compute(ctx_final, [imt], mean, sig, tau, phi)
+        
+        # Allocate std devs
+        stddevs = []
+        for stddev_type in stddev_types:
+            if stddev_type == const.StdDev.TOTAL:
+                stddevs.append(sig[0])
+            elif stddev_type == const.StdDev.INTER_EVENT:
+                stddevs.append(tau[0])
+            elif stddev_type == const.StdDev.INTRA_EVENT:
+                stddevs.append(phi[0])
+
+        return mean[0], stddevs
+
     def get_exp_motions(self, context):
         """
         Calculate the expected ground motions from the context.
@@ -373,7 +422,8 @@ class Residuals(object):
                         exp[gmpe][imtx] = None
                         continue
                 # Get expected motions
-                mean, stddev = gsim.get_mean_and_stddevs(
+                mean, stddev = self.get_mean_and_stddevs(
+                    gsim,
                     context["Ctx"],
                     context["Ctx"],
                     context["Ctx"],
