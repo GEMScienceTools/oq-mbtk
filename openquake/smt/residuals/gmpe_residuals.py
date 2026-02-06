@@ -124,7 +124,7 @@ def get_mean_stds(rup_ctx, gsim, imt):
     :param rup_ctx: a RuptureContext with site information
     :param gsim: a GSIM instance
     :param imt_str: an IMT string
-    :return: 4 arrays (mean, sig, tau, phi) of N elements each.
+    :return: an array of shape (4, N) with mean, sig, tau, phi vectors
     """
     cmaker = contexts.simple_cmaker([gsim], [imt])
     ctx = cmaker.recarray([rup_ctx])
