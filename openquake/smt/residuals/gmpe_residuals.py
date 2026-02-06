@@ -28,7 +28,7 @@ import pandas as pd
 from scipy.integrate import trapezoid
 from scipy.stats import norm
 
-from openquake.hazardlib import imt, valid, nrml
+from openquake.hazardlib import imt, valid, nrml, contexts
 from openquake.baselib.node import Node as N
 from openquake.hazardlib.gsim_lt import GsimLogicTree
 
@@ -117,6 +117,18 @@ def get_gmpe_str(gmpe):
         return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
     else:
         return gmpe
+
+
+def get_mean_stds(rup_ctx, gsim, imt):
+    """
+    :param rup_ctx: a RuptureContext with site information
+    :param gsim: a GSIM instance
+    :param imt_str: an IMT string
+    :return: an array of shape (4, N) with mean, sig, tau, phi vectors
+    """
+    cmaker = contexts.simple_cmaker([gsim], [imt])
+    ctx = cmaker.recarray([rup_ctx])
+    return cmaker.get_mean_stds([ctx])[:, 0, 0, :]  # (4, N)
 
 
 class Residuals(object):
@@ -342,8 +354,8 @@ class Residuals(object):
 
             self.contexts.append(context)
 
-        for gmpe in self.residuals.keys():
-            for imtx in self.residuals[gmpe].keys():
+        for gmpe in self.residuals:
+            for imtx in self.residuals[gmpe]:
                 # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     continue
@@ -373,12 +385,7 @@ class Residuals(object):
                         exp[gmpe][imtx] = None
                         continue
                 # Get expected motions
-                mean, stddev = gsim.get_mean_and_stddevs(
-                    context["Ctx"],
-                    context["Ctx"],
-                    context["Ctx"],
-                    imt.from_string(imtx),
-                    self.types[gmpe][imtx])
+                mean, *stddev = get_mean_stds(context["Ctx"], gsim, imtx)
                 keep = context["Retained"][imtx]
                 mean = mean[keep]
                 for idx_comp, comp in enumerate(stddev):

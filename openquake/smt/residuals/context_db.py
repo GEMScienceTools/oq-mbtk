@@ -22,7 +22,7 @@ data capable of yielding Contexts and Observations suitable for Residual analysi
 import numpy as np
 import pandas as pd
 
-from openquake.hazardlib.contexts import DistancesContext, RuptureContext
+from openquake.hazardlib.contexts import RuptureContext
 
 
 class ContextDB:
@@ -43,7 +43,16 @@ class ContextDB:
        (which is called only if `imts` is given in :meth:`self.get_contexts`)
     """
     rupture_context_attrs = tuple(RuptureContext._slots_)
-    distances_context_attrs = tuple(DistancesContext._slots_)
+    distances_context_attrs = ('rrup',
+                               'rx',
+                               'rjb',
+                               'rhypo',
+                               'repi',
+                               'ry0',
+                               'rcdpp',
+                               'azimuth',
+                               'hanging_wall',
+                               'rvolc')
     sites_context_attrs = ('custom_site_id',
                            'vs30',
                            'lons',
@@ -54,7 +63,8 @@ class ContextDB:
                            'z2pt5',
                            'backarc')
 
-    def get_contexts(self, nodal_plane_index=1, imts=None, component="Geometric"):
+    def get_contexts(self, nodal_plane_index=1, imts=None,
+                     component="Geometric"):
         """
         Return an iterable of Contexts. Each Context is a `dict` with
         earthquake, sites and distances information (`dict["Ctx"]`)
