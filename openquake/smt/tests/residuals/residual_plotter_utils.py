@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Test suite for the `residual_plotter_utils` module responsible for calculating the
-data used for plotting (see `residual_plotter`)
+Test suite for the `residual_plotter_utils` module responsible for
+calculating the data used for plotting (see `residual_plotter`).
 """
 import os
 import shutil
@@ -38,20 +38,20 @@ from openquake.smt.residuals.residual_plotter_utils import (residuals_density_di
                                                     _nanlinregress)
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 
 class ResidualsTestCase(unittest.TestCase):
     """
-    Core test case for the residuals objects
+    Core test case for the residuals objects.
     """
     @classmethod
     def setUpClass(cls):
         """
-        Setup constructs the database from the ESM test data
+        Setup constructs the database from the ESM test data.
         """
-        ifile = os.path.join(BASE_DATA_PATH, "residual_tests_data.csv")
-        cls.out_location = os.path.join(BASE_DATA_PATH, "residual_tests")
+        ifile = os.path.join(BASE, "residual_tests_data.csv")
+        cls.out_location = os.path.join(BASE, "residual_tests")
         if os.path.exists(cls.out_location):
             shutil.rmtree(cls.out_location)
         parser = ESMFlatfileParserURL.autobuild(
@@ -91,8 +91,8 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residual_density_distribution(self):
         """
-        Tests basic execution of residual plot data.
-        Does not test correctness of values
+        Tests basic execution of residual plot data - does not
+        test correctness of values.
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -121,8 +121,8 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_likelihood_density_distribution(self):
         """
-        Tests basic execution of Likelihood plot data.
-        Does not test correctness of values
+        Tests basic execution of Likelihood plot data - does
+        not test correctness of values.
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -150,8 +150,8 @@ class ResidualsTestCase(unittest.TestCase):
 
     def test_residuals_vs_mag_depth_vs30(self):
         """
-        Tests basic execution of Resiuals vs (magnitude, depth, vs30) plot
-        data. Does not test correctness of values
+        Tests basic execution of Resiuals vs (magnitude, depth,
+        vs30) plot data - does not test correctness of values.
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -177,7 +177,7 @@ class ResidualsTestCase(unittest.TestCase):
     def test_residuals_vs_distance(self):
         """
         Tests basic execution of Resiuals vs distances plot
-        data. Does not test correctness of values
+        data - does not test correctness of values.
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
@@ -200,8 +200,7 @@ class ResidualsTestCase(unittest.TestCase):
         self._assert_linreg([1, 2], [np.nan, -4], [2], [4])
         self._assert_linreg([1, np.nan], [np.nan, -4], [np.nan], [np.nan])
         # a less edgy test case:
-        self._assert_linreg([1, np.nan, 4.5, 6], [np.nan, -4, 11, 0.005],
-                            [4.5, 6], [11, 0.005])
+        self._assert_linreg([1, np.nan, 4.5, 6], [np.nan, -4, 11, 0.005], [4.5, 6], [11, 0.005])
 
     def _assert_linreg(self, nanx, nany, x, y):
         # nanx, nany: values for _nanlinreg.
@@ -223,6 +222,6 @@ class ResidualsTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Deletes the database
+        Deletes the database.
         """
         shutil.rmtree(cls.out_location)

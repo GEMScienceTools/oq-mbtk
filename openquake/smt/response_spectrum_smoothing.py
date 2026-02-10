@@ -27,7 +27,8 @@ import warnings
 
 class BaseSpectralSmoother(object):
     """
-    Abstract base class for method to apply smoothing to a spectrum
+    Abstract base class for method to apply smoothing to a spectrum.
+
     :param dict params:
         Smoothing model parameters
     """
@@ -35,20 +36,20 @@ class BaseSpectralSmoother(object):
 
     def __init__(self, params):
         """
-        Instantiate with dictionary of parameters
+        Instantiate with dictionary of parameters.
         """
         self.params = self._check_params(params)
 
     def _check_params(self, params):
         """
-        In the simple case the parameters are valid
+        In the simple case the parameters are valid.
         """
         return params
     
     @abc.abstractmethod
     def apply_smoothing(self, spectra, frequencies):
         """
-        Applies the smoothing to a given spectrum
+        Applies the smoothing to a given spectrum.
         """
 
 def konnoOhmachiSmoothingWindow(frequencies, center_frequency, bandwidth=40.0,
@@ -58,7 +59,7 @@ def konnoOhmachiSmoothingWindow(frequencies, center_frequency, bandwidth=40.0,
     frequencies.
 
     Returns the smoothing window around the center frequency with one value per
-    input frequency defined as follows (see [Konno1998]_):
+    input frequency defined as follows:
 
     [sin(b * log_10(f/f_c)) / (b * log_10(f/f_c)]^4
         b   = bandwidth
@@ -274,7 +275,7 @@ def konnoOhmachiSmoothing(spectra, frequencies, bandwidth=40, count=1,
 
 class KonnoOhmachi(BaseSpectralSmoother):
     """
-
+    Class which applies the Konno & Ohmachi (1998) smoothing method
     """
     def _check_params(self, params):
         """

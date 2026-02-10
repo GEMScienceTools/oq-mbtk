@@ -302,8 +302,13 @@ def plot_yy(gs0, dip1, dip2, stk1, stk2):
 
 def process_gcmt_datafames(fname_folder: str, folder_out: str, save_csv: bool = False):
     """
+    Process GCMt dataframes describing the nodal planes of events and produce figures of the classification
+    of the focal mechanisms according to Kaverina et al. (1996) 
+    
     :param fnames:
         A list containing the names of the files to be processed or a pattern
+        These should be csv files containing information from GCMT 
+        (plunge_b, plunge_p, plunge_t, dip1, dip2, strike1, strike2)
     :param folder_out:
         The name of the output folder
     :param save_csv:

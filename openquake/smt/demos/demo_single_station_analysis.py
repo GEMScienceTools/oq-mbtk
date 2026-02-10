@@ -6,7 +6,6 @@ import os
 import pickle
 import shutil
 
-from openquake.baselib import sap
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
@@ -24,18 +23,18 @@ BASE = os.path.abspath('')
 demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify .toml file with GMPEs and imts to use
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residual_analysis_inputs.toml')
+demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify results folder name
 demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 # Minimum number of records for a site to be considered in the SSA
-demo_threshold = 10
+demo_threshold = 20
 
 
 def make_database(flatfile, out_dir):
     """
-    Compute the residuals from the example flatfile, GMMs and imts
+    Compute the residuals from the example flatfile, GMMs and imts.
     """
     # Create metadata directory
     metadata_dir = os.path.join(out_dir, 'metadata')
@@ -52,7 +51,7 @@ def make_database(flatfile, out_dir):
 
 def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     """
-    Perform the analysis using the demo files
+    Perform the analysis using the demo files.
     """
     # Print that workflow has begund
     print("Single station residual analysis workflow has begun...")
@@ -63,12 +62,12 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     # For each station print some info
     msg = 'Sites with required threshold of at least %s records:' %(threshold)
     print(msg)
-    for _, site_id in enumerate(top_sites.keys()):
+    for _, site_id in enumerate(list(top_sites.keys())):
         print(" Site ID: %s Name: %s, Number of Records: %s" %(
-            site_id, top_sites[site_id]["Name"], top_sites [site_id]["Count"]))
+            site_id, top_sites[site_id]["Name"], top_sites[site_id]["Count"]))
 
     # Create SingleStationAnalysis object
-    ssa = res.SingleStationAnalysis.from_toml(top_sites.keys(), gmms_imts)
+    ssa = res.SingleStationAnalysis.from_toml(list(top_sites.keys()), gmms_imts)
     
     # Compute the total, inter-event and intra-event residuals for each site
     ssa.get_site_residuals(sm_database)
@@ -95,16 +94,16 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
             # Filenames
             output_all_res_with_site = os.path.join(
                 gmpe_folder, gmpe_folder_name + '_' + imt + '_' +
-                'AllResPerSite.jpg') 
-            output_intra_res_components_with_site = os.path.join(
+                'AllResPerSite.png') 
+            output_intra_res_comps_with_site = os.path.join(
                 gmpe_folder, gmpe_folder_name + '_' + imt + '_' +
-                'IntraResCompPerSite.jpg') 
+                'IntraResCompPerSite.png') 
             
             # Create the plots and save
             rspl.ResidualWithSite(
-                ssa, gmpe, imt, output_all_res_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_all_res_with_site)
             rspl.IntraEventResidualWithSite(
-                ssa, gmpe, imt, output_intra_res_components_with_site, filetype='jpg')
+                ssa, gmpe, imt, output_intra_res_comps_with_site)
 
     # Print that workflow has finished
     print("Single station residual analysis workflow successfully completed.")
@@ -115,7 +114,7 @@ def main(flatfile=demo_flatfile,
          out_dir=demo_out,
          threshold=demo_threshold):
     """
-    Run the demo single station residual analysis
+    Run the demo single station residual analysis.
     """
     # Make a new directory for outputs
     if os.path.exists(out_dir):
@@ -130,4 +129,4 @@ def main(flatfile=demo_flatfile,
     
     
 if __name__ == '__main__':
-    sap.run(main)
+    main()

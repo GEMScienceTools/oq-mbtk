@@ -20,8 +20,9 @@
 Tests for intensity-measure computation including response spectra
 and unit conversion.
 """
-import unittest
 import os
+import unittest
+import tempfile
 import h5py
 import numpy as np
 from scipy.constants import g
@@ -32,18 +33,19 @@ import openquake.smt.utils_intensity_measures as ims
 from openquake.smt.utils import convert_accel_units
 
 
-BASE_DATA_PATH = os.path.dirname(__file__)
+BASE = os.path.dirname(__file__)
+TMP = os.path.join(tempfile.mkdtemp(), "tmp.png")
 
 
 class BaseIMSTestCase(unittest.TestCase):
     """
-    Base test case for Response Spectra and Intensity Measure functions
+    Base test case for Response Spectra and Intensity Measure functions.
     """
     @staticmethod
     def arr_diff(x, y, percent):
         """
         Retrieving data from hdf5 leads to precision differences use relative
-        error (i.e. < X % difference)
+        error (i.e. < X % difference).
         """
         idx = np.logical_and(x > 0.0, y > 0.0)
         diff = np.zeros_like(x)
@@ -57,7 +59,7 @@ class BaseIMSTestCase(unittest.TestCase):
 
     def _compare_sa_sets(self, sax, fle_loc, disc=1.0):
         """
-        When data is stored in a dictionary of arrays, compare by keys
+        When data is stored in a dictionary of arrays, compare by keys.
         """
         for key in sax:
             if not isinstance(sax[key], np.ndarray) or len(sax[key]) == 1:
@@ -67,22 +69,22 @@ class BaseIMSTestCase(unittest.TestCase):
 
     def setUp(self):
         """
-        Connect to hdf5 data store
+        Connect to hdf5 data store.
         """
         self.fle = h5py.File(os.path.join(
-            BASE_DATA_PATH, "utils_intensity_measures_test_data.hdf5"), "r")
+            BASE, "utils_intensity_measures_test_data.hdf5"), "r")
         self.periods = self.fle["INPUTS/periods"][:]
 
     def tearDown(self):
         """
-        Close hdf5 connection
+        Close hdf5 connection.
         """
         self.fle.close()
 
 
 class ResponseSpectrumTestCase(BaseIMSTestCase):
     """
-    Tests the response spectrum methods
+    Tests the response spectrum methods.
     """
     def test_response_spectrum(self):
         # Tests the Nigam & Jennings Response Spectrum
@@ -162,7 +164,7 @@ class ResponseSpectrumTestCase(BaseIMSTestCase):
 
 class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
     """
-    Tests the functions returning scalar intensity measures
+    Tests the functions returning scalar intensity measures.
     """
     def test_get_peak_measures(self):
         # Tests the PGA, PGV, PGD functions
@@ -215,6 +217,8 @@ class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
         self.assertAlmostEqual(
             ims.get_arms(x_record, x_timestep),
             56.8495087, 3)
+        # Husid plot execution
+        ims.plot_husid(x_record, x_timestep, TMP, 0.05, 0.95)
 
     def test_spectrum_intensities(self):
         # Tests Housner Intensity and Acceleration Spectrum Intensity
@@ -233,7 +237,7 @@ class ScalarIntensityMeasureTestCase(BaseIMSTestCase):
 
 class FourierSpectrumBuildSmooth(BaseIMSTestCase):
     """
-    Test smoothing of FAS.
+    Test creation and smoothing of FAS.
     """
     def test_create_fas(self):
         x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
@@ -255,6 +259,10 @@ class FourierSpectrumBuildSmooth(BaseIMSTestCase):
         np.testing.assert_array_almost_equal(
             smoothed_fas, self.fle["TEST2/FAS_SMOOTHED"][:], 5)
 
+    def test_plot_fourier(self):
+        x_record = self.fle["INPUTS/RECORD1/XRECORD"][:]
+        x_timestep = self.fle["INPUTS/RECORD1/XRECORD"].attrs["timestep"]
+        ims.plot_fourier_spectrum(x_record, x_timestep, TMP)
 
 class UtilsTestCase(unittest.TestCase):
     """
@@ -269,7 +277,7 @@ class UtilsTestCase(unittest.TestCase):
 
     def test_accel_units(self):
         """
-        Test conversion of acceleration units and scalar handling
+        Test conversion of acceleration units and scalar handling.
         """
         func = convert_accel_units
         for acc in [np.nan, 0, 100, -g*5, g*6.5,

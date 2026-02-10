@@ -18,31 +18,317 @@
 """
 Utilities used throughout the SMT (both Comparison and Residuals Module)
 """
-import os
 import re
 import numpy as np
 from scipy.constants import g
 from scipy.integrate import cumulative_trapezoid
-from math import sqrt, pi, sin, cos
 
-from openquake.hazardlib.geo import PlanarSurface
+from openquake.hazardlib.geo import PlanarSurface, Point
+from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.gsim import get_available_gsims
-from openquake.hazardlib.scalerel.peer import PeerMSR
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
+from openquake.hazardlib import valid
 
-
-# Converting to radians
-TO_RAD = pi / 180.
 
 # Get a list of the available GSIMs
 AVAILABLE_GSIMS = get_available_gsims()
 
 # Regular expression to get a GMPETable from string:
-_gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
+_GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
+
+# GEM Global Flatfile Mappings
+CMS2_TO_G = 1/980.665
+CMS_TO_GSEC = 1/980.665
+GEM_FF_MAPPINGS = {
+    # Dist types: dist cols
+    "repi": "epi_dist",
+    "rjb": "JB_dist",
+    "rrup": "rup_dist",
+    "rhypo": "rhypo_dist",
+    # IMT strings: {col, units in flatfile, conversion to OQ gsim units --> found in oq-engine.openquake.hazardlib.imt}
+    "CAV": {"col": "rotD50_CAV", "unit": "cm/s", "conv_factor": CMS_TO_GSEC},
+    "IA": {"col": "rotD50_IA", "unit": "m/s", "conv_factor": 1},
+    "PGD": {"col": "rotD50_pgd", "unit": "cm", "conv_factor": 1},
+    "PGV": {"col": "rotD50_pgv", "unit": "cm/s", "conv_factor": 1},
+    "PGA": {"col": "rotD50_pga", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.01)": {"col": "rotD50_T0_010", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.025)": {"col": "rotD50_T0_025", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.04)": {"col": "rotD50_T0_040", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.05)": {"col": "rotD50_T0_050", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.07)": {"col": "rotD50_T0_070", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.1)": {"col": "rotD50_T0_100", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.15)": {"col": "rotD50_T0_150", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.2)": {"col": "rotD50_T0_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.25)": {"col": "rotD50_T0_250", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.3)": {"col": "rotD50_T0_300", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.35)": {"col": "rotD50_T0_350", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.4)": {"col": "rotD50_T0_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.45)": {"col": "rotD50_T0_450", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.5)": {"col": "rotD50_T0_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.6)": {"col": "rotD50_T0_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.7)": {"col": "rotD50_T0_700", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.75)": {"col": "rotD50_T0_750", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.8)": {"col": "rotD50_T0_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.9)": {"col": "rotD50_T0_900", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.0)": {"col": "rotD50_T1_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.2)": {"col": "rotD50_T1_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.4)": {"col": "rotD50_T1_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.6)": {"col": "rotD50_T1_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.8)": {"col": "rotD50_T1_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.0)": {"col": "rotD50_T2_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.5)": {"col": "rotD50_T2_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.0)": {"col": "rotD50_T3_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.5)": {"col": "rotD50_T3_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.0)": {"col": "rotD50_T4_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.5)": {"col": "rotD50_T4_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(5.0)": {"col": "rotD50_T5_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(6.0)": {"col": "rotD50_T6_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(7.0)": {"col": "rotD50_T7_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(8.0)": {"col": "rotD50_T8_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(9.0)": {"col": "rotD50_T9_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(10.0)": {"col": "rotD50_T10_000", "unit": "g", "conv_factor": CMS2_TO_G}
+    }
 
 
-### General utils for time series
+COLORS = [
+        '#0000FF',  # blue
+        '#008000',  # green
+        '#FF0000',  # red
+        '#00FFFF',  # cyan
+        '#FF00FF',  # magenta
+        '#FFFF00',  # yellow
+        '#DAA520',  # goldenrod
+        '#708090',  # slategray
+        '#A0522D',  # sienna
+        '#FF4500',  # orange red
+        '#32CD32',  # lime green
+        '#FF8C00',  # dark orange
+        '#9400D3',  # dark violet
+        '#20B2AA',  # light sea green
+        '#F0E68C',  # khaki
+        '#FF69B4',  # hot pink
+        '#BA55D3',  # medium orchid
+        '#7CFC00',  # lawn green
+        '#CD853F',  # peru
+        '#9ACD32',  # yellow green
+        '#3CB371',  # medium sea green
+        '#4B0082',  # indigo
+        '#FFFF00',  # yellow
+        '#1E90FF',  # dodger blue
+        '#FFB6C1',  # light pink
+        '#4682B4',  # steel blue
+        '#8FBC8F',  # dark sea green
+        '#B22222',  # firebrick
+        '#00CED1',  # dark turquoise
+        '#FFD700',  # gold
+        '#6A5ACD',  # slate blue
+        '#D2691E',  # chocolate
+        '#00BFFF',  # deep sky blue
+        '#FF6347',  # tomato
+        '#40E0D0',  # turquoise
+        '#C71585',  # medium violet red
+        '#E9967A',  # dark salmon
+        '#A9A9A9',  # dark gray
+        ]
+
+
+### Utils for value validation ###
+def get_float(xval):
+    """
+    Returns a float value, or none
+    """
+    if xval.strip():
+        try:
+            return float(xval)
+        except:
+            return None
+    else:
+        return None
+
+
+def get_int(xval):
+    """
+    Returns an int value or none
+    """
+    if xval.strip():
+        try:
+            return int(xval)
+        except:
+            return None
+    else:
+        return None
+
+
+def positive_float(value, key, verbose=False):
+    """
+    Returns True if the value is positive or zero, false otherwise
+    """
+    value = value.strip()
+    if value and float(value) >= 0.0:
+        return float(value)
+    if verbose:
+        print("Positive float value (or 0.0) is needed for %s - %s is given"
+              % (key, str(value)))
+    return None
+
+
+def vfloat(value, key):
+    """
+    Returns value or None if not possible to calculate
+    """
+    value = value.strip()
+    if value:
+        try:
+            return float(value)
+        except:
+            print("Invalid float value %s for %s" % (value, key))
+    return None
+
+
+def vint(value, key):
+    """
+    Returns value or None if not possible to calculate
+    """
+    value = value.strip()
+    if "." in value:
+        value = value.split(".")[0]
+    if value:
+        try:
+            return int(value)
+        except:
+            print("Invalid int value %s for %s" % (value, key))
+    return None
+
+
+def positive_int(value, key):
+    """
+    Returns True if the value is positive or zero, false otherwise
+    """
+    value = value.strip()
+    if value and int(value) >= 0.0:
+        return int(value)
+    print("Positive float value (or 0.0) is needed for %s - %s is given"
+          % (key, str(value)))
+    return False
+
+
+def longitude(value):
+    """
+    Returns True if the longitude is valid, False otherwise
+    """
+    lon = float(value.strip())
+    if not lon:
+        return False
+    if (lon >= -180.0) and (lon <= 180.0):
+        return lon
+    print("Longitude %s is outside of range -180 <= lon <= 180" % str(lon))
+    return False
+
+
+def latitude(value):
+    """
+    Returns True if the latitude is valid, False otherwise
+    """
+    lat = float(value.strip())
+    if not lat:
+        print("Latitude is missing")
+        return False
+    if (lat >= -90.0) and (lat <= 90.0):
+        return lat 
+    print("Latitude %s is outside of range -90 <= lat <= 90" % str(lat))
+    return False
+
+
+def strike(value):
+    """
+    Returns a float value in range 0 - 360.0
+    """
+    strike = value.strip()
+    if not strike:
+        return None
+    strike = float(strike)
+    if strike and (strike >= 0.0) and (strike <= 360.0):
+        return strike
+    print("Strike %s is not in range 0 - 360" % value)
+    return None
+
+
+def dip(value):
+    """
+    Returns a float value in range 0 - 90.
+    """
+    dip = value.strip()
+    if not dip:
+        return None
+    dip = float(dip)
+    if dip and (dip > 0.0) and (dip <= 90.0):
+        return dip
+    print("Dip %s is not in range 0 - 90" % value)
+    return None
+
+
+def rake(value):
+    """
+    Returns a float value in range -180 - 180
+    """
+    rake = value.strip()
+    if not rake:
+        return None
+    rake = float(rake)
+    if rake and (rake >= -180.0) and (rake <= 180.0):
+        return rake
+    print("Rake %s is not in range -180 - 180" % value)
+    return None
+
+
+### General utils for ctx management ###
+def make_rup(lon,
+             lat,
+             dep,
+             msr,
+             mag,
+             aratio,
+             strike,
+             dip,
+             rake,
+             trt,
+             ztor=None):
+    """
+    Creates an OQ planar rupture given the hypocenter position
+    """
+    hypoc = Point(lon, lat, dep)
+    srf = PlanarSurface.from_hypocenter(hypoc,
+                                        msr,
+                                        mag,
+                                        aratio,
+                                        strike,
+                                        dip,
+                                        rake,
+                                        ztor)
+    rup = BaseRupture(mag, rake, trt, hypoc, srf)
+    rup.hypocenter.depth = dep
+    return rup
+
+
+def full_dtype_gmm():
+    """
+    Instantiate a DummyGMPE with all distance types. This is useful
+    for returning all distance metrics from a ctx (otherwise only
+    the distance types used by the given GMM are returned).
+    """
+    core_r_types = [
+        'repi', 'rrup', 'rjb', 'rhypo', 'rx', "ry0", "rvolc"]
+    gmpe = valid.gsim("DummyGMPE")
+    orig_r_types = list(gmpe.REQUIRES_DISTANCES)
+    for core in core_r_types:
+        if core not in orig_r_types:
+            orig_r_types.append(core)
+    gmpe.REQUIRES_DISTANCES = frozenset(orig_r_types)
+    return gmpe
+
+
+### General utils for time series ###
 def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
     """
     Converts acceleration from/to different units
@@ -139,7 +425,7 @@ def nextpow2(nval):
     return int(2.0 ** m_i)
 
 
-### Utils for managing GMMs in the Residuals Module
+### Utils for managing GMMs in the Residuals Module ###
 def check_gsim_list(gsim_list):
     """
     Check the GSIM models or strings in `gsim_list`, and return a dict of
@@ -156,13 +442,13 @@ def check_gsim_list(gsim_list):
     output_gsims = {}
     for gs in gsim_list:
         if isinstance(gs, GMPE):
-            output_gsims[_get_gmpe_name(gs)] = gs  # get name of GMPE instance
+            output_gsims[_get_gmpe_name(gs)] = gs # Get name of GMPE instance
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
         else:
-            match = _gmpetable_regex.match(gs)  # GMPETable ?
+            match = _GMPETABLE_REGEX.match(gs) # GMPETable ?
             if match:
-                filepath = match.group(1).split("=")[1]  # get table filename
+                filepath = match.group(1).split("=")[1] # Get table filename
                 output_gsims[gs] = GMPETable(gmpe_table=filepath)
             else:
                 raise ValueError('%s Not supported by OpenQuake' % gs)
@@ -174,7 +460,7 @@ def _get_gmpe_name(gsim):
     """
     Returns the name of the GMPE given an instance of the class
     """
-    match = _gmpetable_regex.match(str(gsim))  # GMPETable ?
+    match = _GMPETABLE_REGEX.match(str(gsim)) # GMPETable ?
     if match:
         filepath = match.group(1).split("=")[1][1:-1]
         return 'GMPETable(gmpe_table=%s)' % filepath
@@ -194,139 +480,39 @@ def _get_gmpe_name(gsim):
             return gsim_name + gsim_name_str
         else:
             return gsim_name
-        
 
-### Utils for finite rupture construction in the Residuals module
-DEFAULT_MSR = PeerMSR()
 
-def create_planar_surface(top_centroid, strike, dip, area, aspect):
+def clean_gmm_label(gmpe, drop_weight_info=False):
     """
-    Given a central location, create a simple planar rupture
-    :param top_centroid:
-        Centroid of trace of the rupture, as instance of :class:
-            openquake.hazardlib.geo.point.Point
-    :param float strike:
-        Strike of rupture(Degrees)
-    :param float dip:
-        Dip of rupture (degrees)
-    :param float area:
-        Area of rupture (km^2)
-    :param float aspect:
-        Aspect ratio of rupture
+    Return a string of GMM which contains no slashes or new line
+    syntax for use in plots (generally this occurs from the use of
+    ModifiableGMPE with a GMM containing additional input arguments).
 
-    :returns: Rupture as an instance of the :class:
-        openquake.hazardlib.geo.surface.planar.PlanarSurface
+    Also can remove LT weight information if required.
     """
-    rad_dip = dip * pi / 180.
-    width = sqrt(area / aspect)
-    length = aspect * width
-    # Get end points by moving the top_centroid along strike
-    top_right = top_centroid.point_at(length / 2., 0., strike)
-    top_left = top_centroid.point_at(length / 2.,
-                                     0.,
-                                     (strike + 180.) % 360.)
-    # Along surface width
-    surface_width = width * cos(rad_dip)
-    vertical_depth = width * sin(rad_dip)
-    dip_direction = (strike + 90.) % 360.
+    # Clean the gmpe
+    gmm_label = re.sub(r'\\+n', ' ', gmpe)
+    gmm_label = re.sub(r'\\', '', gmm_label)
 
-    bottom_right = top_right.point_at(surface_width,
-                                      vertical_depth,
-                                      dip_direction)
-    bottom_left = top_left.point_at(surface_width,
-                                    vertical_depth,
-                                    dip_direction)
+    lines = gmm_label.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().startswith('gmpe = '):
+            prefix, value = line.split('=', 1)
+            parts = value.strip().split()
+            value_clean = ', '.join(parts)
+            lines[i] = f"{prefix.strip()} = {value_clean}"
+    gmm_label = '\n'.join(lines)
 
-    # Create the rupture
-    return PlanarSurface(strike, dip, top_left, top_right,
-                         bottom_right, bottom_left)
+    # Might not want to retain the GMC LT weight info
+    if drop_weight_info is True:
+        parts = [part.strip() for part in gmm_label.split(
+            '\n') if "lt_weight_gmc" not in part]
+        gmm_label = ', '.join(parts)
+
+    return gmm_label
 
 
-def get_hypocentre_on_planar_surface(plane, hypo_loc=None):
-    """
-    Determines the location of the hypocentre within the plane
-    :param plane:
-        Rupture plane as instance of :class:
-        openquake.hazardlib.geo.surface.planar.PlanarSurface
-    :param tuple hypo_loc:
-        Hypocentre location as fraction of rupture plane, as a tuple of
-        (Along Strike, Down Dip), e.g. a hypocentre located in the centroid of
-        the rupture plane would be input as (0.5, 0.5), whereas a hypocentre
-        located in a position 3/4 along the length, and 1/4 of the way down
-        dip of the rupture plane would be entered as (0.75, 0.25)
-    :returns:
-        Hypocentre location as instance of :class:
-        openquake.hazardlib.geo.point.Point
-    """
-    centroid = plane.get_middle_point()
-    if hypo_loc is None:
-        return centroid
-
-    along_strike_dist = (hypo_loc[0] * plane.length) - (0.5 * plane.length)
-    down_dip_dist = (hypo_loc[1] * plane.width) - (0.5 * plane.width)
-    if along_strike_dist >= 0.:
-        along_strike_azimuth = plane.strike
-    else:
-        along_strike_azimuth = (plane.strike + 180.) % 360.
-        along_strike_dist = (0.5 - hypo_loc[0]) * plane.length
-    # Translate along strike
-    hypocentre = centroid.point_at(along_strike_dist,
-                                   0.,
-                                   along_strike_azimuth)
-    # Translate down dip
-    horizontal_dist = down_dip_dist * cos(TO_RAD * plane.dip)
-    vertical_dist = down_dip_dist * sin(TO_RAD * plane.dip)
-    if down_dip_dist >= 0.:
-        down_dip_azimuth = (plane.strike + 90.) % 360.
-    else:
-        down_dip_azimuth = (plane.strike - 90.) % 360.
-        down_dip_dist = (0.5 - hypo_loc[1]) * plane.width
-        horizontal_dist = down_dip_dist * cos(TO_RAD * plane.dip)
-
-    return hypocentre.point_at(horizontal_dist,
-                               vertical_dist,
-                               down_dip_azimuth)
-
-
-# Mechanism type to Rake conversion:
-MECHANISM_TYPE = {
-    "Normal": -90.0,
-    "Strike-Slip": 0.0,
-    "Reverse": 90.0,
-    "Oblique": 0.0,
-    "Unknown": 0.0,
-    "N": -90.0,  # Flatfile conventions
-    "S": 0.0,
-    "R": 90.0,
-    "U": 0.0,
-    "NF": -90.,  # ESM flatfile conventions
-    "SS": 0.,
-    "TF": 90.,
-    "NS": -45.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 0.0}
-
-
-# Mechanism type to dip conversion
-DIP_TYPE = {
-    "Normal": 60.0,
-    "Strike-Slip": 90.0,
-    "Reverse": 35.0,
-    "Oblique": 60.0,
-    "Unknown": 90.0,
-    "N": 60.0,  # Flatfile conventions
-    "S": 90.0,
-    "R": 35.0,
-    "U": 90.0,
-    "NF": 60.,  # ESM flatfile conventions
-    "SS": 90.,
-    "TF": 35.,
-    "NS": 70.,  # Normal with strike-slip component
-    "TS": 45.,  # Reverse with strike-slip component
-    "O": 90.0}
-
-
-### Vs30 to z1pt0 and z2pt5 relationships from GMMs
+### Vs30 to z1pt0 and z2pt5 relationships from GMMs ###
 def vs30_to_z1pt0_as08(vs30):
     """
     Extracts a depth to 1.0 km/s velocity layer using the relationship
@@ -405,33 +591,3 @@ def vs30_to_z2pt5_cb14(vs30, japan=False):
         return np.exp(5.359 - 1.102 * np.log(vs30))
     else:
         return np.exp(7.089 - 1.144 * np.log(vs30))
-
-
-# Other
-def _save_image(filename, fig, format='png', dpi=300, **kwargs):  # noqa
-    """
-    Saves the matplotlib figure `fig` to `filename`. Wrapper around `fig.savefig`
-    with `dpi=300` by default and `format` inferred from `filename` extension
-    or, if no extension is found, set as "png".
-    If filename is empty this function does nothing and return
-
-    :param str filename: str, the file path
-    :param figure: a :class:`matplotlib.figure.Figure` (e.g. via
-        `matplotlib.pyplot.figure()`)
-    :param format: string, the image format. Default: 'png'. This argument is
-        ignored if `filename` has a file extension, as `format` will be set
-        equal to the extension without leading dot.
-    :param str kwargs: additional keyword arguments to pass to `fig.savefig`.
-        For details, see:
-        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
-    """
-    if not filename:
-        return
-
-    name, ext = os.path.splitext(filename)
-    if ext:
-        format = ext[1:]  # noqa
-    else:
-        filename = name + '.' + format
-
-    fig.savefig(filename, dpi=dpi, format=format, **kwargs)

@@ -29,7 +29,6 @@ from matplotlib.patches import Patch
 
 from openquake.baselib import sap, hdf5
 from openquake.commands.export import main as export
-from openquake.hazardlib.site import SiteCollection
 
 import warnings
 warnings.filterwarnings("ignore")

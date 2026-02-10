@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests parsing of a flatfile downloaded from ESM custom URL database
+Tests parsing of a flatfile downloaded from ESM custom URL database.
 --> (https://esm-db.eu/esmws/flatfile/1/)
-
-This parser assumes you have selected all available headers in your URL search
-when downloading the flatfile
 """
 import os
 import shutil
@@ -32,7 +29,7 @@ from openquake.smt.residuals.parsers.esm_url_flatfile_parser import \
     ESMFlatfileParserURL
 
 
-BASE_DATA_PATH = os.path.join(os.path.dirname(__file__), "data")
+BASE = os.path.join(os.path.dirname(__file__), "data")
 
 # Defines the record IDs for the target data set
 TARGET_IDS = [
@@ -49,23 +46,24 @@ TARGET_IDS = [
 
 class ESMFlatfileParserURLTestCase(unittest.TestCase):
     """
-    Tests the parsing of an ESM URL format flatfile
+    Tests the parsing of an ESM URL format flatfile.
     """
     @classmethod
     def setUpClass(cls):
         cls.ESM_flatfile_directory = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_Greece_test.csv")
+            BASE, "esm_url_test_file.csv")
         cls.db_file = os.path.join(
-            BASE_DATA_PATH, "ESM_URL_conversion_test_metadata")    
-        cls.gmpe_list = ["AkkarEtAlRjb2014", "ChiouYoungs2014"]
+            BASE, "ESM_URL_conversion_test_metadata")    
+        cls.gmpe_list = ["BooreEtAl2014", "ChiouYoungs2014"]
         cls.imts = ["PGA", "SA(1.0)"]   
 
     def test_esm_url_flatfile_parser(self):
         """
-        Tests the parsing of the reformatted ESM flatfile
+        Tests the parsing of the reformatted ESM flatfile.
         """
-        parser = ESMFlatfileParserURL.autobuild("000", "ESM_conversion_test",
-                                             self.db_file, self.ESM_flatfile_directory)
+        # Parse
+        parser = ESMFlatfileParserURL.autobuild(
+            "000", "ESM_conversion_test", self.db_file, self.ESM_flatfile_directory)
         with open(os.path.join(self.db_file, "metadatafile.pkl"), "rb") as f:
             db = pickle.load(f)
 
@@ -87,6 +85,6 @@ class ESMFlatfileParserURLTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Remove the database
+        Remove the database.
         """
         shutil.rmtree(cls.db_file)

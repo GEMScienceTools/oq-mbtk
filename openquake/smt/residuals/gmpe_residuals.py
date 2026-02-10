@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Module to get GMPE residuals - total, inter and intra
-{'GMPE': {'IMT1': {'Total': [], 'Inter event': [], 'Intra event': []},
-          'IMT2': { ... }}}
+Module to get GMPE residuals.
 """
 import sys
 import warnings
@@ -27,13 +25,13 @@ import re
 import toml
 import numpy as np
 import pandas as pd
-from math import sqrt, ceil
 from scipy.integrate import trapezoid
-from scipy.special import erf
 from scipy.stats import norm
 
-from openquake.hazardlib import valid
-from openquake.hazardlib import imt
+from openquake.hazardlib import imt, valid, nrml, contexts
+from openquake.baselib.node import Node as N
+from openquake.hazardlib.gsim_lt import GsimLogicTree
+
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 from openquake.smt.utils import convert_accel_units, check_gsim_list
 
@@ -62,13 +60,15 @@ ST_PAR = ["vs30",
           "rjb",
           "rhypo",
           "repi",
-          "ry0"]
+          "ry0",
+          "rvolc",
+          "rcdpp"]
 
 
 ### Util functions
 def get_gmm_from_toml(key, config):
     """
-    Get a GMM from a TOML file
+    Get a GMM from a TOML file.
     """
     # ModifiableGMPE is not implemented for use in res module
     if key == "ModifiableGMPE":
@@ -84,19 +84,51 @@ def get_gmm_from_toml(key, config):
     if len(config['models'][key]):
         config['models'][key].pop('style', None)
         value += '\n' + str(toml.dumps(config['models'][key]))
-    return valid.gsim(value.strip())
+
+    # Get GMM
+    gmm = valid.gsim(value.strip())
+
+    # HACK: Also make sure still retrieving any rup, dist and site
+    # params only specified in the parent class (sometimes the use
+    # of gsim aliases means they are not added as expected)
+    parent = gmm.__class__.__bases__[0]
+    if parent.__name__ != "GMPE": # Must be a subclass
+        # Rup params
+        for par in parent.REQUIRES_RUPTURE_PARAMETERS:
+            if par not in gmm.REQUIRES_RUPTURE_PARAMETERS:
+                gmm.REQUIRES_RUPTURE_PARAMETERS |= {par}
+        # Site params
+        for par in parent.REQUIRES_SITES_PARAMETERS:
+            if par not in gmm.REQUIRES_SITES_PARAMETERS:
+                gmm.REQUIRES_SITES_PARAMETERS |= {par}
+        # Dist params
+        for par in parent.REQUIRES_DISTANCES:
+            if par not in gmm.REQUIRES_DISTANCES:
+                gmm.REQUIRES_DISTANCES |= {par}
+
+    return gmm
+
 
 def get_gmpe_str(gmpe):
     """
-    Return a string of the GMPE to use for printing/exporting
+    Return a simplified string representative of the given gmpe.
     """
     if '_toml=' in str(gmpe):
-        gmpe_str = str(
-            gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
+        return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
     else:
-        gmpe_str = gmpe
+        return gmpe
 
-    return gmpe_str
+
+def get_mean_stds(rup_ctx, gsim, imt):
+    """
+    :param rup_ctx: a RuptureContext with site information
+    :param gsim: a GSIM instance
+    :param imt_str: an IMT string
+    :return: an array of shape (4, N) with mean, sig, tau, phi vectors
+    """
+    cmaker = contexts.simple_cmaker([gsim], [imt])
+    ctx = cmaker.recarray([rup_ctx])
+    return cmaker.get_mean_stds([ctx])[:, 0, 0, :]  # (4, N)
 
 
 class Residuals(object):
@@ -121,37 +153,45 @@ class Residuals(object):
         self.unique_indices = {}
         self.gmpe_sa_limits = {}
         self.gmpe_scalars = {}
+
+        sa = any("SA(" in imtx for imtx in self.imts)
         for gmpe in self.gmpe_list:
             gmpe_dict_1 = {}
             gmpe_dict_2 = {}
             self.unique_indices[gmpe] = {}
             
-            # Get the period range and the coefficient types
+            # If evaluting GMMs for SA then get the min/max periods
             gmpe_i = self.gmpe_list[gmpe]
             coeff_atts = [att for att in dir(gmpe_i) if "COEFFS" in att]
             if len(coeff_atts) > 0:
                 coeff_att = coeff_atts[0] # Some GSIMS have irreg. COEFF attribute 
                                           # names e.g. Z06 (but const. period range)
                 pers = [sa.period for sa in getattr(gmpe_i, coeff_att).sa_coeffs]
+                if len(pers) == 0 and sa is True:
+                    raise ValueError(f"No period-dependent coefficients could be "
+                                     f"retrieved for {get_gmpe_str(gmpe)} - check "
+                                     f"that this GMM supports SA.")
                 self.gmpe_scalars[gmpe] = list(
                     getattr(gmpe_i, coeff_att).non_sa_coeffs)
             else:
                 assert hasattr(gmpe_i, "gmpe_table")
-                # tabular GMM specified using an alias
+                # Tabular GMM specified using an alias
                 pers = gmpe_i.imls["T"]
 
-            min_per, max_per = (min(pers), max(pers))
-            self.gmpe_sa_limits[gmpe] = (min_per, max_per)
+            # Store min/max periods for given GMM
+            if sa is True:
+                min_per, max_per = (min(pers), max(pers))
+                self.gmpe_sa_limits[gmpe] = (min_per, max_per)
+
+            # Add stores for each IMT
             for imtx in self.imts:
                 if "SA(" in imtx:
                     period = imt.from_string(imtx).period
                     if period < min_per or period > max_per:
-                        print(f"IMT {imtx} outside period range for GMPE {gmpe}"
-                              f"(min GMM period = {min_per} s, "
-                              f"max GMM period = {max_per} s)")
-                        gmpe_dict_1[imtx] = None
-                        gmpe_dict_2[imtx] = None
-                        continue
+                        raise ValueError(
+                            f"IMT {imtx} outside period range for {gmpe} "
+                            f"(min GMM period = {min_per} s, "
+                            f"max GMM period = {max_per} s)")
                 gmpe_dict_1[imtx] = {}
                 gmpe_dict_2[imtx] = {}
                 self.unique_indices[gmpe][imtx] = []
@@ -184,8 +224,7 @@ class Residuals(object):
     @classmethod
     def from_toml(cls, filename):
         """
-        Read in gmpe_list and imts from .toml file. This method allows use of
-        gmpes with additional parameters and input files within the SMT
+        Read in gmpe_list and imts from .toml file.
         """
         # Read in toml file with dict of gmpes and subdict of imts
         config = toml.load(filename)
@@ -205,11 +244,27 @@ class Residuals(object):
         
         return cls(gmpe_list, imts)
 
+    @classmethod
+    def from_xml(cls, filename, imts):
+        """
+        Read in the GMMs from an XML and the IMTs as list of IMTs.
+
+        NOTE: We read all of the GMMs over the potentially multiple
+        branchsets. If the user wishes to evaluate only one branchset
+        (i.e. for one TRT, which is more likely), then they should just
+        remove the not-required branchsets from the XML.
+        """
+        # Get the GMMs from the xml
+        gmpe_list = [gmm.gsim for gmm in GsimLogicTree(filename).branches]
+
+        return cls(gmpe_list, imts)
+
     def compute_residuals(self,
                           ctx_database,
                           nodal_plane_index=1,
                           component="Geometric",
-                          normalise=True):
+                          normalise=True,
+                          stations=False):
         """
         Calculate the residuals for a set of ground motion records
 
@@ -218,19 +273,30 @@ class Residuals(object):
             observed IMTs.
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase`
             for an example
+        :param stations: Bool which if set to True prevents an error being raised
+                         if all obs values for given IMT are nans at the station,
+                         which is forbidden for a single ground-motion record in
+                         a regular residual analysis, but permitted when computing
+                         single-station residuals
         """
         # Build initial contexts with the observed values
-        contexts = ctx_database.get_contexts(
-            nodal_plane_index, self.imts, component)
+        contexts = ctx_database.get_contexts(nodal_plane_index,
+                                             self.imts,
+                                             component)
         
         # Check at least one observed value per IMT (else raise an error)
         for im in self.imts:
             obs_check = []
             for ctx in contexts:
-                obs_check.append(ctx["Observations"][im])
+                obs = ctx["Observations"][im]
+                if stations is True:
+                    # In SSA should be one rec per ev
+                    # given computing res per station
+                    assert len(obs) == 1
+                obs_check.append(obs)
             obs_check = np.concatenate(obs_check)
             check = pd.notnull(obs_check)
-            if len(check[check]) < 1:
+            if len(check[check]) < 1 and stations is False:
                 raise ValueError(f"All observed intensity measure "
                                  f"levels for {im} are empty - "
                                  f"no residuals can be computed "
@@ -243,13 +309,10 @@ class Residuals(object):
         # Contexts is in either case a list of dictionaries
         self.contexts = []
         for context in contexts:
-            # If no rvolc fix to zero (ensure rvolc gsims usable)
-            if 'rvolc' not in context['Ctx']._slots_:
-                context['Ctx'].rvolc = np.zeros_like(context['Ctx'].repi)
-            # Convert all IMTS with acceleration units, which are supposed to
-            # be in cm/s/s, to g:
+            # If units are acceleration (admitted in cm/s/s) to g
             for a_imt in accel_imts:
-                context['Observations'][a_imt] = convert_accel_units(
+                context['Observations'][
+                    a_imt] = convert_accel_units(
                         context['Observations'][a_imt], 'cm/s/s', 'g')
             # Get the expected ground motions from GMMs
             context = self.get_exp_motions(context)
@@ -291,8 +354,8 @@ class Residuals(object):
 
             self.contexts.append(context)
 
-        for gmpe in self.residuals.keys():
-            for imtx in self.residuals[gmpe].keys():
+        for gmpe in self.residuals:
+            for imtx in self.residuals[gmpe]:
                 # Check residuals exist for GMM and IMT
                 if not self.residuals[gmpe][imtx]:
                     continue
@@ -306,7 +369,7 @@ class Residuals(object):
 
     def get_exp_motions(self, context):
         """
-        Calculate the expected ground motions from the context
+        Calculate the expected ground motions from the context.
         """
         # Get expected
         exp = {gmpe: {} for gmpe in self.gmpe_list}
@@ -322,12 +385,7 @@ class Residuals(object):
                         exp[gmpe][imtx] = None
                         continue
                 # Get expected motions
-                mean, stddev = gsim.get_mean_and_stddevs(
-                    context["Ctx"],
-                    context["Ctx"],
-                    context["Ctx"],
-                    imt.from_string(imtx),
-                    self.types[gmpe][imtx])
+                mean, *stddev = get_mean_stds(context["Ctx"], gsim, imtx)
                 keep = context["Retained"][imtx]
                 mean = mean[keep]
                 for idx_comp, comp in enumerate(stddev):
@@ -335,8 +393,8 @@ class Residuals(object):
                 # If no sigma for the GMM residuals can't be computed
                 if np.all(stddev[0] == 0.) and len(keep) > 0:
                     gs = str(gmpe).split('(')[0]
-                    m = 'A sigma model is not provided for %s' %gs
-                    raise ValueError(m)
+                    mg = 'A sigma model is not provided for %s' %gs
+                    raise ValueError(mg)
                 exp[gmpe][imtx]["Mean"] = mean
                 for i, res_type in enumerate(self.types[gmpe][imtx]):
                     exp[gmpe][imtx][res_type] = stddev[i]
@@ -347,7 +405,7 @@ class Residuals(object):
 
     def calculate_residuals(self, context, normalise=True):
         """
-        Calculate the residual terms
+        Calculate the residual terms.
         """
         # Calculate residual
         residual = {}
@@ -370,7 +428,8 @@ class Residuals(object):
                         mean,
                         context["Expected"][gmpe][imtx]["Inter event"],
                         context["Expected"][gmpe][imtx]["Intra event"],
-                        normalise)
+                        normalise
+                        )
                     residual[gmpe][imtx]["Inter event"] = inter
                     residual[gmpe][imtx]["Intra event"] = intra
         context["Residual"] = residual
@@ -384,24 +443,34 @@ class Residuals(object):
                                       intra,
                                       normalise=True):
         """
-        Calculates the random effects residuals using the inter-event
-        residual formula described in Abrahamson & Youngs (1992) Eq. 10
+        Calculates the random effects residuals (i.e. decomposition of the
+        total residuals into inter-event and intra-event) using equation 10
+        of Abrahamson & Youngs (1992).
         
         :param obs: array of observed ground-shaking values for a single ctx
-                    (i.e. event) for a given imt, in natural log.
+                    (i.e. event) for a given imt, in natural log
         :param mean: array of ground-shaking values for the same ctx 
-                     predicted by the given GMPE and imt, in natural log.
+                     predicted by the given GMPE and imt, in natural log
         :param inter: float representing the inter-event component of GMPE
-                      sigma for a given imt.
+                      sigma for a given imt
         :param intra: float representing the intra-event component of GMPE
-                      sigma for a given imt.
+                      sigma for a given imt
         :param normalise: bool which if True normalises the residuals using
                           the corresponding GMPE sigma components
         """
+        # Get number of values
         nvals = float(len(mean))
+
+        # Total variance for all observations combining GMPE tau and phi
         v = nvals * (inter ** 2.) + (intra ** 2.)
+                                                  
+        # Compute the inter-event
         inter_res = ((inter ** 2.) * sum(obs - mean)) / v
+
+        # Compute the intra-event
         intra_res = obs - (mean + inter_res)
+
+        # Whether to normalise or not
         if normalise:
             return inter_res / inter, intra_res / intra
         else:
@@ -409,27 +478,21 @@ class Residuals(object):
 
     def get_residual_statistics(self):
         """
-        Retreives the mean and standard deviation values of the residuals
+        Retreives the mean and standard deviation values of the residuals.
         """
         statistics = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             for imtx in self.imts:
                 if not self.residuals[gmpe][imtx]:
                     continue
-                statistics[
-                    gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
+                statistics[gmpe][imtx] = self.get_residual_statistics_for(gmpe, imtx)
                 
         return statistics
 
     def get_residual_statistics_for(self, gmpe, imtx):
         """
         Retreives the mean and standard deviation values of the residuals for
-        a given gmpe and imtx
-
-        :param gmpe: (string) the gmpe. It must be in the list of this
-            object's gmpes
-        :param imtx: (string) the imt. It must be in the imts defined for
-            the given `gmpe`
+        a given gmpe and imtx.
         """
         residuals = self.residuals[gmpe][imtx]
         return {
@@ -441,7 +504,7 @@ class Residuals(object):
     def _get_magnitudes(self):
         """
         Returns an array of magnitudes equal in length to the number of
-        residuals
+        residuals.
         """
         magnitudes = np.array([])
         for ctxt in self.contexts:
@@ -453,16 +516,14 @@ class Residuals(object):
 
     def export_residuals(self, out_fname):
         """
-        Export the observed, predicted and residuals to a text file
+        Export the observed, predicted and residuals to a text file.
         """
         ctxs = self.contexts # List of contexts
-        gmms = self.gmpe_list
-        imts = self.imts
         store = {}
         for ctx in ctxs:
-            for imt in imts:
+            for imt in self.imts:
                 ctx_and_imt = {} # One df per imt and ctx
-                for gmpe in gmms:                
+                for gmpe in self.gmpe_list:                
                     gmpe_str = get_gmpe_str(gmpe)
 
                     # Get the expected values and the residuals
@@ -514,66 +575,85 @@ class Residuals(object):
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
 
-    ### Likelihood (Scherbaum et al. 2004) functions
-    def get_likelihood_values(self):
+    def export_gmc_xml(self, weight_metric, out_fname):
         """
-        Returns the likelihood values for Total, plus inter- and intra-event
-        residuals according to Equation 9 of Scherbaum et al (2004)
+        Export the GMMs evaluated in the residual analysis to an OQ GMC XML.
+        The weights of each GMM can be based on the normalisation of the LLH,
+        EDR or Stochastic Area scores (averaged over all considered IMTs).
+
+        NOTE: This function sets a default TRT of "*". Once written to XML
+        the user must modify this to match the TRT they wish to apply the
+        exported logic tree to within their seismic source model.
+
+        :param weight_metric: Can be "LLH", "EDR", "STO" or "equal".
         """
-        statistics = self.get_residual_statistics()
-        lh_values = {gmpe: {} for gmpe in self.gmpe_list}
-        for gmpe in self.gmpe_list:
-            for imtx in self.imts:
-                # Check residuals exist for GMM and IMT
-                if not self.residuals[gmpe][imtx]:
-                    print("IMT %s not found in Residuals for %s"
-                          % (imtx, gmpe))
-                    continue
-                lh_values[gmpe][imtx] = {}
-                values = self._compute_likelihood_values_for(gmpe, imtx)
-                for res_type, data in values.items():
-                    l_h, median_lh = data
-                    lh_values[gmpe][imtx][res_type] = l_h
-                    statistics[gmpe][imtx][res_type]["Median LH"] = median_lh
+        # Map the scores to attributes in residuals object
+        score_map = {"LLH": "llh_weights",
+                     "EDR": "edr_weights",
+                     "STO": "sto_weights",
+                     "equal": None}
 
-        return lh_values, statistics
+        # Check weight metric is valid
+        if weight_metric not in score_map.keys():
+            raise ValueError(f"An invalid weight metric has been"
+                             f"specified for GMC XML exporting - "
+                             f"must be in {list(score_map.keys())}")
+        
+        # Check required weights are in residuals obj
+        if weight_metric != "equal":
+            if not hasattr(self, score_map[weight_metric]):
+                raise ValueError(
+                    f"Cannot use {weight_metric} weights because "
+                    f"{score_map[weight_metric]} attribute is missing "
+                    f"from residuals obj (you must first compute the "
+                    f"{weight_metric}-based weights).")
 
-    def _compute_likelihood_values_for(self, gmpe, imt):
-        """
-        Returns the likelihood values for Total, plus inter- and intra-event
-        residuals according to Equation 9 of Scherbaum et al (2004) for the
-        given gmpe and the given intensity measure type.
-        `gmpe` must be in this object gmpe(s) list and imt must be defined
-        for the given gmpe: this two conditions are not checked for here.
+        # Get the weights
+        if weight_metric != "equal":
+            weights = getattr(self, score_map[weight_metric])
+        else:
+            weights = {gmm: 1/len(self.gmpe_list) for gmm in self.gmpe_list}
+        
+        # Make a branch for each GMM
+        branches = []
+        for idx_gmm, gmm in enumerate(self.gmpe_list):
+            if weight_metric != "equal":
+                wei = weights[f"{gmm} {weight_metric}-based weight"]['Avg over imts']
+            else:
+                wei = weights[gmm]
+        
+            # Make the branch
+            branch = N('logicTreeBranch', {'branchID': f'b{idx_gmm}'}, 
+                        nodes=[N('uncertaintyModel', text=str(gmm)),
+                               N('uncertaintyWeight', text=str(wei))])
+            
+            # Store
+            branches.append(branch)
 
-        :return: a dict mapping the residual type(s) (string) to the tuple
-        lh, median_lh where the first is the array of likelihood values and
-        the latter is the median of those values
-        """
-        ret = {}
-        for res_type in self.types[gmpe][imt]:
-            zvals = np.fabs(self.residuals[gmpe][imt][res_type])
-            l_h = 1.0 - erf(zvals / sqrt(2.))
-            median_lh = np.nanpercentile(l_h, 50.0)
-            ret[res_type] = l_h, median_lh
+        # Make an LT
+        lt = N('logicTree', {'logicTreeID': 'lt1'},
+               nodes=[N('logicTreeBranchSet',
+                        {'applyToTectonicRegionType': '*',
+                         'branchSetID': 'bs1',
+                         'uncertaintyType': 'gmpeModel'},
+                         nodes=branches)])
+        gsim_lt = GsimLogicTree('<in-memory>', ['*'], ltnode=lt)
 
-        return ret
+        # Write to XML
+        with open(out_fname, 'wb') as f:
+            nrml.write([gsim_lt.to_node()], f)
 
     ### LLH (Scherbaum et al. 2009) functions
-    def get_loglikelihood_values(self):
+    def get_llh_values(self):
         """
         Returns the loglikelihood fit of the GMPEs to data using the
-        loglikehood (LLH) function described in Scherbaum et al. (2009).
+        loglikehood (LLH) function described in Scherbaum et al. (2009):
         
         Scherbaum, F., Delavaud, E., Riggelsen, C. (2009) "Model Selection in
         Seismic Hazard Analysis: An Information-Theoretic Perspective",
         Bulletin of the Seismological Society of America, 99(6), 3234-3247
-
-        :param imts:
-            List of intensity measures for LLH calculation
         """
-        imt_list = {imt: None for imt in self.imts}
-        imt_list["All"] = None
+        # Iterate over the GMMs
         self.llh = {gmpe: {} for gmpe in self.gmpe_list}
         for gmpe in self.gmpe_list:
             log_residuals = np.array([])
@@ -583,36 +663,18 @@ class Residuals(object):
                 if not (imtx in self.imts) or not self.residuals[gmpe][imtx]:
                     print("IMT %s not found in Residuals for %s" % (imtx, gmpe))
                     continue
-            
+
                 # Get log-likelihood distance for IMT
                 asll = np.log2(
                     norm.pdf(self.residuals[gmpe][imtx]["Total"], 0., 1.0))
-                self.llh[gmpe][imtx] = -(1.0 / float(len(asll))) * np.sum(asll)
+                self.llh[gmpe][imtx] = -1 * (1.0 / float(len(asll))) * np.sum(asll)
             
                 # Stack
                 log_residuals = np.hstack([log_residuals, asll])
 
             # Get the average over the IMTs
-            self.llh[gmpe]["All"] = -(
+            self.llh[gmpe]["all"] = -1 * (
                 1. / float(len(log_residuals))) * np.sum(log_residuals)
-
-        # Get mean weights
-        weights = np.array(
-            [2.0 ** -self.llh[gmpe]["All"] for gmpe in self.gmpe_list])
-        weights = weights / np.sum(weights)
-        self.model_weights = {
-            gmpe: weights[idx] for idx, gmpe in enumerate(self.gmpe_list)}
-
-        # Get weights with imt
-        self.model_weights_with_imt = {}
-        for im in self.imts:
-            weights_with_imt = np.array(
-                [2.0 ** -self.llh[gmpe][im] for gmpe in self.gmpe_list])
-            weights_with_imt = weights_with_imt/np.sum(weights_with_imt)
-            self.model_weights_with_imt[im] = {gmpe: weights_with_imt[
-                idx] for idx, gmpe in enumerate(self.gmpe_list)}
-            
-        return self.llh, self.model_weights, self.model_weights_with_imt
 
     ### EDR (Kale and Akkar 2013) functions
     def get_edr_values(self, bandwidth=0.01, multiplier=3.0):
@@ -631,29 +693,36 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        edr_values = {gmpe: {} for gmpe in self.gmpe_list}
+        # Set store
+        self.edr_values = {gmpe: {} for gmpe in self.gmpe_list}
+
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
-            obs, exp, std = self._get_edr_inputs(gmpe)
-            results = self._compute_edr(obs,
-                                        exp,
-                                        std,
-                                        bandwidth,
-                                        multiplier)
-            edr_values[gmpe]["MDE Norm"] = results[0]
-            edr_values[gmpe]["sqrt Kappa"] = results[1]
-            edr_values[gmpe]["EDR"] = results[2]
+            
+            # Set empty arrays
+            obs = np.array([], dtype=float)
+            exp = np.array([], dtype=float)
+            std = np.array([], dtype=float)
 
-        return edr_values
-    
-    def get_edr_values_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
+            # Stack over the IMTs
+            for imtx in self.imts:
+                for context in self.contexts:
+                    keep = context["Retained"][imtx]
+                    obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
+                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
+                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+
+            # Now compute EDR
+            results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
+
+            # Store
+            self.edr_values[gmpe]["MDE Norm"] = results[0]
+            self.edr_values[gmpe]["sqrt Kappa"] = results[1]
+            self.edr_values[gmpe]["EDR"] = results[2]
+
+    def get_edr_wrt_imt(self, bandwidth=0.01, multiplier=3.0):
         """
-        Calculates the EDR values for each GMPE according to the Euclidean
-        Distance Ranking method of Kale & Akkar (2013) for each imt
-
-        Kale, O., and Akkar, S. (2013) "A New Procedure for Selecting and
-        Ranking Ground Motion Predicion Equations (GMPEs): The Euclidean
-        Distance-Based Ranking Method", Bulletin of the Seismological Society
-        of America, 103(2A), 1069 - 1084.
+        Calculates the EDR values for each GMPE but per IMT instead.
 
         :param float bandwidth:
             Discretisation width
@@ -661,157 +730,85 @@ class Residuals(object):
         :param float multiplier:
             "Multiplier of standard deviation (equation 8 of Kale and Akkar)
         """
-        self.edr_values_wrt_imt = {gmpe: {} for gmpe in self.gmpe_list}
+        # Set store
+        self.edr_values_wrt_imt = {gmpe: {key: {
+            imtx: None for imtx in self.imts} for key in [
+                "MDE Norm", "sqrt Kappa", "EDR"]} for gmpe in self.gmpe_list}
+
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
-            obs_wrt_imt, exp_wrt_imt, std_wrt_imt = self._get_edr_inputs_wrt_imt(gmpe)
-            results = self._compute_edr_wrt_imt(obs_wrt_imt,
-                                                exp_wrt_imt,
-                                                std_wrt_imt,
-                                                bandwidth,
-                                                multiplier)
-            self.edr_values_wrt_imt[gmpe]["MDE Norm"] = results[0]
-            self.edr_values_wrt_imt[gmpe]["sqrt Kappa"] = results[1]
-            self.edr_values_wrt_imt[gmpe]["EDR"] = results[2]
 
-        return self.edr_values_wrt_imt
-
-    def _get_edr_inputs(self, gmpe):
-        """
-        Extract the observed ground motions, expected and total standard
-        deviation for the GMPE
-        """
-        obs = np.array([], dtype=float)
-        exp = np.array([], dtype=float)
-        std = np.array([], dtype=float)
-        for imtx in self.imts:
-            for context in self.contexts:
-                keep = context["Retained"][imtx]
-                obs = np.hstack([obs, np.log(context["Observations"][imtx][keep])])
-                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-
-        return obs, exp, std
-    
-    def _get_edr_inputs_wrt_imt(self, gmpe):
-        """
-        Extract the observed ground motions, expected and total standard
-        deviation for the GMPE (per imt)
-        """  
-        # Get EDR values per imt
-        obs_wrt_imt, exp_wrt_imt, std_wrt_imt = {}, {}, {}
-        for imtx in self.imts:
-            obs = np.array([], dtype=float)
-            exp = np.array([], dtype=float)
-            std = np.array([], dtype=float)
-            for context in self.contexts:
-                keep = context["Retained"][imtx]
-                obs_stack = np.log(context["Observations"][imtx][keep])
-                obs = np.hstack([obs, obs_stack])
-                exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-            obs_wrt_imt[imtx] = obs
-            exp_wrt_imt[imtx] = exp
-            std_wrt_imt[imtx] = std
-
-        return obs_wrt_imt, exp_wrt_imt, std_wrt_imt
+            # Iterate over IMTs
+            for imtx in self.imts:
+                obs = np.array([], dtype=float)
+                exp = np.array([], dtype=float)
+                std = np.array([], dtype=float)
+                for context in self.contexts:
+                    keep = context["Retained"][imtx]
+                    obs_stack = np.log(context["Observations"][imtx][keep])
+                    obs = np.hstack([obs, obs_stack])
+                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
+                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+               
+                # Compute EDR for given IMT
+                results = self._compute_edr(obs, exp, std, bandwidth, multiplier)
+                
+                # Store
+                self.edr_values_wrt_imt[gmpe]["MDE Norm"][imtx] = results[0]
+                self.edr_values_wrt_imt[gmpe]["sqrt Kappa"][imtx]= results[1]
+                self.edr_values_wrt_imt[gmpe]["EDR"][imtx] = results[2]
     
     def _compute_edr(self, obs, exp, std, bandwidth=0.01, multiplier=3.0):
         """
         Calculate the Euclidean Distanced-Based Rank for a set of
-        observed and expected values from a particular GMPE
+        observed and expected values from a particular GMPE.
         """
         finite = np.isfinite(obs) & np.isfinite(exp) & np.isfinite(std)
         if not finite.any():
             return np.nan, np.nan, np.nan
-        elif not finite.all():
-            obs, exp, std = obs[finite], exp[finite], std[finite]
+        obs, exp, std = obs[finite], exp[finite], std[finite]
         nvals = len(obs)
         min_d = bandwidth / 2.
         kappa = self._get_edr_kappa(obs, exp)
         mu_d = obs - exp
         d1c = np.fabs(obs - (exp - (multiplier * std)))
         d2c = np.fabs(obs - (exp + (multiplier * std)))
-        dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
+        dc_max = np.ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
         num_d = len(np.arange(min_d, dc_max, bandwidth))
         mde = np.zeros(nvals)
         for iloc in range(0, num_d):
             d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
             d_1 = d_val - min_d
             d_2 = d_val + min_d
-            p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf(
-                (-d_1 - mu_d) / std)
-            p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf(
-                (-d_2 - mu_d) / std)
+            p_1 = norm.cdf((d_1 - mu_d) / std) - norm.cdf((-d_1 - mu_d) / std)
+            p_2 = norm.cdf((d_2 - mu_d) / std) - norm.cdf((-d_2 - mu_d) / std)
             mde += (p_2 - p_1) * d_val
         inv_n = 1.0 / float(nvals)
         mde_norm = np.sqrt(inv_n * np.sum(mde ** 2.))
         edr = np.sqrt(kappa * inv_n * np.sum(mde ** 2.))
 
-        return mde_norm, np.sqrt(kappa), edr            
-    
-    def _compute_edr_wrt_imt(self,
-                             obs_wrt_imt,
-                             exp_wrt_imt,
-                             std_wrt_imt,
-                             bandwidth=0.01,
-                             multiplier=3.0):
-        """
-        Calculate the Euclidean Distanced-Based Rank for a set of
-        observed and expected values from a particular GMPE over IMTs
-        """
-        mde_norm_wrt_imt = {}
-        edr_wrt_imt = {}
-        kappa_wrt_imt = {}
-
-        for imtx in self.imts:
-            nvals = len(obs_wrt_imt[imtx])
-            min_d = bandwidth / 2.
-            kappa_wrt_imt[imtx] = self._get_edr_kappa(obs_wrt_imt[imtx],
-                                                      exp_wrt_imt[imtx])
-            mu_d = obs_wrt_imt[imtx] - exp_wrt_imt[imtx]
-            d1c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] - (
-                multiplier * std_wrt_imt[imtx])))
-            d2c = np.fabs(obs_wrt_imt[imtx] - (exp_wrt_imt[imtx] + (
-                multiplier * std_wrt_imt[imtx])))
-            dc_max = ceil(np.max(np.array([np.max(d1c), np.max(d2c)])))
-            num_d = len(np.arange(min_d, dc_max, bandwidth))
-            mde_wrt_imt = np.zeros(nvals)
-            for iloc in range(0, num_d):
-                d_val = (min_d + (float(iloc) * bandwidth)) * np.ones(nvals)
-                d_1 = d_val - min_d
-                d_2 = d_val + min_d
-                p_1 = norm.cdf((d_1 - mu_d) / std_wrt_imt[imtx]) -\
-                norm.cdf((-d_1 - mu_d) / std_wrt_imt[imtx])
-                p_2 = norm.cdf((d_2 - mu_d) / std_wrt_imt[imtx]) -\
-                norm.cdf((-d_2 - mu_d) / std_wrt_imt[imtx])
-                mde_wrt_imt += (p_2 - p_1) * d_val
-            inv_n = 1.0 / float(nvals)
-            mde_norm_wrt_imt[imtx] = np.sqrt(inv_n * np.sum(mde_wrt_imt ** 2.))
-            edr_wrt_imt[imtx] = np.sqrt(
-                kappa_wrt_imt[imtx] * inv_n * np.sum(mde_wrt_imt ** 2.))
-
-        return mde_norm_wrt_imt, np.sqrt(pd.Series(kappa_wrt_imt)), edr_wrt_imt            
+        return mde_norm, np.sqrt(kappa), edr                
 
     def _get_edr_kappa(self, obs, exp):
         """
-        Returns the correction factor kappa
+        Returns the correction factor kappa.
         """
         mu_a = np.mean(obs)
         mu_y = np.mean(exp)
-        b_1 = np.sum(
-            (obs - mu_a) * (exp - mu_y)) / np.sum((obs - mu_a) ** 2.)
+        b_1 = np.sum((obs - mu_a) * (exp - mu_y)) / np.sum((obs - mu_a) ** 2.)
         b_0 = mu_y - b_1 * mu_a
         y_c = exp - ((b_0 + b_1 * obs) - obs)
         de_orig = np.sum((obs - exp) ** 2.)
         de_corr = np.sum((obs - y_c) ** 2.)
-
+        
         return de_orig / de_corr
 
     ### Stochastic Area (Sunny et al. 2021) functions
-    def get_stochastic_area_wrt_imt(self):
+    def get_sto_wrt_imt(self):
         """
-        Calculates the stochastic area values per imt for each GMPE according
-        to the Stochastic Area Ranking method of Sunny et al. (2021).
+        Calculates the stochastic area values per GMPE for each IMT
+        according to the Stochastic Area Ranking method of Sunny et
+        al. (2021):
         
         Sunny, J., M. DeAngelis, and B. Edwards (2021). Ranking and Selection
         of Earthquake Ground Motion Models Using the Stochastic Area Metric,
@@ -820,10 +817,14 @@ class Residuals(object):
         # Create store of values per gmm
         stoch_area_store = {gmpe: {} for gmpe in self.gmpe_list}
         
-        # Get the observed and predicted per gmm per imt
+        # Iterate over the GMMs
         for gmpe in self.gmpe_list:
             stoch_area_wrt_imt = {}
+
+            # Iterate over the IMTs
             for imtx in self.imts:
+
+                # Stack values
                 obs = np.array([], dtype=float)
                 exp = np.array([], dtype=float)
                 std = np.array([], dtype=float)
@@ -831,7 +832,12 @@ class Residuals(object):
                     obs = np.hstack([obs, np.log(context["Observations"][imtx])])
                     exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
                     std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
-                
+
+                # Take only the finite obs
+                idx_f = np.isfinite(obs)
+                obs = obs[idx_f]
+                assert len(obs) == len(exp) == len(std)
+
                 # Get the ECDF for distribution from observations
                 x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
                 
@@ -853,20 +859,20 @@ class Residuals(object):
                 area_gmm = trapezoid(y_cdf, x_cdf)
 
                 # Get absolute of difference in areas - eq 3 of paper
-                stoch_area_wrt_imt[imtx] = np.abs(area_gmm-area_obs) 
-             
-            # Store the stoch area per imt per gmm
+                stoch_area = np.abs(area_gmm - area_obs)
+
+                # Store the stoch area per imt for given gmm
+                stoch_area_wrt_imt[imtx] = max(1E-09, stoch_area)
+
+            # Store for given gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
-    
+        
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
 
-        return self.stoch_areas_wrt_imt
-
     def cdf(self, data):
         """
-        Get the cumulative distribution function (cdf) of the ground-motion
-        values
+        Get the cumulative distribution function (cdf).
         """
         x1 = np.sort(data)
         x = x1.tolist()
@@ -878,7 +884,7 @@ class Residuals(object):
     
     def step_data(self, x,y):
         """
-        Step the cdf to obtain the ecdf
+        Step the cdf to obtain the ecdf.
         """
         xx, yy = x*2, y*2
         xx.sort()
@@ -888,7 +894,7 @@ class Residuals(object):
     def get_cdf_data(self, data, step_flag=False):
         """
         Get the cdf (for the predicted ground-motions) or the ecdf (for the
-        observed ground-motions)
+        observed ground-motions).
         """
         x, p = self.cdf(data)
         if step_flag is True:
@@ -903,7 +909,7 @@ class SingleStationAnalysis(object):
     Residuals object for single station residual analysis.
     """
     def __init__(self, site_id_list, gmpe_list, imts):
-        # station sites are strings like 'MN-PDG', 'HL-KASA', ...
+        # Station sites are strings like 'MN-PDG', 'HL-KASA', ...
         # we sort them lexicographically since the order they are
         # stored in the database is unspecified
         self.site_ids = site_id_list
@@ -930,8 +936,7 @@ class SingleStationAnalysis(object):
     @classmethod
     def from_toml(cls, site_id_list, filename):
         """
-        Read in GMPEs and IMTs from .toml file. This method allows use of
-        gmpes with additional parameters and input files within the SMT
+        Read in GMPEs and IMTs from .toml file.
         """
         # Read in toml file with dict of GMPEs and subdict of IMTs
         config = toml.load(filename)
@@ -954,34 +959,36 @@ class SingleStationAnalysis(object):
     def get_site_residuals(self, database, component="Geometric"):
         """
         Calculates the total, inter-event and within-event residuals for
-        each site
+        each site.
         """
         for site_id in self.site_ids:
             selector = SMRecordSelector(database)
             site_db = selector.select_from_site_id(site_id, as_db=True)
             # Use a deep copied gmpe list to avoid recursive GMM instantiation
-            # issues when using check_gsim_list within Residuals obj __init__
+            # issues when using check_gsim_list within Residuals obj's init
             resid = Residuals(self.frozen_gmpe_list, self.imts)
-            resid.compute_residuals(site_db, normalise=False, component=component)
+            resid.compute_residuals(site_db,
+                                    component=component,
+                                    stations=True)
             setattr(
                 resid,
                 "site_analysis",
-                self._set_empty_dict())
+                {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
+                )
             setattr(
                 resid,
                 "site_expected",
-                self._set_empty_dict())
+                {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
+                )
             self.site_residuals.append(resid)
-
-    def _set_empty_dict(self):
-        """
-        Sets an empty set of nested dictionaries for each GMPE and each IMT
-        """
-        return {gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
     def station_residual_statistics(self, filename=None):
         """
-        Get single-station residual statistics for each site
+        Get single-station residual statistics for each site.
+
+        Equation numbers throughout this function and those called within refer to
+        equations provided within Rodriguez-Marek et al. (2011) for the computation
+        of the site-specific components of the intra-event residual.
         """
         output_resid = []
         for t_resid in self.site_residuals:
@@ -1007,28 +1014,31 @@ class SingleStationAnalysis(object):
                         # GMPE has no within-event term - skip
                         continue
 
-                    # Get deep copy of phi (intra) and tau (inter)
+                    # Get deep copy of intra and inter residuals
                     resid.site_analysis[gmpe][imtx]["Intra event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Intra event"])
                     resid.site_analysis[gmpe][imtx]["Inter event"] = np.copy(
                         t_resid.residuals[gmpe][imtx]["Inter event"])
 
-                    # Get delta_s2ss
-                    delta_s2ss = self._get_delta_s2ss(
-                        resid.residuals[gmpe][imtx]["Intra event"], n_events)
-                    
-                    # Get delta_woes
-                    delta_woes = (
-                        resid.site_analysis[gmpe][imtx]["Intra event"] - delta_s2ss)
-                    
-                    # Get phi_ss
-                    phi_ss = self._get_single_station_phi(
-                        resid.residuals[gmpe][imtx]["Intra event"], delta_s2ss, n_events)
+                    # Get deltaW_es (i.e. the intra-event residuals)
+                    deltaW_es = resid.residuals[gmpe][imtx]["Intra event"]
 
+                    # Get deltaS2S_s (avg within-event for the station - eq 8)
+                    # NOTE: the std of deltaS2S_s over the stations is phi_S2S
+                    deltaS2S_s = np.sum(deltaW_es)/n_events
+                    
+                    # Get deltaWS_es (within-site residual - eq 9)
+                    deltaWS_es = deltaW_es - deltaS2S_s
+                    
+                    # Get phi_ss,s for given station (i.e. std of deltaWS_es- eq 11)
+                    phi_ss_s = np.sqrt(
+                        np.sum((deltaWS_es) ** 2.) / float(n_events - 1)
+                        )
+                    
                     # Store 
-                    resid.site_analysis[gmpe][imtx]["dS2ss"] = delta_s2ss
-                    resid.site_analysis[gmpe][imtx]["dWo,es"] = delta_woes
-                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss
+                    resid.site_analysis[gmpe][imtx]["deltaS2S_s"] = deltaS2S_s
+                    resid.site_analysis[gmpe][imtx]["deltaWS_es"] = deltaWS_es
+                    resid.site_analysis[gmpe][imtx]["phi_ss,s"] = phi_ss_s
                     
                     # Get expected values too
                     resid.site_analysis[gmpe][imtx]["Expected inter"] =\
@@ -1042,99 +1052,120 @@ class SingleStationAnalysis(object):
         # Update
         self.site_residuals = output_resid
 
-        return self.get_total_phi_ss(filename)
+        # Now can get station averaged values of (phi_ss and deltaS2S)
+        self._get_station_averaged_values(filename)
 
-    def _get_delta_s2ss(self, intra_event, n_events):
+    def _get_station_averaged_values(self, filename=None):
         """
-        Returns the average within-event residual for the site from
-        Rodriguez-Marek et al. (2011) Equation 8
+        Compute station-averaged standard deviation of deltaS2S_s
+        (i.e. phi_ss, rather than phi_ss,s which is per station)
+        AND station-averaged phiS2S_s (i.e. phiS2S). 
         """
-        return (1. / float(n_events)) * np.sum(intra_event)
+        fid = open(filename, "w") if filename else sys.stdout
+        self.mean_deltaS2S = {
+            gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
+        self.phi_S2S = {
+            gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
+        self.phi_ss = {
+            gmpe: {imtx: {} for imtx in self.imts} for gmpe in self.gmpe_list}
 
-    def _get_single_station_phi(self, intra_event, delta_s2ss, n_events):
-        """
-        Returns the single-station phi for the specific station from
-        Rodriguez-Marek et al. (2011) Equation 11
-        """
-        return np.sqrt(
-            np.sum((intra_event - delta_s2ss) ** 2.) / float(n_events - 1))
-
-    def get_total_phi_ss(self, filename=None):
-        """
-        Returns the station averaged single-station phi from Rodriguez-Marek
-        et al. (2011) Equation 10
-        """
-        if filename is not None:
-            fid = open(filename, "w")
-        else:
-            fid = sys.stdout
-        phi_ss = self._set_empty_dict()
-        phi_s2ss = self._set_empty_dict()
         for gmpe in self.gmpe_list:
-            
-            # Print GMM info to file
-            if filename is not None:
-                gmpe_str = get_gmpe_str(gmpe)
-                print("%s" % gmpe_str, file=fid)
-            
-            # Print IMT info to file
-            for imtx in self.imts:
-                if filename is not None:
-                    print("%s" % imtx, file=fid)
-                if not ("Intra event" in self.site_residuals[
-                    0].site_analysis[gmpe][imtx]):
-                    msg = (f"GMPE {gmpe} does not have random"
-                           f"effects residuals for {imtx}")
-                    warnings.warn(msg, stacklevel=10)
-                    continue
-                n_events = []
-                numerator_sum = 0.0
-                d2ss = []
-                for iloc, resid in enumerate(self.site_residuals):
-                    d2ss.append(resid.site_analysis[gmpe][imtx]["dS2ss"])
-                    n_events.append(resid.site_analysis[gmpe][imtx]["events"])
-                    numerator_sum += np.sum((
-                        resid.site_analysis[gmpe][imtx]["Intra event"] -
-                        resid.site_analysis[gmpe][imtx]["dS2ss"]) ** 2.)
-                    
-                    # Print dS2S, phi_ss per station to file
-                    if filename is not None:
-                        print("Site ID, %s, dS2S, %s, "
-                              "phi_ss, %s, Num Records, %s" % (
-                              list(self.site_ids)[iloc],
-                              resid.site_analysis[gmpe][imtx]["dS2ss"],
-                              resid.site_analysis[gmpe][imtx]["phi_ss,s"],
-                              resid.site_analysis[gmpe][imtx]["events"]),
-                              file=fid)
-                        
-                d2ss = np.array(d2ss)
-                phi_s2ss[gmpe][imtx] = {
-                    "Mean": np.mean(d2ss), "StdDev": np.std(d2ss)}
-                phi_ss[gmpe][imtx] = np.sqrt(
-                    numerator_sum / float(np.sum(np.array(n_events)) - 1))
-        
-        # Print phi_ss (single-station phi), phi_s2s (station-to-station) to file
-        if filename is not None:
-            print("\nSSA RESULTS PER GMPE", file=fid)
-            for gmpe in self.gmpe_list:
-                gmpe_i = self.gmpe_list[gmpe]
-                gmpe_str = get_gmpe_str(gmpe)
-                print("%s" % gmpe_str, file=fid)
-                if gmpe_i.DEFINED_FOR_STANDARD_DEVIATION_TYPES == ALL_SIGMA:
-                    p_data = (imtx,
-                              phi_ss[gmpe][imtx],
-                              phi_s2ss[gmpe][imtx]["Mean"],
-                              phi_s2ss[gmpe][imtx]["StdDev"])
-                else:
-                    p_data = (imtx, None, None, None) # No intra-event for GMM
-                for imtx in self.imts:                # so write blank values
-                    print("%s, "\
-                          "phi_ss (phi single-station), %s" \
-                          "phi_s2s mean, %s, " \
-                          "phi_s2s std. dev, %s" \
-                          % p_data, file=fid)
-                            
-            if filename is not None:
-                fid.close()
+            if fid is not None and fid is not sys.stdout:
+                print(get_gmpe_str(gmpe), file=fid)
 
-        return phi_ss, phi_s2ss
+            for imtx in self.imts:
+                if fid is not None and fid is not sys.stdout:
+                    print(imtx, file=fid)
+
+                if "Intra event" not in self.site_residuals[0].site_analysis[gmpe][imtx]:
+                    warnings.warn(
+                        f"GMPE {gmpe} does not have random effects residuals for {imtx}",
+                        stacklevel=10,
+                    )
+                    continue
+                
+                # Return mean deltaS2S, stddev of deltaS2S (phi_S2S) and phi_ss
+                st_averaged = self._compute_station_averaged_values(gmpe, imtx, fid)
+                self.mean_deltaS2S[gmpe][imtx] = st_averaged[0]
+                self.phi_S2S[gmpe][imtx] = st_averaged[1]
+                self.phi_ss[gmpe][imtx] = st_averaged[2]
+
+        if filename is not None:
+            # Print the rest of the results to file
+            self._print_ssa_results(fid, self.mean_deltaS2S, self.phi_ss, self.phi_S2S)
+            fid.close()
+
+    def _compute_station_averaged_values(self, gmpe, imtx, fid):
+        """
+        Computes the following: 
+
+            1) Mean deltaS2S_s w.r.t. all the stations
+        
+            2) Stddev of deltaS2S_s w.r.t. all the stations (phi_S2S)
+            
+            3) Compute station-averaged single-station standard deviation
+               (phi_ss) using equation 10 of Rodriguez-Marek et al. (2011)
+               
+        NOTE: This function returns phi_ss (station-averaged) which is
+        NOT phi_ss,s (per station) - the prior is computed assuming a
+        homoskedastic model (see equation 10). The user is referred to
+        pp. 1248 of Rodriguez-Marek et al. (2011) for more info.
+        """
+        # Set some stores
+        deltaS2S_s, n_events = [], []
+
+        # For each station collect deltaS2S_s and the num. events associated
+        numerator_sum = 0.0
+        for iloc, resid in enumerate(self.site_residuals):
+            site_data = resid.site_analysis[gmpe][imtx]
+            deltaS2S_s.append(site_data["deltaS2S_s"])
+            n_events.append(site_data["events"])
+            numerator_sum += np.sum(
+                (site_data["Intra event"] - site_data["deltaS2S_s"]) ** 2)
+            if fid is not None and fid is not sys.stdout:
+                print(
+                    f"Site ID, {list(self.site_ids)[iloc]}, "
+                    f"deltaS2S_s, {site_data['deltaS2S_s']}, "
+                    f"phi_ss,s, {site_data['phi_ss,s']}, "
+                    f"Num Records, {site_data['events']}",
+                    file=fid
+                )
+
+        # Compute mean deltaS2S_s
+        mean_deltaS2S = np.mean(deltaS2S_s)
+
+        # Compute phi_S2S (stddev of deltaS2S_s amongst the stations)
+        phi_S2S = np.std(deltaS2S_s)
+
+        # Compute station averaged phi_ss,s (eq 10) for given gmpe and imt
+        phi_ss = np.sqrt(numerator_sum / (np.sum(n_events) - 1))
+
+        return mean_deltaS2S, phi_S2S, phi_ss
+
+    def _print_ssa_results(self, fid, mean_deltaS2S, phi_ss, phi_S2S):
+        """
+        Print SSA results to the file.
+        """
+        ni = 'Sigma model of GMPE has no intra-event component'
+        if fid is not None and fid is not sys.stdout:
+            print("\nSSA RESULTS PER GMPE", file=fid)
+        for gmpe in self.gmpe_list:
+            gmm_str = get_gmpe_str(gmpe)
+            gmm_sigmas = valid.gsim(gmm_str).DEFINED_FOR_STANDARD_DEVIATION_TYPES
+            if fid is not None and fid is not sys.stdout:
+                print(gmm_str, file=fid)
+            for imtx in self.imts:
+                p_data = (
+                    imtx,
+                    phi_ss[gmpe][imtx],
+                    mean_deltaS2S[gmpe][imtx],
+                    phi_S2S[gmpe][imtx],
+                ) if gmm_sigmas == ALL_SIGMA else (imtx, ni, ni, ni)
+                if fid is not None and fid is not sys.stdout:
+                    print(
+                        f"{p_data[0]}, "
+                        f"phi_ss, {p_data[1]}, "
+                        f"deltaS2S, {p_data[2]}, "
+                        f"phi_S2S, {p_data[3]}",
+                        file=fid
+                        )
