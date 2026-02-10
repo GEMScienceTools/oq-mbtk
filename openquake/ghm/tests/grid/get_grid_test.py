@@ -37,7 +37,6 @@ import openquake.ghm.grid.get_sites as get_sites
 
 DATA = os.path.join(os.path.dirname(__file__))
 
-
 class GetSitesTestCase(unittest.TestCase):
     """ Test the creation of a grid of sites """
 
