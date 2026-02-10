@@ -106,6 +106,10 @@ class Configurations(object):
             # Get lt weights
             self.get_lt_weights(self.gmpes_list)
 
+        # Raise an error if no GMMs specified
+        if len(self.gmpes_list) < 1:
+            raise ValueError("User has not specified any GMPEs in the config file.")
+
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
