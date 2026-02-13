@@ -26,14 +26,13 @@
 # coding: utf-8
 
 import os
-import numpy
 import tempfile
 import unittest
-import subprocess
+import numpy
 import pandas as pd
 import numpy as np
 
-from openquake.wkf.seismicity.distribute import main as distribute
+from openquake.wkf.seismicity.distribute import _distribute_rates as distribute
 
 HERE = os.path.dirname(__file__)
 CWD = os.getcwd()
