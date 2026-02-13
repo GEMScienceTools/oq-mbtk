@@ -37,13 +37,13 @@ from openquake.smt.comparison.utils_gmpes import (get_imtl_unit,
 
 
 # Periods used in spectra plotting (truncated based on max_period in config)
-PERIODS = [PGA(), SA(0.01), SA(0.025), SA(0.04), SA(0.05), SA(0.07), SA(0.1),
-           SA(0.15), SA(0.2), SA(0.25), SA(0.3), SA(0.35), SA(0.4), SA(0.45),
-           SA(0.5), SA(0.6), SA(0.7), SA(0.8), SA(0.9), SA(1.0), SA(1.1), SA(1.2),
-           SA(1.3), SA(1.4), SA(1.5), SA(1.6), SA(1.7), SA(1.8), SA(1.9), SA(2.0),
-           SA(2.2), SA(2.4), SA(2.6), SA(2.8), SA(3.0), SA(3.2), SA(3.4), SA(3.6),
-           SA(3.8), SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0), SA(6.5), SA(7.0),
-           SA(7.5), SA(8.0), SA(8.5), SA(9.0), SA(9.5), SA(10.0)]
+PERIODS = [PGA(), SA(0.025), SA(0.04), SA(0.05), SA(0.07), SA(0.1), SA(0.15),
+           SA(0.2), SA(0.25), SA(0.3), SA(0.35), SA(0.4), SA(0.45), SA(0.5),
+           SA(0.6), SA(0.7), SA(0.8), SA(0.9), SA(1.0), SA(1.1), SA(1.2), SA(1.3),
+           SA(1.4), SA(1.5), SA(1.6), SA(1.7), SA(1.8), SA(1.9), SA(2.0), SA(2.2),
+           SA(2.4), SA(2.6), SA(2.8), SA(3.0), SA(3.2), SA(3.4), SA(3.6), SA(3.8),
+           SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0), SA(6.5), SA(7.0), SA(7.5),
+           SA(8.0), SA(8.5), SA(9.0), SA(9.5), SA(10.0)]
 
 # Fltering params for plotting observations against GMPEs
 MAG_LIM = 0.25 # Mw
@@ -1457,8 +1457,8 @@ def update_spectra_plots(ax, mag, depth_g, dist, vs30, d, m, dist_list, dist_typ
     Add titles and axis labels to spectra.
     """
     # Title
-    ax.set_title(f'Mw={mag}, depth={depth_g}km, {dist_type}={dist}km, vs30={vs30}m/s',
-                  fontsize=9.5, y=1.0, pad=-16)
+    pyplot.title(
+        f'Mw={mag}, depth={depth_g}km, {dist_type}={dist}km, vs30={vs30}m/s', fontsize=9.5)
 
      # Bottom row only
     if d == len(dist_list)-1:
