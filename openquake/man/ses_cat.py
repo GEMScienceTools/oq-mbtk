@@ -15,8 +15,8 @@ def merge_ses_event_rupture(event_file: str, rupture_file: str) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Merged catalogue containing events matched with ruptures
     """
-    events = pd.read_csv(event_file, skiprows=1)
-    ruptures = pd.read_csv(rupture_file, skiprows=1)
+    events = pd.read_csv(event_file)
+    ruptures = pd.read_csv(rupture_file)
     return events.merge(ruptures, on="rup_id", how="left")
 
 

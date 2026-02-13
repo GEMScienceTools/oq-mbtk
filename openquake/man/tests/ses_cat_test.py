@@ -2,6 +2,8 @@ import os
 import unittest
 import pandas as pd
 import numpy as np
+import tempfile
+import shutil
 
 from openquake.man.ses_cat import (
     merge_ses_event_rupture, 
@@ -10,50 +12,48 @@ from openquake.man.ses_cat import (
     build_hmtk_ses_catalogue
 )
 
-class TestSESCatalogue(unittest.TestCase):
-    """ Testing the merging of rupture and event sets"""
+EVENTS_TEXT = """event_id,rup_id,year,ses_id,source_id,rlz_id
+0,118,5948,1,fr,0
+1,65,3266,12,fr,1
+2,91,4567,18,fr,2
+3,136,6815,24,fr,3
+4,11,554,121,fr,4
+5,195,9763,123,fr,5
+6,142,7128,214,fr,6
+7,177,8881,349,fr,7
+8,150,7515,504,fr,8
+9,88,4425,504,fr,9
+"""
 
+RUPTURES_TEXT = """rup_id,centroid_lon,centroid_lat,mag,centroid_depth,multiplicity,trt,strike,dip,rake
+118,4.5528,44.82738,3.55,5,1,Active Shallow Crust,0,89.99,0
+65,4.5528,44.82738,3.65,5,1,Active Shallow Crust,0,89.98,0
+91,4.5528,44.82738,3.65,5,1,Active Shallow Crust,0,89.98,-90
+136,4.5528,44.82738,3.75,5,1,Active Shallow Crust,0,89.98,0
+11,4.5528,44.82738,4.55,15,1,Active Shallow Crust,0,89.99,0
+195,4.5528,44.82738,4.55,5,1,Active Shallow Crust,240.0,57.99,0
+142,4.5528,44.82738,5.25,15,1,Active Shallow Crust,128.8,89.98,0
+177,4.5528,44.82738,6.45,15,1,Active Shallow Crust,0,89.99,0
+150,-5.48151,49.46184,3.75,5,1,Active Shallow Crust,0,89.98,0
+88,-5.48151,49.46184,3.75,5,1,Active Shallow Crust,0,89.98,0
+"""
+
+class TestSESCatalogue(unittest.TestCase):
     def setUp(self):
-        """ Creating temporary rupture and event sets """
-        self.event_file = 'temp_events.csv'
-        self.rupture_file = 'temp_ruptures.csv'
-        self.output_file = 'temp_output_hmtk.csv'
+        self.test_dir = tempfile.mkdtemp()
         
-        events_data = ("SkipHeader\nevent_id,rup_id,year,ses_id,source_id,rlz_id\n"
-                       "0,118,5948,1,fr,0\n"
-                       "1,65,3266,12,fr,1\n"
-                       "2,91,4567,18,fr,2\n"
-                       "3,136,6815,24,fr,3\n"
-                       "4,11,554,121,fr,4\n"
-                       "5,195,9763,123,fr,5\n"
-                       "6,142,7128,214,fr,6\n"
-                       "7,177,8881,349,fr,7\n"
-                       "8,150,7515,504,fr,8\n"
-                       "9,88,4425,504,fr,9")
+        self.event_file = os.path.join(self.test_dir, 'temp_events.csv')
+        self.rupture_file = os.path.join(self.test_dir, 'temp_ruptures.csv')
+        self.output_file = os.path.join(self.test_dir, 'temp_output_hmtk.csv')
+        
         with open(self.event_file, 'w') as f:
-            f.write(events_data)
+            f.write(EVENTS_TEXT)
             
-        rupture_data = ("SkipHeader\nrup_id,centroid_lon,centroid_lat,mag,centroid_depth,"
-                        "multiplicity,trt,strike,dip,rake\n"
-                        "118,4.5528,44.82738,3.55,5,1,Active Shallow Crust,0,89.99,0\n"
-                        "65,4.5528,44.82738,3.65,5,1,Active Shallow Crust,0,89.98,0\n"
-                        "91,4.5528,44.82738,3.65,5,1,Active Shallow Crust,0,89.98,-90\n"
-                        "136,4.5528,44.82738,3.75,5,1,Active Shallow Crust,0,89.98,0\n"
-                        "11,4.5528,44.82738,4.55,15,1,Active Shallow Crust,0,89.99,0\n"
-                        "195,4.5528,44.82738,4.55,5,1,Active Shallow Crust,240.0,57.99,0\n"
-                        "142,4.5528,44.82738,5.25,15,1,Active Shallow Crust,128.8,89.98,0\n"
-                        "177,4.5528,44.82738,6.45,15,1,Active Shallow Crust,0,89.99,0\n"
-                        "150,-5.48151,49.46184,3.75,5,1,Active Shallow Crust,0,89.98,0\n"
-                        "88,-5.48151,49.46184,3.75,5,1,Active Shallow Crust,0,89.98,0")
         with open(self.rupture_file, 'w') as f:
-            f.write(rupture_data)
+            f.write(RUPTURES_TEXT)
 
     def tearDown(self):
-        """ Cleaning up temporary files after tests are completed """
-        files_to_remove = [self.event_file, self.rupture_file, self.output_file]
-        for f in files_to_remove:
-            if os.path.exists(f):
-                os.remove(f)
+        shutil.rmtree(self.test_dir)
 
     def test_merge_ses_event_rupture(self):
         """ Testing if the merge function correctly joins events and ruptures on 'rup_id' """
@@ -102,6 +102,3 @@ class TestSESCatalogue(unittest.TestCase):
         saved_df = pd.read_csv(result_path)
         self.assertEqual(len(saved_df), 10)
         self.assertEqual(saved_df.columns[0], "longitude")
-
-if __name__ == '__main__':
-    unittest.main()
