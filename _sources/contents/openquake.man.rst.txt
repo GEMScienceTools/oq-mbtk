@@ -1,0 +1,32 @@
+openquake.man package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.man.notebooks
+   openquake.man.single_source_utils
+   openquake.man.tests
+   openquake.man.tools
+
+Submodules
+----------
+
+openquake.man.ses\_cat module
+-----------------------------
+
+.. automodule:: openquake.man.ses_cat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man
+   :members:
+   :show-inheritance:
+   :undoc-members:

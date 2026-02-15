@@ -1,0 +1,61 @@
+openquake.smt.tests.residuals.parsers package
+=============================================
+
+Submodules
+----------
+
+openquake.smt.tests.residuals.parsers.asa\_database\_parser\_test module
+------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.asa_database_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.parsers.esm\_database\_parser\_test module
+------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.esm_database_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.parsers.esm\_flatfile\_parser\_test module
+------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.esm_flatfile_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.parsers.esm\_url\_flatfile\_parser\_test module
+-----------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.esm_url_flatfile_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.parsers.gem\_flatfile\_parser\_test module
+------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.gem_flatfile_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.parsers.ngawest2\_flatfile\_parser\_test module
+-----------------------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers.ngawest2_flatfile_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.residuals.parsers
+   :members:
+   :show-inheritance:
+   :undoc-members:

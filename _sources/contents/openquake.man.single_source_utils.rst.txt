@@ -1,0 +1,45 @@
+openquake.man.single\_source\_utils package
+===========================================
+
+Submodules
+----------
+
+openquake.man.single\_source\_utils.areas\_utils module
+-------------------------------------------------------
+
+.. automodule:: openquake.man.single_source_utils.areas_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.single\_source\_utils.faults\_utils module
+--------------------------------------------------------
+
+.. automodule:: openquake.man.single_source_utils.faults_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.single\_source\_utils.general\_utils module
+---------------------------------------------------------
+
+.. automodule:: openquake.man.single_source_utils.general_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.man.single\_source\_utils.points\_utils module
+--------------------------------------------------------
+
+.. automodule:: openquake.man.single_source_utils.points_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.single_source_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
