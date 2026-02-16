@@ -54,7 +54,7 @@ class ISCBulletinUrl():
     def __init__(self):
 
         # DEFAULT VALUES
-        self.BaseServer = "http://www.isc.ac.uk/cgi-bin/web-db-v4?"
+        self.BaseServer = "http://www.isc.ac.uk/cgi-bin/web-db-run?"
 
         self.Request = collections.OrderedDict()
 
@@ -86,21 +86,23 @@ class ISCBulletinUrl():
         self.Request["NoDepthEvents"]           = "null_dep=on"
         self.Request["MinimumMagnitude"]        = "min_mag="
         self.Request["MaximumMagnitude"]        = "max_mag="
-        self.Request["NoMagnitudeEvents"]       = "null_mag=on"
-        self.Request["MagnitudeType"]           = "req_mag_type="
-        self.Request["MagnitudeAgency"]         = "req_mag_agcy="
-        self.Request["FocalMechanismAgency"]    = "req_fm_agcy=Any"
-
-        # Optional Fields
-        self.Request["IncludePhases"]           = "include_phases=off"
-        self.Request["MinimumPhaseNumber"]      = "min_def="
-        self.Request["MaximumPhaseNumber"]      = "max_def="
-        self.Request["NoKnownPhases"]           = "null_phs="
-        self.Request["PrimeOnly"]               = "prime_only="
+        self.Request["PrimeOnly"]               = "prime_only=on"
+        self.Request["IncludeLinks"]            = "include_links=off"
+        self.Request["IncludeComments"]         = "include_comments=off"
         self.Request["IncludeMagnitudes"]       = "include_magnitudes=on"
         self.Request["IncludeHeaders"]          = "include_headers=on"
-        self.Request["IncludeComments"]         = "include_comments=off"
-        self.Request["IncludeLinks"]            = "include_links=off"
+
+        # Optional Fields
+        self.Request_opt = collections.OrderedDict()
+
+        self.Request_opt["IncludePhases"]           = "include_phases="
+        self.Request_opt["MinimumPhaseNumber"]      = "min_def="
+        self.Request_opt["MaximumPhaseNumber"]      = "max_def="
+        self.Request_opt["NoKnownPhases"]           = "null_phs="
+        self.Request_opt["NoMagnitudeEvents"]       = "null_mag="
+        self.Request_opt["MagnitudeType"]           = "req_mag_type="
+        self.Request_opt["MagnitudeAgency"]         = "req_mag_agcy="
+        self.Request_opt["FocalMechanismAgency"]    = "req_fm_agcy="
 
     def UseMirror(self):
         tmp = "http://isc-mirror.iris.washington.edu/cgi-bin/web-db-v4?"
@@ -117,9 +119,14 @@ class ISCBulletinUrl():
     def SetField(self, field_name, field_value):
         """
         """
-        buf = self.Request[field_name]
-        buf = buf.split("=")[0]
-        self.Request[field_name] = buf + "=%s" % field_value
+        if field_name in self.Request:
+            buf = self.Request[field_name]
+            buf = buf.split("=")[0]
+            self.Request[field_name] = buf + "=%s" % field_value
+        elif field_name in self.Request_opt:
+            buf = self.Request_opt[field_name]
+            buf = buf.split("=")[0]
+            self.Request_opt[field_name] = buf + "=%s" % field_value
 
     def SaveSettings(self, ParamFile):
         """
@@ -142,6 +149,7 @@ class ISCBulletinUrl():
             if Value == "Null":
                 Value = ""
             self.SetField(Key, Value)
+
         ParFile.close()
 
     def SetSearchArea(self, Lat, Lon):
@@ -159,6 +167,11 @@ class ISCBulletinUrl():
         UrlString = self.BaseServer
         for value in self.Request.values():
             UrlString += value + "&"
+        # for optional inputs, only add if we have set the field
+        for value in self.Request_opt.values():
+            if value.endswith("=") == False:
+                UrlString += value + "&"
+        print(UrlString)
         return UrlString
 
     def DownloadBlock(self):
@@ -172,13 +185,18 @@ class ISCBulletinUrl():
             UrlRes = urlopen(UrlReq)
             Page = parse_page(UrlRes.read())
             UrlRes.close()
-            if Page.find("Sorry") > -1:
+            if Page.find("Sorry, but your request cannot be processed at the present time.") > -1:
                 if Tries > 10:
                     print("Warning: Maximum number of attempts reached...")
                     break
                 print("Warning: Server is busy, retrying in a few seconds...")
                 time.sleep(30)
                 Tries += 1
+            # If it hits an error, print the page
+            elif Page.find("The search could not be run due to problems") > -1:
+                print("Error in query, see below: ")
+                print(Page)
+                break
             else:
                 CatStart = Page.find("DATA_TYPE")
                 CatStop = Page.find("STOP")
