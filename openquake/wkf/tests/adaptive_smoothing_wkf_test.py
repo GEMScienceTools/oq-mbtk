@@ -42,7 +42,7 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
        
         # Get lat/lon locations for each h3 cell, convert to seperate lat and
         # lon columns of dataframe
-        h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.h3_to_geo)
+        h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.cell_to_latlng)
         locations = pd.DataFrame(h3_idx['latlon'].tolist())
         locations.columns = ["lat", "lon"]
         np.testing.assert_almost_equal(locations.lon[0], -46.025932, decimal = 6) 
@@ -58,7 +58,7 @@ class AdaptiveSmoothingTestwkf(unittest.TestCase):
         # locations as above
         h3_map = os.path.join(DATA_PATH, 'mapping_h2.csv')
         h3_idx = pd.read_csv(h3_map, names = ("h3", "id"))
-        h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.h3_to_geo)
+        h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.cell_to_latlng)
         locations = pd.DataFrame(h3_idx['latlon'].tolist())
         locations.columns = ["lat", "lon"]
         #locations = self.locations
