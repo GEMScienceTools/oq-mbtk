@@ -204,10 +204,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
             eee = gds.explode(index_parts=True)
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            try:
-                tidx_a = h3.polygon_to_cells_geojson(tmp, h3_resolution)
-            except:
-                breakpoint()
+            tidx_a = h3.polygon_to_cells(tmp, h3_resolution)
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
@@ -223,7 +220,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = h3.polygon_to_cells_geojson(tmp, h3_resolution)
+                    tidx_b = h3.polygon_to_cells(tmp, h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
