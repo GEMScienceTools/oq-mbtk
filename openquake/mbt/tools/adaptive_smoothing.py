@@ -129,7 +129,8 @@ class AdaptiveSmoothing(object):
             h3_df = pd.DataFrame(data)
             h3_df.columns = ['lon', 'lat', 'depth', 'mag']
             h3_df['h3'] = h3_df.apply(lat_lng_to_h3, axis=1)
-            maxdistk = int(np.ceil(maxdist/h3.edge_length(h3res, 'km')))
+            maxdistk = int(np.ceil(maxdist/h3.average_hexagon_edge_length(
+                h3res, unit='km')))
 
             # Consider only neighbours within maxdistk
             for iloc in range(0, len(data)):
