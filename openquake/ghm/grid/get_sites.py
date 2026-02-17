@@ -205,7 +205,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
             try:
-                tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
+                tidx_a = h3.polygon_to_cells_geojson(tmp, h3_resolution)
             except:
                 breakpoint()
 
@@ -223,7 +223,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
+                    tidx_b = h3.polygon_to_cells_geojson(tmp, h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
@@ -231,7 +231,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
 
     sites_indices = list(set(sites_indices))
     sidxs = sorted(sites_indices)
-    tmp = np.array([h3.h3_to_geo(h) for h in sidxs])
+    tmp = np.array([h3.cell_to_latlng(h) for h in sidxs])
     sites = np.fliplr(tmp)
 
     return sites, sites_indices, one_polygon, selection

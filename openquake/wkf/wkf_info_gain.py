@@ -62,14 +62,14 @@ def information_gain(catalogue, h3_map, h3_level, smooth_out, T = 1, for_zone = 
     # Find which cell each event in the catalogue belongs to    
     h3_cell_c = [0]*len(cat_df)
     for i in range(0,len(cat_df)):
-        h3_cell_c[i] = h3.geo_to_h3(cat_df['latitude'][i], cat_df['longitude'][i], h3_level)
+        h3_cell_c[i] = h3.latlng_to_cell(cat_df['latitude'][i], cat_df['longitude'][i], h3_level)
         
     cat_df['h3_cell'] = h3_cell_c
     
     ## Find which cell each smoothed value is in
     h3_cell_sm = [0]*len(smoothed)
     for i in range(0,len(smoothed)):
-        h3_cell_sm[i] = h3.geo_to_h3(smoothed['lat'][i], smoothed['lon'][i], h3_level)
+        h3_cell_sm[i] = h3.latlng_to_cell(smoothed['lat'][i], smoothed['lon'][i], h3_level)
     
     smoothed['h3_cell'] = h3_cell_sm
     

@@ -66,12 +66,12 @@ def discretize_zones_with_h3_grid(h3_level: str, fname_poly: str,
             multipoly = shape(geojson_poly)
             if len(multipoly.geoms) == 1:
                 geojson_poly = mapping(multipoly.geoms[0])
-                hexagons = list(h3.polyfill(geojson_poly, h3_level, geo_json_conformant=True))
+                hexagons = list(h3.polygon_to_cells(geojson_poly, h3_level, geo_json_conformant=True))
             else:
                 print("found multipolygon for source ", poly.id)
                 for i in range(len(multipoly.geoms)):
                     poly_comp = mapping(multipoly.geoms[i])
-                    hex_comp = list(h3.polyfill(poly_comp, h3_level, geo_json_conformant=True))
+                    hex_comp = list(h3.polygon_to_cells(poly_comp, h3_level, geo_json_conformant=True))
                     hexagons = hexagons + hex_comp
 
         # Revert the positions of lons and lats
