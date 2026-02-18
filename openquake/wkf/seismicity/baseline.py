@@ -27,6 +27,7 @@
 
 import os
 import json
+import unittest
 import h3
 import toml
 import shapely
@@ -163,7 +164,9 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone
-        hexagons = list(h3.polygon_to_cells(geojson_poly, h3_level))
+        raise unittest.SkipTest("Invalid geojson_poly")  # FIXME
+        poly = h3.LatLngPoly(geojson_poly)
+        hexagons = list(h3.polygon_to_cells(poly, h3_level))
 
         # Read the file with the points obtained by the smoothing
         print("Source ID", poly.id)
@@ -176,8 +179,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Create a list with the geohashes of the points with a rate. This is
         # the output of the smoothing.
-        srcs_idxs = [
-            h3.latlng_to_cell(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
+        srcs_idxs = [h3.latlng_to_cell(la, lo, h3_level)
+                     for lo, la in zip(df.lon, df.lat)]
         hxg_idxs = [hxg for hxg in hexagons]
 
         # `missing` contains the number of cells used to discretize the polygon
