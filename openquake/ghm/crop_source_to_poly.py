@@ -11,7 +11,7 @@ from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.wkf.distributed_seismicity import _get_point_sources, from_list_ps_to_multipoint
 
 
-def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, src_conv, poly_id = []):
+def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, keep_out, src_conv=False, poly_id = []):
     '''
     Function to crop multipoint sources down to specified polygons by extracting all points within the polygon
     and making a new source. 
@@ -68,17 +68,24 @@ def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, src_conv, poly_id 
         # Find index of the sources within the polygon
         poly_df = gpd.GeoDataFrame(poly_proj[poly_proj.id == poly_id])
         idx_within = poly_df.sindex.query(mesh.geometry, predicate="intersects")[0]
+        idx_out = [i for i in range(len(mesh.geometry)) if not i in idx_within]  
+        
+        keep_outside = bool(keep_out)
+        if keep_outside:
+            idx_keep = idx_out
+        else:
+            idx_keep = idx_within
 
         ip2_idx_list = []
-        for idx in range(0, len(idx_within)):
-            pt = pnt_srcs[idx_within[idx]]
+        for idx in range(0, len(idx_keep)):
+            pt = pnt_srcs[idx_keep[idx]]
             ip2_idx_list.append(pt)
     
 
         # Create the multi-point source
         tmpsrc = from_list_ps_to_multipoint(ip2_idx_list, 'pnts_{}'.format(poly_id))
         # Make out_name from id in input
-        fname_out = os.path.join(out_folder, f'{src_xml_fname.replace('.xml','')}_{poly_id}.xml')
+        fname_out = os.path.join(out_folder, f'{src_xml_fname.split('/')[-1].replace('.xml','')}_{poly_id}.xml')
         #fname_out = os.path.join(out_folder, 'src_{}.xml'.format(poly_id))
         print('saving source to ', fname_out)
 
@@ -87,17 +94,18 @@ def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, src_conv, poly_id 
 #one day we might add so that the src_conv can be a command line or toml object
 #but for now it's not possible to run from command line 
 
-def crop_mps (src_xml_fname, fname_poly, out_folder, src_conv=None, poly_id = []):
+def crop_mps (src_xml_fname, fname_poly, out_folder, keep_outside=0, src_conv=None, poly_id = []):
     """
     crop multipoint source to given polygon
     source will retain original mmax, nodal plane distribution etc
     """
-    crop_mps_to_poly (src_xml_fname, fname_poly, out_folder, src_conv, poly_id)
+    crop_mps_to_poly (src_xml_fname, fname_poly, out_folder, keep_outside, src_conv, poly_id)
 
 crop_mps.src_xml = 'Source xml file to be cropped'
 crop_mps.fname_poly = 'file name of source polygon'
-crop_mps.src_conv = 'source converter object'
 crop_mps.out_folder = 'output folder to store new (cropped) mps'
+crop_mps.keep_out = '1 if keeping points outside polygon else 0'
+crop_mps.src_conv = 'source converter object'
 crop_mps.poly_id = 'optional list of polygon ids to crop'
 
 if __name__=="__main__":
