@@ -259,7 +259,6 @@ class Configurations(object):
         else:
             value = f"[{key}] "
         if len(models[key]):
-            models[key].pop('style', None)
             value += '\n' + str(toml.dumps(models[key]))
         return value.strip()
 
@@ -358,9 +357,9 @@ class Configurations(object):
 
         # Add any other GMMs specified in the xml dict
         if "other_gmpes" in xml_dic:
-            for gmm in xml_dic["other_gmpes"]: # NOTE: specify GMMs using same syntax as used when
-                gmpe_list.append(gmm)          # specifying base GMM with additional inputs for a
-                                               # ModifiableGMPE
+            for gmm in xml_dic["other_gmpes"]:
+                gmpe_list.append(gmm)          
+
         # Add GMMs
         setattr(self, 'gmpes_list', gmpe_list)
         
