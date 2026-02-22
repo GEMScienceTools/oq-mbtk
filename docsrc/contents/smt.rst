@@ -468,6 +468,7 @@ Comparing GMPEs
         fname = "gmc.xml" # Path to a regular OQ GMC XML which inherently has a weight per GMM
         trt = "Active Shallow Crust" # GMC LT to use from the provided XML (or set to "all" to use all LTs)
         plot_lt_only = false # If false plot the individual GMMs, if true then plot only the weighted mean LTs
+        other_gmpes = ["[ChiouYoungs2014]\nregion='JPN'", "KothaEtAl2020ESHM20"] # Other GMMs to plot
 
         [custom_plotting]
         custom_colors_flag = false # Set to true for custom colours in plots
