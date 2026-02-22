@@ -226,6 +226,7 @@ class ComparisonTestCase(unittest.TestCase):
         tmp = toml.load(self.config_file)
         tmp['gmc_xml'] = {}
         tmp['gmc_xml']['fname'] = self.gmc_xml
+        tmp["gmc_xml"]["other_gmpes"] = ["ChiouYoungs2014", "KothaEtAl2020ESHM20"]
         
         # Test for only ASCR and then all LTs
         for trt in ["Active Shallow Crust", "all"]:
