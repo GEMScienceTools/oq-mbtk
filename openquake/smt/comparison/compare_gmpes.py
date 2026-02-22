@@ -356,6 +356,11 @@ class Configurations(object):
             # Store GMC's weights
             lt_weight[idx_trt] = lt_gmc
 
+        # Add any other GMMs specified in the xml dict
+        if "other_gmpes" in xml_dic:
+            for gmm in xml_dic["other_gmpes"]: # NOTE: specify GMMs using same syntax as used when
+                gmpe_list.append(gmm)          # specifying base GMM with additional inputs for a
+                                               # ModifiableGMPE
         # Add GMMs
         setattr(self, 'gmpes_list', gmpe_list)
         
