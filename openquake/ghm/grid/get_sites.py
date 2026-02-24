@@ -150,12 +150,6 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
 
-    # Set the name of the shapefile
-    # if model == 'ucerf':
-    #    fname = 'cb_2017_us_state_500k.shp'
-    #    print('ucerf')
-    # in_file = os.path.join(inpath, fname)
-
     country_column = conf['main']['country_column']
     SUBSETS = mosaic.SUBSETS[country_column]
     DATA = mosaic.DATA[country_column]
@@ -165,19 +159,26 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     tmpdf = create_query(tmpdf, country_column, DATA[model])
 
     # Explode the geodataframe and set MODEL attribute
-    # inpt = explode(tmpdf)
     inpt = tmpdf.explode(index_parts=True)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
-    # selection = create_query(inpt, country_column, mosaic.DATA[model])
-    # selection = selection.set_crs('epsg:4326')
     selection = inpt
 
     # Merge the polygons into a single one
     one_polygon = selection.dissolve(by='MODEL')
 
-    # Process the polygons included in the selection. One polygon per row
+    def _ring_lonlat_to_latlon(ring):
+        # Swap (lon, lat) to (lat, lon)
+        return [(lat, lng) for (lng, lat) in ring]
+
+    def _geom_to_cells(geom, res):
+        # Make the tmp dict into list of h3 cell IDs
+        rings = geom['coordinates']
+        outer = _ring_lonlat_to_latlon(geom['coordinates'][0]) # Reorder outer 
+        holes = [_ring_lonlat_to_latlon(r) for r in rings[1:]] # Reorder inner
+        return list(h3.polygon_to_cells(h3.LatLngPoly(outer, *holes), res))
+
     old_key = ''
     sites_indices = []
     for nrow, row in selection.iterrows():
@@ -204,7 +205,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
             eee = gds.explode(index_parts=True)
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            tidx_a = h3.polygon_to_cells(tmp, h3_resolution)
+            tidx_a = _geom_to_cells(tmp, h3_resolution)
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
@@ -220,7 +221,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = h3.polygon_to_cells(tmp, h3_resolution)
+                    tidx_b = _geom_to_cells(tmp, h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:

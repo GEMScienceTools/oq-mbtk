@@ -164,7 +164,6 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone
-        raise unittest.SkipTest("Invalid geojson_poly")  # FIXME
         poly = h3.LatLngPoly(geojson_poly)
         hexagons = list(h3.polygon_to_cells(poly, h3_level))
 
