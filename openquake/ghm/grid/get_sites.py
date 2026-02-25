@@ -127,22 +127,6 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _geojson_dict_to_h3_cells(geom, res):
-    """
-    Convert geojson dictionary to h3 cells
-    """
-    def _ring_lonlat_to_latlon(ring):
-        # Swap (lon, lat) to (lat, lon)
-        return [(lat, lng) for (lng, lat) in ring]
-
-    # Make the tmp dict into list of h3 cell IDs
-    rings = geom['coordinates']
-    outer = _ring_lonlat_to_latlon(geom['coordinates'][0]) # Reorder outer 
-    holes = [_ring_lonlat_to_latlon(r) for r in rings[1:]] # Reorder inner
-    
-    return list(h3.polygon_to_cells(h3.LatLngPoly(outer, *holes), res))
-
-
 def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     """
     Tool for creating an equally spaced set of points covering a model in the
@@ -210,7 +194,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
             eee = gds.explode(index_parts=True)
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            tidx_a = _geojson_dict_to_h3_cells(tmp, h3_resolution)
+            tidx_a = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
@@ -226,7 +210,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = _geojson_dict_to_h3_cells(tmp, h3_resolution)
+                    tidx_b = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
