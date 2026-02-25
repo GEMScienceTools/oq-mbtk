@@ -36,7 +36,6 @@ import pandas as pd
 import geopandas as gpd
 from openquake.wkf.utils import get_list
 from openquake.wkf.utils import create_folder
-from openquake.ghm.grid.get_sites import _geojson_dict_to_h3_cells
 
 
 def _get_rates(geohashes, a_value):
@@ -164,7 +163,7 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Discretizing the polygon i.e. find all the hexagons covering the
         # polygon describing the current zone        
-        hexagons = _geojson_dict_to_h3_cells(tmp, h3_level)
+        hexagons = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_level)
 
         # Read the file with the points obtained by the smoothing
         print("Source ID", poly.id)
