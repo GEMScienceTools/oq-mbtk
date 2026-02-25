@@ -150,12 +150,6 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
 
-    # Set the name of the shapefile
-    # if model == 'ucerf':
-    #    fname = 'cb_2017_us_state_500k.shp'
-    #    print('ucerf')
-    # in_file = os.path.join(inpath, fname)
-
     country_column = conf['main']['country_column']
     SUBSETS = mosaic.SUBSETS[country_column]
     DATA = mosaic.DATA[country_column]
@@ -165,19 +159,15 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     tmpdf = create_query(tmpdf, country_column, DATA[model])
 
     # Explode the geodataframe and set MODEL attribute
-    # inpt = explode(tmpdf)
     inpt = tmpdf.explode(index_parts=True)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
-    # selection = create_query(inpt, country_column, mosaic.DATA[model])
-    # selection = selection.set_crs('epsg:4326')
     selection = inpt
 
     # Merge the polygons into a single one
     one_polygon = selection.dissolve(by='MODEL')
 
-    # Process the polygons included in the selection. One polygon per row
     old_key = ''
     sites_indices = []
     for nrow, row in selection.iterrows():
@@ -204,10 +194,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
             eee = gds.explode(index_parts=True)
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            try:
-                tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
-            except:
-                breakpoint()
+            tidx_a = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
@@ -223,7 +210,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
+                    tidx_b = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
@@ -231,7 +218,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
 
     sites_indices = list(set(sites_indices))
     sidxs = sorted(sites_indices)
-    tmp = np.array([h3.h3_to_geo(h) for h in sidxs])
+    tmp = np.array([h3.cell_to_latlng(h) for h in sidxs])
     sites = np.fliplr(tmp)
 
     return sites, sites_indices, one_polygon, selection

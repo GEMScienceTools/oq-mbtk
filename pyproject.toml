@@ -41,7 +41,6 @@ dependencies = [
     "geojson",
     "geopandas >= 1.1.0, <= 1.1.1",
     "pandas >= 2.0.3, <= 2.2.3",
-    "h3 <= 3.7.7",
     "pygmt <= 0.17.0",
     "igraph",
     "ipykernel >= 4.8.0",

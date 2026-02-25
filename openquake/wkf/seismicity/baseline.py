@@ -71,7 +71,7 @@ def create_missing(geohashes, a_value, b_value, a_cell=None, area=None):
     """
 
     # Coordinates
-    coo = np.array([h3.h3_to_geo(idx) for idx in geohashes])
+    coo = np.array([h3.cell_to_latlng(idx) for idx in geohashes])
 
     # Compute the output a_value in each cell
     if a_cell is None:
@@ -162,8 +162,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
         geojson_poly['type'] = "Polygon"
 
         # Discretizing the polygon i.e. find all the hexagons covering the
-        # polygon describing the current zone
-        hexagons = list(h3.polyfill(geojson_poly, h3_level))
+        # polygon describing the current zone        
+        hexagons = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_level)
 
         # Read the file with the points obtained by the smoothing
         print("Source ID", poly.id)
@@ -176,8 +176,8 @@ def add_baseline_seismicity(folder_name: str, folder_name_out: str,
 
         # Create a list with the geohashes of the points with a rate. This is
         # the output of the smoothing.
-        srcs_idxs = [
-            h3.geo_to_h3(la, lo, h3_level) for lo, la in zip(df.lon, df.lat)]
+        srcs_idxs = [h3.latlng_to_cell(la, lo, h3_level)
+                     for lo, la in zip(df.lon, df.lat)]
         hxg_idxs = [hxg for hxg in hexagons]
 
         # `missing` contains the number of cells used to discretize the polygon
