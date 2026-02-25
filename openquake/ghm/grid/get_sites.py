@@ -226,7 +226,7 @@ def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = _geom_to_cells(tmp, h3_resolution)
+                    tidx_b = _geojson_dict_to_h3_cells(tmp, h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
