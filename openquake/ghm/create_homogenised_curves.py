@@ -478,7 +478,7 @@ def proc(contacts_shp, outpath, datafolder, sidx_fname, boundaries_shp,
                         try:
                             res = h3.latlng_to_cell(p.y, p.x, h3_resolution)
                         except:
-                            res = h3.geo_to_h3(p.y, p.x, h3_resolution)
+                            res = h3.latlng_to_cell(p.y, p.x, h3_resolution)
 
                         # if len(res) > 1:
                         #    msg = 'The number of indexes found is larger '

@@ -3,7 +3,7 @@
 
 # From OQ wheels
 #
-https://wheelhouse.openquake.org/v3/macos/py311/h3-3.7.7-cp311-cp311-macosx_10_9_x86_64.whl
+https://wheelhouse.openquake.org/v3/macos/py311/h3-4.4.1-cp311-cp311-macosx_10_9_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/pyproj-3.7.2-cp311-cp311-macosx_13_0_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/fiona-1.10.1-cp311-cp311-macosx_13_0_x86_64.whl
 https://wheelhouse.openquake.org/v3/macos/py311/gdal-3.10.3-cp311-cp311-macosx_13_0_x86_64.whl

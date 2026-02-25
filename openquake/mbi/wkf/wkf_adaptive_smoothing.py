@@ -62,7 +62,7 @@ def main(catalogue:str, h3_map: str, config:str, outputfile:str,  use: str = [])
     
     # Get lat/lon locations for each h3 cell, convert to seperate lat and
     # lon columns of dataframe
-    h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.h3_to_geo)
+    h3_idx['latlon'] = h3_idx.loc[:,"h3"].apply(h3.cell_to_latlng)
     locations = pd.DataFrame(h3_idx['latlon'].tolist())
     locations.columns = ["lat", "lon"]
 
