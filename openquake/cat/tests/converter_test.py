@@ -5,93 +5,98 @@ import numpy as np
 import tempfile
 import shutil
 
-from openquake.cat.converter import gmice, igmce
+from openquake.cat.converter import GallahueAbrahamson2023Model1, GallahueAbrahamson2023Model2
 
 class TestGallahueAbrahamson2023(unittest.TestCase):
 
     def setUp(self):
-        """Initialize a temporary directory and create dummy data for testing."""
+        """Initialize temporary directory and create structured array for testing."""
         self.test_dir = tempfile.mkdtemp()
-        self.data_path = os.path.join(self.test_dir, 'data.csv')
         
         # Sample data for testing
         self.sample_data = pd.DataFrame({
-            "PGA": [0.07, 0.20, 0.46],         # g
-            "Mw": [6.0, 6.5, 7.3],
-            "Rhyp": [10.0, 50.0, 100.0],       # km
-            "Rjb": [9.0, 45.0, 95.0],          # km
-            "Intensity": [3.9, 5.8, 8.0]
+            "pga": [0.07, 0.20, 0.46],       # g
+            "mag": [6.0, 6.5, 7.3],
+            "rhypo": [10.0, 50.0, 100.0],    # km
+            "rjb": [9.0, 45.0, 95.0],        # km
+            "intensity": [3.9, 5.8, 8.0]
         })
-        self.sample_data.to_csv(self.data_path, index=False)
+        
+        self.structured_data = self.sample_data.to_records(index=False)
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
         if os.path.exists("output"):
             shutil.rmtree("output")
 
-    def test_gmice_eq19_success(self):
-        """Testing if Equation 19 calculates Intensity_pred and saves correctly."""
-        gmice(self.data_path, "eq19")
-        output_path = os.path.join("output", "gmice_res.csv")
+    def test_model1_eq19_success(self):
+        """Testing if equation 19 calculates intensity and saves correctly."""
+        model = GallahueAbrahamson2023Model1(self.structured_data)
+        model.get_intensity(mode='eq19')
+        
+        output_path = os.path.join("output", "test_gmice.csv")
+        model.save(output_path)
         
         self.assertTrue(os.path.exists(output_path))
         df_res = pd.read_csv(output_path)
-        self.assertIn("Intensity_pred", df_res.columns)
+        
+        # Checking if the result column 'intensity' exists
+        self.assertIn("intensity", df_res.columns)
         self.assertEqual(len(df_res), 3)
 
-    def test_gmice_eq20_with_epsilon(self):
-        """Testing if Equation 20 handles epsilon correctly."""
-        gmice(self.data_path, "eq20", epsilon=0)
-        df_mean = pd.read_csv(os.path.join("output", "gmice_res.csv"))
-        
-        # Calculate with epsilon=1
-        gmice(self.data_path, "eq20", epsilon=1)
-        df_eps = pd.read_csv(os.path.join("output", "gmice_res.csv"))
+    def test_model1_eq20_with_epsilon(self):
+        """Testing if equation 20 handles epsilon shifts correctly."""
+        model = GallahueAbrahamson2023Model1(self.structured_data)
+
+        # Calculation with epsilon=0 and epsilon=1
+        mean_results = model.get_intensity(mode='eq20', epsilon=0).copy()
+        eps_results = model.get_intensity(mode='eq20', epsilon=1)
         
         # Eq 20 has h4 = -0.568. If epsilon=1, intensity should be lower than the mean.
-        self.assertTrue((df_eps["Intensity_pred"] < df_mean["Intensity_pred"]).all())
+        self.assertTrue(np.all(eps_results < mean_results))
 
-    def test_gmice_eq19_missing_column_error(self):
-        """Verifies that Equation 19 raises ValueError if required columns are not found."""
-        bad_data = self.sample_data.drop(columns=["Rhyp"])
-        bad_input = os.path.join(self.test_dir, 'bad_input.csv')
-        bad_data.to_csv(bad_input, index=False)
+    def test_model1_missing_column_error(self):
+        bad_dt = np.dtype([('pga', 'f8'), ('mag', 'f8')])
+        bad_data = np.array([(0.1, 6.0)], dtype=bad_dt)
         
+        model = GallahueAbrahamson2023Model1(bad_data)
         with self.assertRaises(ValueError) as cm:
-            gmice(bad_input, "eq19")
-        self.assertIn("Rhyp", str(cm.exception))
+            model.get_intensity(mode='eq19')
+        self.assertIn("Missing required columns", str(cm.exception))
 
-    def test_igmce_eq22_success(self):
-        """Testing if Equation 22 calculates PGA successfully."""
-        igmce(self.data_path, "eq22")
-        output_path = os.path.join("output", "igmce_res.csv")
+    def test_model2_eq22_success(self):
+        """Testing if equation 22 calculates PGA and saves correctly."""
+        model = GallahueAbrahamson2023Model2(self.structured_data)
+        model.get_pga(mode='eq22')
+        
+        output_path = os.path.join("output", "test_igmce.csv")
+        model.save(output_path)
         
         self.assertTrue(os.path.exists(output_path))
         df_res = pd.read_csv(output_path)
-        self.assertIn("PGA_pred", df_res.columns)
-        self.assertTrue((df_res["PGA_pred"] > 0).all())
+        self.assertIn("pga", df_res.columns)
+        self.assertTrue((df_res["pga"] > 0).all())
 
-    def test_igmce_eq23_with_epsilon(self):
-        """Testing if Equation 23 handles epsilon and changes the PGA_pred result."""
-        igmce(self.data_path, "eq23", epsilon=0)
-        pga_mean = pd.read_csv(os.path.join("output", "igmce_res.csv"))["PGA_pred"]
+    def test_model2_eq23_with_epsilon(self):
+        """Verifies equation 23 shifts PGA when epsilon is changed."""
+        model = GallahueAbrahamson2023Model2(self.structured_data)
         
-        igmce(self.data_path, "eq23", epsilon=1)
-        pga_eps = pd.read_csv(os.path.join("output", "igmce_res.csv"))["PGA_pred"]
+        pga_mean = model.get_pga(mode='eq23', epsilon=0).copy()
+        pga_eps = model.get_pga(mode='eq23', epsilon=1)
         
-        # Eq 23 has i4 = -0.187. Check if the results are different.
-        self.assertFalse(np.array_equal(pga_mean.values, pga_eps.values))
+        # Confirming results are different
+        self.assertFalse(np.array_equal(pga_mean, pga_eps))
 
-    def test_invalid_equation_id(self):
-        """Testing if an incorrect equation_id triggers the appropriate error message."""
+    def test_invalid_mode_error(self):
+        """Verifies that an invalid mode string raises a ValueError."""
+        model = GallahueAbrahamson2023Model1(self.structured_data)
         with self.assertRaises(ValueError) as cm:
-            gmice(self.data_path, "eq_wrong")
-        self.assertIn("Invalid equation ID", str(cm.exception))
+            model.get_intensity(mode='wrong_mode')
+        self.assertIn("Invalid mode", str(cm.exception))
 
-    def test_output_directory_creation(self):
-        """Testing if the script automatically creates the 'output' directory."""
-        if os.path.exists("output"):
-            shutil.rmtree("output")
-            
-        gmice(self.data_path, "eq20")
-        self.assertTrue(os.path.isdir("output"))
+    def test_save_before_calculation_error(self):
+        """Verifies that saving before calculation triggers an error."""
+        model = GallahueAbrahamson2023Model2(self.structured_data)
+        with self.assertRaises(ValueError) as cm:
+            model.save("failure.csv")
+        self.assertIn("run 'get_pga' before saving", str(cm.exception))

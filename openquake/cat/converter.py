@@ -15,9 +15,9 @@
 
 import numpy as np
 import pandas as pd
-import os
+import pathlib
 
-# Coefficients
+
 COEFFS = {
     "eq19": {"d1": 2.919, "d2": 0.356, "d3": 0.010, "d4": 1.041, "d5": -0.889, "sigma": 0.566},
     "eq20": {"h1": 8.622, "h2": 1.230, "h3": 0.056, "h4": -0.568, "sigma": 0.704},
@@ -25,86 +25,118 @@ COEFFS = {
     "eq23": {"i1": -6.558, "i2": 0.754, "i3": -0.072, "i4": -0.187, "sigma": 0.667}
 }
 
-# Functions
-def gmice(data, equation_id, epsilon=0):
+
+class GallahueAbrahamson2023Model1:
     """
     Ground-motion to intensity conversion (PGA -> Intensity)
     Equations: 19 or 20
-    Units: PGA [g], Rhyp [km]
+    Units: pga [g], rhypo [km]
     Epsilon (ϵ): It can be estimated using the mean ϵ from the disaggregation; 
     however, if disaggregation results are not available, then ϵ can be approximated 
     from the slope of the hazard curve at any particular site (Gallahue and Abrahamson, 2023).
     """
-    df = pd.read_csv(data)
-    c = COEFFS.get(equation_id)
-    
-    if equation_id == "eq19":
-        required = ["PGA", "Mw", "Rhyp"]
-        if not all(col in df.columns for col in required):
-            raise ValueError(f"ERROR: {required} are not found for Equation 19!")
-        
-        ln_pga = np.log(df["PGA"])
-        ln_rhyp = np.log(df["Rhyp"])
-        df["Intensity_pred"] = (c["d1"] + c["d2"] * ln_pga + 
-                           c["d3"] * (ln_pga - np.log(0.1))**2 + 
-                           c["d4"] * df["Mw"] + c["d5"] * ln_rhyp)
-        
-    elif equation_id == "eq20":
-        if "PGA" not in df.columns:
-            raise ValueError("ERROR: PGA is not found for Equation 20!")
-        
-        ln_pga = np.log(df["PGA"])
-        df["Intensity_pred"] = (c["h1"] + c["h2"] * ln_pga + 
-                           c["h3"] * (ln_pga - np.log(0.1))**2 + 
-                           c["h4"] * epsilon)
-    else:
-        raise ValueError("ERROR: Invalid equation ID! Please select 'eq19' or 'eq20' for GMICE.")
+    def __init__(self, data: np.ndarray):
+        self.data = data
+        self.mint = None
 
-    save_results(df, "gmice_res.csv")
+    def get_intensity(self, mode: str = 'eq19', epsilon: float = 0):
+        if mode == 'eq19':
 
-def igmce(data, equation_id, epsilon=0):
-    """
-    Intensity to ground-motion conversion (Intensity -> PGA)
-    Equations: 22 or 23
-    Units: PGA [g], Rjb [km]
-    Epsilon (ϵ): It can be estimated using the mean ϵ from the disaggregation; 
-    however, if disaggregation results are not available, then ϵ can be approximated 
-    from the slope of the hazard curve at any particular site (Gallahue and Abrahamson, 2023).
-    """
-    df = pd.read_csv(data)
-    c = COEFFS.get(equation_id)
-    
-    if equation_id == "eq22":
-        required = ["Intensity", "Mw", "Rjb"]
-        if not all(col in df.columns for col in required):
-            raise ValueError(f"ERROR: {required} are not found for Equation 22!")
-        
-        ln_rjb = np.log(df["Rjb"])
-        ln_pga = (c["f1"] + c["f2"] * df["Intensity"] + 
-                  c["f3"] * (df["Intensity"] - 6)**2 + 
-                  c["f4"] * df["Mw"] + c["f5"] * ln_rjb)
-        df["PGA_pred"] = np.exp(ln_pga)
-        
-    elif equation_id == "eq23":
-        if "Intensity" not in df.columns:
-            raise ValueError("ERROR: Intensity is not found for Equation 23!")
+            required = ['pga', 'mag', 'rhypo']
+            self._check_columns(required)
             
-        ln_pga = (c["i1"] + c["i2"] * df["Intensity"] + 
-                  c["i3"] * (df["Intensity"] - 6)**2 + 
-                  c["i4"] * epsilon)
-        df["PGA_pred"] = np.exp(ln_pga)
-    else:
-        raise ValueError("ERROR: Invalid equation ID! Please select 'eq22' or 'eq23' for IGMCE.")
+            c = COEFFS["eq19"]
+            ln_pga = np.log(self.data['pga'])
+            ln_rhypo = np.log(self.data['rhypo'])
+            
+            self.mint = (c["d1"] + c["d2"] * ln_pga + 
+                         c["d3"] * (ln_pga - np.log(0.1))**2 + 
+                         c["d4"] * self.data['mag'] + c["d5"] * ln_rhypo)
+            
+        elif mode == 'eq20':
+            self._check_columns(['pga'])
+            
+            c = COEFFS["eq20"]
+            ln_pga = np.log(self.data['pga'])
+            
+            self.mint = (c["h1"] + c["h2"] * ln_pga + 
+                         c["h3"] * (ln_pga - np.log(0.1))**2 + 
+                         c["h4"] * epsilon)
+        else:
+            raise ValueError("Invalid mode! Choose 'eq19' or 'eq20'.")
+        
+        return self.mint
 
-    save_results(df, "igmce_res.csv")
+    def save(self, filename: str):
+        if self.mint is None:
+            raise ValueError("Please run 'get_intensity' before saving.")
+        _save_results(self.data, self.mint, 'intensity', filename)
 
-def save_results(df, filename):
-    output_dir = "output"
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+    def _check_columns(self, required):
+        missing = [col for col in required if col not in self.data.dtype.names]
+        if missing:
+            raise ValueError(f"Missing required columns in structured array: {missing}")
+
+
+class GallahueAbrahamson2023Model2:
+    """
+    Intensity to ground motion conversion (Intensity -> PGA)
+    Equations: 22 or 23
+    Units: pga [g], rjb [km]
+    Epsilon (ϵ): It can be estimated using the mean ϵ from the disaggregation; 
+    however, if disaggregation results are not available, then ϵ can be approximated 
+    from the slope of the hazard curve at any particular site (Gallahue and Abrahamson, 2023).
+    """
+    def __init__(self, data: np.ndarray):
+        self.data = data
+        self.pga = None
+
+    def get_pga(self, mode: str = 'eq22', epsilon: float = 0):
+        if mode == 'eq22':
+            required = ['intensity', 'mag', 'rjb']
+            self._check_columns(required)
+            
+            c = COEFFS["eq22"]
+            ln_rjb = np.log(self.data['rjb'])
+            
+            ln_pga = (c["f1"] + c["f2"] * self.data['intensity'] + 
+                      c["f3"] * (self.data['intensity'] - 6)**2 + 
+                      c["f4"] * self.data['mag'] + c["f5"] * ln_rjb)
+            self.pga = np.exp(ln_pga)
+            
+        elif mode == 'eq23':
+            self._check_columns(['intensity'])
+            
+            c = COEFFS["eq23"]
+            ln_pga = (c["i1"] + c["i2"] * self.data['intensity'] + 
+                      c["i3"] * (self.data['intensity'] - 6)**2 + 
+                      c["i4"] * epsilon)
+            self.pga = np.exp(ln_pga)
+        else:
+            raise ValueError("Invalid mode! Choose 'eq22' or 'eq23'.")
+            
+        return self.pga
+
+    def save(self, filename: str):
+        if self.pga is None:
+            raise ValueError("Please run 'get_pga' before saving.")
+        _save_results(self.data, self.pga, 'pga', filename)
+
+    def _check_columns(self, required):
+        missing = [col for col in required if col not in self.data.dtype.names]
+        if missing:
+            raise ValueError(f"Missing required columns in structured array: {missing}")
+
+
+def _save_results(data: np.ndarray, result_array: np.ndarray, result_name: str, filename: str):
+    path = pathlib.Path(filename)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    keys = data.dtype.names
+    tmp = {k: data[k] for k in keys}
+    tmp[result_name] = result_array
     
-    filepath = os.path.join(output_dir, filename)
-    
+    df = pd.DataFrame(tmp)
     df = df.round(5)
-    df.to_csv(filepath, index=False)
-    print(f"Done! Saved to '{filepath}'")
+    df.to_csv(path, index=False)
+    print(f"Done! Saved to '{filename}'")
