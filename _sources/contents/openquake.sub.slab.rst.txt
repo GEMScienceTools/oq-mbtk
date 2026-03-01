@@ -1,0 +1,45 @@
+openquake.sub.slab package
+==========================
+
+Submodules
+----------
+
+openquake.sub.slab.inslab module
+--------------------------------
+
+.. automodule:: openquake.sub.slab.inslab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.sub.slab.rupture module
+---------------------------------
+
+.. automodule:: openquake.sub.slab.rupture
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.sub.slab.rupture\_utils module
+----------------------------------------
+
+.. automodule:: openquake.sub.slab.rupture_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.sub.slab.utils\_plot module
+-------------------------------------
+
+.. automodule:: openquake.sub.slab.utils_plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.slab
+   :members:
+   :show-inheritance:
+   :undoc-members:

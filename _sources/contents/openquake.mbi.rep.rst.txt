@@ -1,0 +1,21 @@
+openquake.mbi.rep package
+=========================
+
+Submodules
+----------
+
+openquake.mbi.rep.logictree module
+----------------------------------
+
+.. automodule:: openquake.mbi.rep.logictree
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbi.rep
+   :members:
+   :show-inheritance:
+   :undoc-members:

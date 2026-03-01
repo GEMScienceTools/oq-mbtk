@@ -1,0 +1,10 @@
+openquake.man.notebooks package
+===============================
+
+Module contents
+---------------
+
+.. automodule:: openquake.man.notebooks
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,872 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strong-Motion Tools (smt) module &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Secondary Perils Analysis using the OQ-MBTK" href="sep.html" />
+    <link rel="prev" title="SUBduction (sub) module" href="sub.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Strong-Motion Tools (smt) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#performing-a-residual-analysis">Performing a Residual Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parsing-a-ground-motion-flatfile-into-metadata">Parsing a Ground-Motion Flatfile into Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#computing-the-ground-motion-residuals">Computing the Ground-Motion Residuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting-of-residuals">Plotting of Residuals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gmpe-performance-ranking-metrics">GMPE Performance Ranking Metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-loglikelihood-method-scherbaum-et-al-2009">The Loglikelihood Method (Scherbaum et al. 2009)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#euclidean-distance-based-ranking-kale-and-akkar-2013">Euclidean Distance Based Ranking (Kale and Akkar, 2013)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stochastic-area-based-ranking-sunny-et-al-2021">Stochastic Area Based Ranking (Sunny et al. 2021)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#single-station-residual-analysis">Single Station Residual Analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#comparing-gmpes">Comparing GMPEs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Strong-Motion Tools (smt) module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/smt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="strong-motion-tools-smt-module">
+<h1>Strong-Motion Tools (smt) module<a class="headerlink" href="#strong-motion-tools-smt-module" title="Link to this heading"></a></h1>
+<p>The <span class="target" id="index-0"></span>Strong-Motion Tools module contains capabilities for (1) computation, plotting and distillation of ground-motion residual distributions (including single station residual analysis and statistical scoring metrics) and (2) comparison of GMPE behaviours for highly-customisable ground-shaking scenarios (which importantly, consider the finiteness of ruptures rather than using point sourcess).</p>
+<p>A set of demo analyses with complete inputs and scripts for utilising the capabilities documented here are available within <code class="docutils literal notranslate"><span class="pre">oq-mbtk\openquake\smt\demos</span></code>.</p>
+<p>Please note that this documentation assumes an elementary knowledge of ground-motion modelling/characterisation and residual analysis. Therefore, this documentation’s purpose is to facilitate the application of the smt by a user who is already familiar with the underlying theory. References are provided throughout.</p>
+<section id="performing-a-residual-analysis">
+<h2>Performing a Residual Analysis<a class="headerlink" href="#performing-a-residual-analysis" title="Link to this heading"></a></h2>
+<p>The smt provides capabilities (parsers) for converting a provided dataset into metadata that can be subsequently used in a residual analysis.</p>
+<p>The inputted dataset usually comprises of a ground-motion record flatfile. Many seismological institutions provide flatfiles of processed ground-motion records. These flatfiles often slightly differ in format, but generally follow a template of a CSV file in which each row represents a single ground-motion record, that is, a recording of the observed ground-motion at a single station. Each record contains information for (1) the associated earthquake (e.g. moment magnitude, hypocentral location, focal depth), (2) the associated site parameters (e.g. shear-wave velocity in the upper 30m of a site (Vs30)) and (3) ground-motion intensity values for various intensity measures (e.g. peak-ground acceleration (PGA), peak-ground velocity (PGV), spectral acceleration (SA) for various spectral ordinates).</p>
+<p>Within a residual analysis, the information provided in each ground-motion record is used to evaluate how closely a selection of GMPEs predict the observed ground-motion. The ground-motion records within a flatfile considered in a residual analysis will usually consist of earthquakes from the same region and of the same tectonic region type.</p>
+<p>When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine’s capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance types required for each GMPE (e.g. rjb, rrup) can be computed relative to each site (i.e. station) in the flatfile if missing for the given record. NOTE: The distance metrics in the flatfile will inherently be the result of a different finite rupture from that modelled within OpenQuake Engine for distance metric computation - if the user requires complete consistency between the considered distance metrics, the user can just remove all distance metrics provided apriori within the inputted flatfile/ground-motion database to ensure all of the metrics are computed using OpenQuake Engine instead.</p>
+<p>Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in <code class="docutils literal notranslate"><span class="pre">oq-mbtk\openquake\smt\residuals\parsers</span></code>. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the <code class="docutils literal notranslate"><span class="pre">ASADatabaseMetadataReader</span></code> (found in <code class="docutils literal notranslate"><span class="pre">oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser.py</span></code>) can be used to parse ASA format files to construct an equivalent ground-motion database.</p>
+<p>In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.</p>
+</section>
+<section id="parsing-a-ground-motion-flatfile-into-metadata">
+<h2>Parsing a Ground-Motion Flatfile into Metadata<a class="headerlink" href="#parsing-a-ground-motion-flatfile-into-metadata" title="Link to this heading"></a></h2>
+<p>Herein we provide a brief description of the various steps for the parsing of the ESM18 example flatfile. Note that we use the symbol <code class="docutils literal notranslate"><span class="pre">&gt;</span></code> as the prompt in a terminal throughout the smt documentation, hence every time you find some code starting with this symbol this indicates a command you must type in your terminal.</p>
+<ol class="arabic">
+<li><p>First we must import the <code class="docutils literal notranslate"><span class="pre">ESMFlatfileParser</span></code> and the required python modules for managing the output directories:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Import required python modules</span>
+<span class="na">&gt; import os</span>
+<span class="na">&gt; import shutil</span>
+<span class="na">&gt; from openquake.smt.residuals.parsers.esm_flatfile_parser import ESMFlatfileParser</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Next we need to specify the base path, the flatfile path and the database output location:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Specify base path</span>
+<span class="na">&gt; DATA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">os.path.abspath(&#39;&#39;)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Specify flatfile paths</span>
+<span class="na">&gt; flatfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">os.path.join(DATA, &#39;demo_flatfile.csv&#39;)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Specify metadata output location</span>
+<span class="na">&gt; database</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">os.path.join(DATA, &#39;metadata&#39;)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # If the metadata already exists first remove</span>
+<span class="na">&gt; if os.path.exists(database)</span><span class="o">:</span>
+<span class="na">&gt;     shutil.rmtree(database)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Now we can parse the metadata from the ESM 2018 flatfile using the <code class="docutils literal notranslate"><span class="pre">ESMFlatfileParser</span></code> with the autobuild class method:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Specify metadata database ID and metadata database name</span><span class="o">:</span>
+<span class="na">&gt; DB_ID</span><span class="o">=</span><span class="s">&#39;000&#39;</span>
+<span class="na">&gt; DB_NAME</span><span class="o">=</span><span class="s">&#39;ESM18_Albania&#39;</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Parse flatfile</span>
+<span class="na">&gt; parser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ESMFlatfileParser.autobuild(DB_ID, DB_NAME, database, flatfile)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>The flatfile will now be parsed by the <code class="docutils literal notranslate"><span class="pre">ESMFlatfileParser</span></code>, and a pickle (<code class="docutils literal notranslate"><span class="pre">.pkl</span></code>) file of the metadata (the parsed ground-motion database) will be outputted in the specified output location. We can now use this metadata to perform a GMPE residual analysis.</p></li>
+</ol>
+</section>
+<section id="computing-the-ground-motion-residuals">
+<h2>Computing the Ground-Motion Residuals<a class="headerlink" href="#computing-the-ground-motion-residuals" title="Link to this heading"></a></h2>
+<p>Following the parsing of a flatfile into a pickled ground-motion database object, we can now specify the inputs for the performing of a residual analysis. Residual analysis compares the predicted and expected (i.e. observed) ground-motion for a combination of source, site and path parameters to evaluate the performance of GMPEs. Residuals are computed using the mixed effects methodology of Abrahamson and Youngs (1992), in which the total residual is split into an inter-event component and an intra-event component. Abrahamson and Youngs (1992) should be consulted for a detailed overview of ground-motion residuals.</p>
+<p>We can specify the inputs to perform a residual analysis with as follows:</p>
+<ol class="arabic">
+<li><p>We can specify the GMPEs we want to evaluate, and the intensity measures we want to evaluate each GMPE for as a <code class="docutils literal notranslate"><span class="pre">gmpe_list</span></code> and an <code class="docutils literal notranslate"><span class="pre">imt_list</span></code> within lists:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Specify some GMPEs and intensity measures within a list</span>
+<span class="na">&gt; gmpe_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;AbrahamsonEtAl2014&#39;,</span>
+<span class="na">&gt;              &#39;AkkarEtAlRjb2014&#39;,</span>
+<span class="na">&gt;              &#39;BooreEtAl2014&#39;,</span>
+<span class="na">&gt;              &#39;BooreEtAl2020&#39;,</span>
+<span class="na">&gt;              &#39;CauzziEtAl2014&#39;,</span>
+<span class="na">&gt;              &#39;CampbellBozorgnia2014&#39;,</span>
+<span class="na">&gt;              &#39;ChiouYoungs2014&#39;,</span>
+<span class="na">&gt;              &#39;KothaEtAl2020&#39;,</span>
+<span class="na">&gt;              &#39;LanzanoEtAl2019_RJB_OMO&#39;]</span>
+<span class="na">&gt; imt_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;PGA&#39;, &#39;SA(0.2)&#39;, &#39;SA(0.6)&#39;, &#39;SA(1.0)&#39;]</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>We can also specify the GMPEs and intensity measures within a <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file. The <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file method permits easier specification of additional parameters accepted by some GMMs compared to when specifying them in lists of strings as demonstrated above.</p>
+<p>The additional input parameters which are specifiable for certain GMPEs are available within their corresponding GMPE modules (the <code class="docutils literal notranslate"><span class="pre">.py</span></code> GMM files found in <code class="docutils literal notranslate"><span class="pre">oq-engine\openquake\hazardlib\gsim</span></code>). The capabilties of ModifiableGMPE are primarily contained within <code class="docutils literal notranslate"><span class="pre">oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file for specifying GMPEs and intensity measures to consider within a residual analysis should be specified as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[models.AbrahamsonEtAl2014]</span>
+
+<span class="k">[models.AkkarEtAlRjb2014]</span>
+
+<span class="k">[models.BooreEtAl2014]</span>
+
+<span class="k">[models.BooreEtAl2020]</span>
+
+<span class="k">[models.CauzziEtAl2014]</span>
+
+<span class="k">[models.CampbellBozorgnia2014]</span>
+
+<span class="k">[models.ChiouYoungs2014]</span>
+
+<span class="k">[models.KothaEtAl2020]</span>
+
+<span class="k">[models.LanzanoEtAl2019_RJB_OMO]</span>
+
+<span class="c1"># Examples below of how some GMPEs not considered in this residual analysis</span>
+<span class="c1"># with additional parameters can be specified within the SMT Comparison toml</span>
+
+<span class="k">[models.AbrahamsonGulerce2020SInter]</span>
+<span class="na">region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CAS&quot;</span><span class="w"> </span><span class="c1"># String representation in a list of GMMs would be &quot;[AbrahamsonGulerce2020SInter]\nregion=&#39;CAS&#39;&quot;</span>
+
+<span class="k">[models.NGAEastUSGSGMPE]</span>
+<span class="na">gmpe_table</span><span class="o">=</span><span class="s">&#39;nga_east_Frankel.hdf5&#39;</span>
+
+<span class="k">[imts]</span>
+<span class="na">imt_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;PGA&#39;, &#39;SA(0.2)&#39;, &#39;SA(0.6)&#39;, &#39;SA(1.0)&#39;]</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module’s capabilities.</p>
+<p>We first need to get the metadata from the parsed <code class="docutils literal notranslate"><span class="pre">.pkl</span></code> file (stored within the metadata folder):</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Import more required python modules</span>
+<span class="na">&gt; import pickle</span>
+<span class="na">&gt; import openquake.smt.residuals.gmpe_residuals as res</span>
+<span class="na">&gt; import openquake.smt.residuals.residual_plotter as rspl</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Create path to parsed database&#39;s metadata file</span>
+<span class="na">&gt; metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">os.path.join(metadata_directory, &#39;metadatafile.pkl&#39;)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Load database metadata</span>
+<span class="na">&gt; sm_database</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">pickle.load(open(metadata, &quot;rb&quot;))</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # If the output folder already exists delete, then create output folder</span>
+<span class="na">&gt; out_folder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">os.path.join(BASE, &#39;residuals&#39;)</span>
+<span class="na">&gt; if os.path.exists(out_folder)</span><span class="o">:</span>
+<span class="na">&gt;    shutil.rmtree(out_folder)</span>
+<span class="na">&gt; os.mkdir(out_folder)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Now we compute the residuals using the specified GMPEs (normalising by each GMPE’s sigma) and intensity measures for the metadata we have parsed from the flatfile:</p>
+<p>Note that here <code class="docutils literal notranslate"><span class="pre">resid</span></code> is the residuals object which stores (1) the observed ground-motions and associated metadata from the parsed flatfile, (2) the corresponding predicted ground-motion per GMPE and (3) the computed residual components per GMPE per intensity measure. The residuals object also stores the gmpe_list (e.g. resid.gmpe_list) and the imt_list (resid.imts) if these inputs are specified within a <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file.</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Compute residuals using GMPEs and intensity measures specified in lists</span>
+<span class="na">&gt; comp</span><span class="o">=</span><span class="s">&#39;Geometric&#39;</span><span class="w"> </span><span class="c1"># Use the geometric mean of H1 and H2 as the observed values to compare against the GMPE predictions</span>
+<span class="na">&gt; resid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">res.Residuals(gmpe_list, imt_list)</span>
+<span class="na">&gt; resid.compute_residuals(sm_database, component</span><span class="o">=</span><span class="s">&quot;Geometric&quot;</span><span class="na">) # horizontal component definition can also be set to &#39;rotD50&#39;, rotD00&#39;,&#39;rotD100&#39; etc</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # OR compute residuals using GMPEs and intensity measures specified in .toml file</span>
+<span class="na">&gt; resid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">res.Residuals.from_toml(toml_fname)</span>
+<span class="na">&gt; resid.compute_residuals(sm_database)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # OR compute residuals using GMPEs specified in a GMC XML and intensity measures specified in a list</span>
+<span class="na">&gt; resid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">res.Residuals.from_xml(xml_fname, imt_list)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # We can export the residuals to a text file</span>
+<span class="na">&gt; resid.export_residuals(txt_fname)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+</section>
+<section id="plotting-of-residuals">
+<h2>Plotting of Residuals<a class="headerlink" href="#plotting-of-residuals" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Now we have computed the residuals, we can generate various basic plots describing the residual distribution.</p>
+<p>We can generate plots of the probability density function plots for total, inter- and intra-event residuals to compare the residual distributions to standard normal distributions.</p>
+<p>Probability density function plots can be generated as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Make residual pdf plot for givne gmpe and imt</span>
+<span class="na">&gt; rspl.ResidualPlot(resid, gmpe, imt, fname)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+<dl>
+<dt>Residual distribution plot for Boore et al. 2020 and PGA:</dt><dd><img alt="../_images/residual_histogram_PGA.png" src="../_images/residual_histogram_PGA.png" />
+</dd>
+</dl>
+<ol class="arabic" start="2">
+<li><p>We can also plot the means and standard deviations of the distributions of the residuals over all considered periods at once:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Plot means and stddevs of all GMPEs residual distributions w.r.t. period</span><span class="o">:</span>
+<span class="na">&gt; rspl.plot_residual_means_and_stds_with_period(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate CSV of this information</span>
+<span class="na">&gt; rspl.residual_means_and_stds_table(resid, fname)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ol>
+<dl>
+<dt>Plot of residual distributions versus spectral acceleration:</dt><dd><img alt="../_images/means_and_stds_vs_period.png" src="../_images/means_and_stds_vs_period.png" />
+</dd>
+</dl>
+<ol class="arabic" start="3">
+<li><p>Plots for residual trends (again for total, inter- and intra-event components) with respect explanatory variables (magnitude, focal depth, distance and vs30) can also be generated in a similar manner. Here we will demonstrate for magnitude:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Plot each component of residuals w.r.t. rrup distance</span>
+<span class="na">&gt; rspl.ResidualWithDistance(resid, gmpe, imt, fname, distance_type</span><span class="o">=</span><span class="s">&quot;rrup&quot;</span><span class="na">)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Residuals w.r.t. rrup for Boore et al. 2020 and PGA:</dt><dd><img alt="../_images/residual_wrt_dist_PGA.png" src="../_images/residual_wrt_dist_PGA.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+</ol>
+</section>
+<section id="gmpe-performance-ranking-metrics">
+<h2>GMPE Performance Ranking Metrics<a class="headerlink" href="#gmpe-performance-ranking-metrics" title="Link to this heading"></a></h2>
+<blockquote>
+<div><p>The smt contains implementations of several published GMPE ranking methodologies, which allow additional inferences to be drawn from the computed residual distributions. Brief summaries of each ranking metric are provided here, but the corresponding publications should be consulted for more information.</p>
+</div></blockquote>
+<section id="the-loglikelihood-method-scherbaum-et-al-2009">
+<h3>The Loglikelihood Method (Scherbaum et al. 2009)<a class="headerlink" href="#the-loglikelihood-method-scherbaum-et-al-2009" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>The loglikelihood method is used to assess information loss between GMPEs compared to the unknown “true” model. The comparison of information loss per GMPE compared to this true model is represented by the corresponding ground-motion residuals. A GMPE with a lower LLH value provides a better fit to the observed ground-motions (less information loss occurs when using the GMPE). It should be noted that LLH is a comparative measure (i.e. the LLH values have no physical meaning), and therefore LLH is only of use to evaluate two or more GMPEs.</p>
+<p>LLH values per GMPE aggregated over all (specified) intensity measures, LLH-based model weights and LLH per intensity measure can be computed as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Get LLH values for given GMPEs and intensity measures (gets LLH per IMT and also aggregated over IMTs)</span>
+<span class="na">&gt; res.get_llh_values(resid, imt_list)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of LLH values per GMPE and per IMT</span>
+<span class="na">&gt; rspl.llh_table(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of LLH-based model weights for a GMPE logic tree</span>
+<span class="na">&gt; rspl.llh_weights(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Plot LLH values per GMPE vs IMT</span>
+<span class="na">&gt; rspl.plot_llh_with_period(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Write GMC XML which uses weights based on LLH</span>
+<span class="na">&gt; res.export_gmc_xml(weight_metric</span><span class="o">=</span><span class="s">&quot;LLH&quot;</span><span class="na">, fname)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Loglikelihood versus period plot for considered GMPEs:</dt><dd><img alt="../_images/llh_vs_period.png" src="../_images/llh_vs_period.png" />
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="euclidean-distance-based-ranking-kale-and-akkar-2013">
+<h3>Euclidean Distance Based Ranking (Kale and Akkar, 2013)<a class="headerlink" href="#euclidean-distance-based-ranking-kale-and-akkar-2013" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>The Euclidean distance based ranking (EDR) method considers the probability that the absolute difference between an observed ground-motion and a predicted ground-motion is less than a specific estimate, and is repeated over a discrete set of such estimates (one set per observed ground-motion per GMPE per the specified intensity measure). The total occurrence probability for such a set is the modified Euclidean distance (MDE). The corresponding EDR value is computed by summing the MDE (one per observation), normalising by the number of observations and then introducing an additional parameter (Kappa) to penalise models displaying a larger predictive bias (here kappa is equal to the ratio of the Euclidean distance between obs. and pred. median ground-motion to the Euclidean distance between the obs. and pred. median ground-motion corrected by a predictive model derived from a linear regression of the observed data - the parameter sqrt(kappa) therefore provides the performance of the median prediction per GMPE).</p>
+<p>EDR score, the normal distribution of modified Euclidean distance (MDE Norm) and sqrt(k) (k is used henceforth to represent the median predicted ground-motion correction factor “Kappa” within the original methodology) per GMPE aggregated over all considered intensity measures, or per intensity measure can be computed as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Get EDR, MDE Norm and MDE per GMPE aggregated over all IMTs</span>
+<span class="na">&gt; res.get_edr_values(resid)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Get EDR, MDE Norm and MDE per GMPE per IMT</span>
+<span class="na">&gt; res.get_edr_wrt_imt(resid)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of EDR values per GMPE and per IMT</span>
+<span class="na">&gt; rspl.edr_table(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of EDR-based model weights for a GMPE logic tree</span>
+<span class="na">&gt; rspl.edr_weights(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Plot EDR score, MDE norm and sqrt(k) vs IMT</span>
+<span class="na">&gt; rspl.plot_edr_with_period(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Write GMC XML which uses weights based on EDR</span>
+<span class="na">&gt; res.export_gmc_xml(weight_metric</span><span class="o">=</span><span class="s">&quot;EDR&quot;</span><span class="na">, fname)</span>
+</pre></div>
+</div>
+<dl>
+<dt>EDR rank versus period plot for considered GMPEs:</dt><dd><img alt="../_images/edr_vs_period_value.png" src="../_images/edr_vs_period_value.png" />
+</dd>
+<dt>EDR median correction factor versus period for considered GMPEs:</dt><dd><img alt="../_images/edr_vs_period_kappa.png" src="../_images/edr_vs_period_kappa.png" />
+</dd>
+<dt>MDE versus period for considered GMPEs:</dt><dd><img alt="../_images/edr_vs_period_MDE.png" src="../_images/edr_vs_period_MDE.png" />
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="stochastic-area-based-ranking-sunny-et-al-2021">
+<h3>Stochastic Area Based Ranking (Sunny et al. 2021)<a class="headerlink" href="#stochastic-area-based-ranking-sunny-et-al-2021" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>The stochastic area ranking metric considers the absolute difference between the integrals of the cumulative distribution function of the GMPE and the empirical distribution function of the observations. A smaller value is representative of a better fit between the GMPE and the observed ground-motions.</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Get stochastic area metric per GMPE and per IMT</span>
+<span class="na">&gt; res.get_sto_wrt_imt(resid)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of stochastic area values per GMPE and per IMT</span>
+<span class="na">&gt; rspl.sto_table(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Generate a CSV table of stochastic area-based model weights for a GMPE logic tree</span>
+<span class="na">&gt; rspl.sto_weights(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Plot stochastic area vs IMT</span>
+<span class="na">&gt; rspl.plot_sto_with_period(resid, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Write GMC XML which uses weights based on stochastic area</span>
+<span class="na">&gt; res.export_gmc_xml(weight_metric</span><span class="o">=</span><span class="s">&quot;STO&quot;</span><span class="na">, fname)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Stochastic area versus period plot for considered GMPEs:</dt><dd><img alt="../_images/sto_vs_period.png" src="../_images/sto_vs_period.png" />
+</dd>
+</dl>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+<section id="single-station-residual-analysis">
+<h2>Single Station Residual Analysis<a class="headerlink" href="#single-station-residual-analysis" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>The smt’s residuals module also offers capabilities for performing single station residual analysis (SSA).</p>
+<p>We can first specify a threshold for the minimum number of records each site must have to be considered in the SSA:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Import SMT functions required for SSA</span>
+<span class="na">&gt; from openquake.smt.strong_motion_selector import rank_sites_by_record_count</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Specify threshold for min. num. records</span>
+<span class="na">&gt; threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">20</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Get the sites meeting threshold (for same parsed database as above!)</span>
+<span class="na">&gt; top_sites</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">rank_sites_by_record_count(sm_database, threshold)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Following selection of sites using a threshold value, we can perform the SSA. For more details on the components of intra-event residuals considered in single-station residual analysis please consult Rodriguez-Marek et al. (2011), which is referenced repeatedly throughout the following section.</p>
+<p>We can compute the intra-event residual per record associated with the selected sites <span class="math notranslate nohighlight">\(\delta W_{es}\)</span>, the average intra-event residual per site <span class="math notranslate nohighlight">\(\delta S2S_S\)</span> and a residual variability <span class="math notranslate nohighlight">\(\delta WS_{es}\)</span> (which is computed per record by subtracting the site-average intra-event residual from the intra-event residual of each recording at the station).
+The <span class="math notranslate nohighlight">\(\delta S2S_S\)</span> term is characteristic of each site, and should (assuming the GMM perfectly predicts) equal 0 with a standard deviation of <span class="math notranslate nohighlight">\(\phi_{S2S}\)</span>. A non-zero value for <span class="math notranslate nohighlight">\(\delta S2S_S\)</span> is indicative of a bias in the prediction of the observed ground-motions at the considered site.</p>
+<p>NB: The standard deviation of the <span class="math notranslate nohighlight">\(\delta WS_{es}\)</span> term (<span class="math notranslate nohighlight">\(\phi_{SS}\)</span>) is representative of the single-station standard deviation of the GMPE, and is an estimate of the non-ergodic standard deviation of the model.</p>
+<p>As previously, we can specify the GMPEs and intensity measures to compute the residuals per site for using either a GMPE list and intensity measure list, or from a <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file.</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Create SingleStationAnalysis object from gmpe_list and imt_list</span>
+<span class="na">&gt; ssa1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">res.SingleStationAnalysis(list(top_sites.keys()), gmpe_list, imt_list)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # OR create SingleStationAnalysis object from .toml</span>
+<span class="na">&gt; ssa1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">res.SingleStationAnalysis.from_toml(list(top_sites.keys()), ssa_toml_fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; Get the total, inter-event and intra-event residuals for each site</span>
+<span class="na">&gt; ssa1.get_site_residuals(sm_database)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; Get single station residual statistics for each site and export to CSV</span>
+<span class="na">&gt; ssa1.residual_statistics(True, csv_output_fname)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>We can plot the computed residual statistics as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # First plot total, inter-event and intra-event residuals for each site</span>
+<span class="na">&gt; rspl.ResidualWithSite(ssa1, gmpe, imt, fname)</span>
+<span class="na">&gt;</span>
+<span class="na">&gt; # Then plot intra-event per site, average intra-event per site and residual variability per site</span>
+<span class="na">&gt; rspl.IntraEventResidualWithSite(ssa1, gmpe, imt, fname)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Residuals per considered site for Boore et al. 2020 and PGA:</dt><dd><img alt="../_images/%5BBooreEtAl2020%5D_PGA_AllResPerSite.png" src="../_images/%5BBooreEtAl2020%5D_PGA_AllResPerSite.png" />
+</dd>
+<dt>Intra-event residuals components per considered site for Boore et al. 2020 and PGA:</dt><dd><img alt="../_images/%5BBooreEtAl2020%5D_PGA_IntraResCompPerSite.png" src="../_images/%5BBooreEtAl2020%5D_PGA_IntraResCompPerSite.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+</ol>
+</section>
+<section id="comparing-gmpes">
+<h2>Comparing GMPEs<a class="headerlink" href="#comparing-gmpes" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p>Alongside the smt’s capabilities for evaluating GMPEs in terms of residuals, we can also compare the behaviours of GMPEs for a given set of highly customisable earthquake scenarios using the tools within the Comparison module. The tools within the Comparison module includes plotting capabilities for response spectra and attenuation curves (trellis plots), as well as methods for considering the similarities of GMPE predictions in Euclidean space (i.e. distances) such as Sammon Maps and hierarchical clustering dendrogram plots. These tools are highly useful for better understanding the behaviours of GMMs in ground-shaking scenarios of interest to a specific region and tectonic region type, These scenarios could potentially be identified from a disaggregation analysis for some sites of interest within a PSHA. Therefore, such tools can be used to help further inform the construction of a GMC logic tree using some GMPEs identified as being potentially suitable for application to a given region and tectonic region type from a residual analysis.</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Import GMPE comparison tools</span>
+<span class="na">&gt; from openquake.smt.comparison import compare_gmpes as comp</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>The inputs for these comparitive tools must be specified within a single <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file as provided below. GMPE parameters can be specified in the same way as within residual analysis input <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file. To plot a GMPE logic tree we must assign model weights using <code class="docutils literal notranslate"><span class="pre">lt_weight_gmc1</span></code> or ‘<code class="docutils literal notranslate"><span class="pre">lt_weight_gmc2</span></code> in each GMPE depending on which GMC logic tree we wish to include the GMPE within (up to 4 GMC logic trees can currently be plotted within one analysis). To plot only the final logic tree and not the individual GMPEs comprising it, we use <code class="docutils literal notranslate"><span class="pre">lt_weight_gmc1_plot_lt_only</span></code> instead (depending on which GMC we wish to not plot the individual GMPEs for - see the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file below for an example of these potential configurations).</p>
+<p>In the comparison module <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file the user must specify the source parameters (here compressional thrust faulting, Mw 5 to Mw 7), site parameters (e.g. vs30), and some GMPEs to evaluate in the specified ground-shaking scenarios.</p>
+<p>The Comparison module leverages the OpenQuake Engine to construct a finite rupture from the provided source information in the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file, which ensures the distance metrics required for a given GMPE (e.g. rrup, rjb) are always available when computing the ground-motions in the given ground-shaking scenario.</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[general]</span>
+<span class="na">imt_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;PGA&#39;, &#39;SA(0.2)&#39;, &#39;SA(1.0)&#39;]</span><span class="w"> </span><span class="c1"># IMTs to compute attenuation curves for</span>
+<span class="na">max_period</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2</span><span class="w"> </span><span class="c1"># Max period for response spectra (can&#39;t exceed maximum period in a specified GMPE)</span>
+<span class="na">minR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span><span class="w"> </span><span class="c1"># Min dist. used in trellis, Sammon&#39;s, clusters and matrix plots</span>
+<span class="na">maxR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w"> </span><span class="c1"># Max dist. used in trellis, Sammon&#39;s, clusters and matrix plots</span>
+<span class="na">dist_type</span><span class="o">=</span><span class="s">&#39;repi&#39;</span><span class="w"> </span><span class="c1"># Specify distance metric for trellis and response spectra</span>
+<span class="na">dist_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[10, 100, 250]</span><span class="w"> </span><span class="c1"># Distance intervals for use in spectra plots</span>
+<span class="na">Nstd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span><span class="w"> </span><span class="c1"># Truncation for GMM sigma distribution</span>
+
+<span class="na">[site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)</span>
+<span class="na">vs30</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">800</span>
+<span class="na">z1pt0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-999</span><span class="w">  </span><span class="c1"># (m) - if -999 compute from each GMM&#39;s own vs30 to z1pt0 relationship</span>
+<span class="na">z2pt5</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-999</span><span class="w">  </span><span class="c1"># (km) - if -999 compute from each GMM&#39;s own vs30 to z2pt5 relationship</span>
+<span class="na">up_or_down_dip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w"> </span><span class="c1"># 1 = up-dip, 0 = down-dip</span>
+<span class="na">volc_back_arc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">false</span><span class="w"> </span><span class="c1"># true or false</span>
+<span class="na">eshm20_region</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span><span class="w"> </span><span class="c1"># Residual attenuation cluster to use for KothaEtAl2020ESHM20</span>
+
+<span class="na">[source_properties] # Characterise EQ as finite rupture (can omit if providing rupture in &quot;rup_file&quot; key)</span>
+<span class="na">lon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span><span class="w"> </span><span class="c1"># Lon and lat values can be omitted (are set to zero if missing from the toml)</span>
+<span class="na">lat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+<span class="na">strike</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+<span class="na">dip</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">45</span>
+<span class="na">rake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">60</span><span class="w"> </span><span class="c1"># Must be provided. Strike and dip can be approximated if set to -999</span>
+<span class="na">mags</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[5,6,7]</span><span class="w"> </span><span class="c1"># mags used only for trellis and response spectra</span>
+<span class="na">depths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[20,25,30]</span><span class="w"> </span><span class="c1"># depth per magnitude for trellis and response spectra</span>
+<span class="na">ztor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-999</span><span class="w"> </span><span class="c1"># Set to -999 to NOT consider</span>
+<span class="na">aratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2</span><span class="w"> </span><span class="c1"># If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio</span>
+<span class="na">trt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-999</span><span class="w"> </span><span class="c1"># Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy</span>
+
+<span class="na">[rup_file] # NOTE</span><span class="o">:</span><span class="w"> </span><span class="s">Adding this key means an OQ rup is used instead of the info in &quot;source_properties&quot;</span>
+<span class="na">fname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;rup.xml&quot;</span><span class="w"> </span><span class="c1"># Can be an XML or CSV format OQ rupture.</span>
+
+<span class="na">[euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)</span>
+<span class="na">mag_spacing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+<span class="na">mags_depths</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[[5, 20], [6, 20], [7, 20]]</span><span class="w"> </span><span class="c1"># [[mag, depth], [mag, depth], [mag, depth]]</span>
+<span class="na">gmpe_labels</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;B20&#39;, &#39;L19&#39;, &#39;K1&#39;, &#39;K2&#39;, &#39;K3&#39;, &#39;K4&#39;, &#39;K5&#39;, &#39;CB14&#39;, &#39;AK14&#39;]</span>
+
+<span class="na">[models] # Specify GMMs (not required if providing a GMC XML file in the &quot;gmc_xml&quot; key)</span>
+
+<span class="c1"># Plot logic tree and individual GMPEs for below GMC logic tree config (gmc1)</span>
+<span class="k">[models.BooreEtAl2020]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span>
+
+<span class="k">[models.LanzanoEtAl2019_RJB_OMO]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.40</span>
+
+<span class="c1"># Default K20_ESHM20 logic tree branches considered in gmc1</span>
+<span class="k">[models.1-KothaEtAl2020ESHM20]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.000862</span>
+<span class="na">sigma_mu_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">2.85697</span>
+<span class="na">c3_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.72</span>
+
+<span class="k">[models.2-KothaEtAl2020ESHM20]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.067767</span>
+<span class="na">sigma_mu_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.35563</span>
+<span class="na">c3_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+
+<span class="k">[models.3-KothaEtAl2020ESHM20]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.162742</span>
+<span class="na">sigma_mu_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+<span class="na">c3_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+
+<span class="k">[models.4-KothaEtAl2020ESHM20]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.067767</span>
+<span class="na">sigma_mu_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-1.35563</span>
+<span class="na">c3_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+
+<span class="k">[models.5-KothaEtAl2020ESHM20]</span>
+<span class="na">lt_weight_gmc1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.000862</span>
+<span class="na">sigma_mu_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-2.85697</span>
+<span class="na">c3_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-1.72</span>
+
+<span class="c1"># Plot logic tree only for the second GMC logic tree config (gmc2)</span>
+<span class="k">[models.CampbellBozorgnia2014]</span>
+<span class="na">lt_weight_gmc2_plot_lt_only</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.50</span>
+<span class="na">estimate_ztor</span><span class="o">=</span><span class="s">true</span>
+
+<span class="k">[models.AkkarEtAlRjb2014]</span>
+<span class="na">lt_weight_gmc2_plot_lt_only</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.50</span>
+
+<span class="c1"># Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)</span>
+<span class="k">[ratios_baseline_gmm.BooreEtAl2020]</span>
+
+<span class="na">[gmc_xml] # NOTE</span><span class="o">:</span><span class="w"> </span><span class="s">Adding this key means the GMMs in an XML are used instead of those in the &quot;models&quot; key</span>
+<span class="na">fname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;gmc.xml&quot;</span><span class="w"> </span><span class="c1"># Path to a regular OQ GMC XML which inherently has a weight per GMM</span>
+<span class="na">trt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;Active Shallow Crust&quot;</span><span class="w"> </span><span class="c1"># GMC LT to use from the provided XML (or set to &quot;all&quot; to use all LTs)</span>
+<span class="na">plot_lt_only</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">false</span><span class="w"> </span><span class="c1"># If false plot the individual GMMs, if true then plot only the weighted mean LTs</span>
+<span class="na">other_gmpes = [&quot;[ChiouYoungs2014]\nregion</span><span class="o">=</span><span class="s">&#39;JPN&#39;</span><span class="na">&quot;, &quot;KothaEtAl2020ESHM20&quot;] # Other GMMs to plot</span>
+
+<span class="k">[custom_plotting]</span>
+<span class="na">custom_colors_flag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">false</span><span class="w"> </span><span class="c1"># Set to true for custom colours in plots</span>
+<span class="na">custom_colors_list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[&#39;lime&#39;, &#39;dodgerblue&#39;, &#39;gold&#39;, &#39;0.8&#39;]</span>
+<span class="na">custom_lt_labels</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">lt_gmc_1&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;updated LT&#39;</span><span class="na">, &#39;original LT&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;test_lt2&#39;</span><span class="na">}&quot; # Dict (as a string) specifying custom label for each LT (optional)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Trellis Plots</p>
+<p>We can generate trellis plots (predicted ground-motion by each considered GMPE versus distance) for different magnitudes and intensity measures (specified in the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file).</p>
+<p>The attenuation curves and response spectra for a given run configuration can be exported into CSVs as demonstrated within the Comparison module demo (<code class="docutils literal notranslate"><span class="pre">openquake\smt\demos\demo_comparison.py</span></code>).</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate trellis plots</span>
+<span class="na">&gt; comp.plot_trellis(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Trellis plots for input parameters specified in toml file:</dt><dd><img alt="../_images/TrellisPlots.png" src="../_images/TrellisPlots.png" />
+</dd>
+</dl>
+</div></blockquote>
+<p>The user can also automatically plot observations from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of <code class="docutils literal notranslate"><span class="pre">obs_data_fname</span></code>, which must be the path to a CSV file
+containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within <code class="docutils literal notranslate"><span class="pre">openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv</span></code>.</p>
+</li>
+<li><p>Spectra Plots</p>
+<p>We can also plot response spectra:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate spectra plots</span>
+<span class="na">&gt; comp.plot_spectra(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Response spectra plots for input parameters specified in toml file:</dt><dd><img alt="../_images/ResponseSpectra.png" src="../_images/ResponseSpectra.png" />
+</dd>
+</dl>
+</div></blockquote>
+<p>Similarly to within the trellis plotting, the user can also automatically observations (spectra) from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of <code class="docutils literal notranslate"><span class="pre">obs_data_fname</span></code>, which represents the path to a CSV file
+a GEM-format ground-motion flatfile.</p>
+</li>
+<li><p>Plot of Spectra from a Record</p>
+<p>The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the
+Comparison module (<code class="docutils literal notranslate"><span class="pre">oq-mbtk\openquake\smt\tests\comparison\data\inputs</span></code>). A comparison of a record’s spectra against some GMPEs can be generated as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate plot of observed spectra and predictions by GMPEs</span>
+<span class="na">&gt; comp.plot_spectra(comp_toml, output_directory, obs_spectra_fname</span><span class="o">=</span><span class="s">&#39;spectra_chamoli_1991_station_UKHI.csv&#39;</span><span class="na">)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Response spectra plots for input parameters specified in toml file:</dt><dd><img alt="../_images/ResponseSpectra_Chamoli_1991_03_28_19_05_11_recorded_at_UKHI.png" src="../_images/ResponseSpectra_Chamoli_1991_03_28_19_05_11_recorded_at_UKHI.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>Plot of ratios of attenuation curves</p>
+<p>The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Plot ratios of median attenuation curves for each individual GMPE/median attenuation curves for baseline GMPE</span>
+<span class="na">&gt; comp.plot_ratios(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Ratio plots for input parameters specified in toml file (note that here the baseline GMPE is <code class="docutils literal notranslate"><span class="pre">BooreEtAl2014</span></code>):</dt><dd><img alt="../_images/RatioPlots.png" src="../_images/RatioPlots.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>Sammon Maps</p>
+<p>We can plot Sammon Maps to examine how similar the medians (and 16th and 84th percentiles) of predicted ground-motion of each GMPE are (see Sammon, 1969 and Scherbaum et al. 2010 for more details on the Sammon Mapping procedure).</p>
+<p>A larger distance between two plotted GMPEs represents a greater difference in the predicted ground-motion. It should be noted that: (1) more than one 2D configuration can exist for a given set of GMPEs and (2) that the absolute numbers on the axes do not have a physical meaning.</p>
+<p>Sammon Maps can be generated as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate Sammon Maps</span>
+<span class="na">&gt; comp.plot_sammons(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Sammon Maps (median predicted ground-motion) for input parameters specified in toml file:</dt><dd><img alt="../_images/Median_SammonMaps.png" src="../_images/Median_SammonMaps.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>Hierarchical Clustering</p>
+<p>Dendrograms can be plotted as an alternative tool to evaluate how similarly the predicted ground-motion is by each GMPE.</p>
+<p>Within the dendrograms the GMPEs are clustered hierarchically (i.e. the GMPEs which are clustered together at shorter Euclidean distances are more similar than those clustered together at larger Euclidean distances).</p>
+<p>Hierarchical clustering plots can be generated as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate dendrograms</span>
+<span class="na">&gt; comp.plot_cluster(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Dendrograms (median predicted ground-motion) for input parameters specified in toml file:</dt><dd><img alt="../_images/Median_Clustering.png" src="../_images/Median_Clustering.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>Matrix Plots of Euclidean Distance</p>
+<p>In addition to Sammon Maps and hierarchical clustering, we can also plot the Euclidean distance between the predicted ground-motions by each GMPE in a matrix plot.</p>
+<p>Within the matrix plots the darker cells represent a smaller Euclidean distance (and therefore greater similarity) between each GMPE for the given intensity measure.</p>
+<p>Matrix plots of Euclidean distance can be generated as follows:</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">&gt; # Generate matrix plots of Euclidean distance</span>
+<span class="na">&gt; comp.plot_matrix(comp_toml, output_directory)</span>
+</pre></div>
+</div>
+<dl>
+<dt>Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:</dt><dd><img alt="../_images/Median_Euclidean.png" src="../_images/Median_Euclidean.png" />
+</dd>
+</dl>
+</div></blockquote>
+</li>
+<li><p>Using ModifiableGMPE to modify GMPEs within an SMT Comparison <code class="docutils literal notranslate"><span class="pre">.toml</span></code>.</p>
+<p>In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in <code class="docutils literal notranslate"><span class="pre">oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py</span></code>).</p>
+<p>Using the capabilities of this GMPE class we can modify GMPEs in various ways, including scaling the median and/or sigma by either a scalar or a vector (different scalar per IMT), set a fixed total GMPE sigma, partition the GMPE sigma using a ratio and using a different sigma model or site amplification model than those provided by a GMPE by default.</p>
+<p>Some examples of how the ModifiableGMPE can be used within the comparison module input <code class="docutils literal notranslate"><span class="pre">.toml</span></code> when specifying GMPEs is provided below. Note that ModifiableGMPE is not currently supported to be usable within the residuals input <code class="docutils literal notranslate"><span class="pre">.toml</span></code> (an error will be raised):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[models]</span>
+
+<span class="k">[models.0-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;YenierAtkinson2015BSSA&quot;</span>
+<span class="na">sigma_model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;al_atik_2015_sigma&#39;</span><span class="w"> </span><span class="c1"># Use Al Atik (2015) sigma model</span>
+
+<span class="k">[models.1-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CampbellBozorgnia2014&quot;</span>
+<span class="na">fix_total_sigma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">PGA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">0.750, &#39;SA(0.1)&#39;: 0.800, &#39;SA(0.5)&#39;: 0.850}&quot;</span><span class="w"> </span><span class="c1"># Set total sigma per imt</span>
+
+<span class="k">[models.2-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CampbellBozorgnia2014&quot;</span>
+<span class="na">with_betw_ratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.7</span><span class="w"> </span><span class="c1"># Add between-event and within-event sigma using ratio of 1.7 to partition total sigma</span>
+
+<span class="k">[models.3-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CampbellBozorgnia2014&quot;</span>
+<span class="na">set_between_epsilon</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.5</span><span class="w"> </span><span class="c1"># Set between-event epsilon (i.e. tau epsilon)</span>
+
+<span class="k">[models.4-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AbrahamsonEtAl2014&quot;</span>
+<span class="na">median_scaling_scalar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.4</span><span class="w"> </span><span class="c1"># Scale median by factor of 1.4 over all imts</span>
+
+<span class="k">[models.5-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AbrahamsonEtAl2014&quot;</span>
+<span class="na">median_scaling_vector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">PGA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">1.10, &#39;SA(0.1)&#39;: 1.15, &#39;SA(0.5)&#39;: 1.20}&quot;</span><span class="w"> </span><span class="c1"># Scale median by imt-dependent factor</span>
+
+<span class="k">[models.6-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;KothaEtAl2020&quot;</span>
+<span class="na">sigma_scaling_scalar</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1.05</span><span class="w"> </span><span class="c1"># Scale sigma by factor of 1.05 over all imts</span>
+
+<span class="k">[models.7-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;KothaEtAl2020&quot;</span>
+<span class="na">sigma_scaling_vector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">PGA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">1.20, &#39;SA(0.1)&#39;: 1.15, &#39;SA(0.5)&#39;: 1.10}&quot;</span><span class="w"> </span><span class="c1"># Scale sigma by imt-dependent factor</span>
+
+<span class="k">[models.8-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BooreEtAl2014&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CY14SiteTerm&quot;</span><span class="w"> </span><span class="c1"># Use CY14 site term</span>
+
+<span class="k">[models.9-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AtkinsonMacias2009&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;BA08SiteTerm&#39;</span><span class="w"> </span><span class="c1"># Use BA08 site term</span>
+
+<span class="k">[models.10-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;EMME24BB_GMM1SGM1&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BSSA14SiteTerm&quot;</span><span class="w"> </span><span class="c1"># Use BSSA14 site term</span>
+
+<span class="k">[models.11-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BooreEtAl2014&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;NRCan15SiteTerm&quot;</span><span class="w"> </span><span class="c1"># Use NRCan15 site term (&quot;base&quot; kind)</span>
+
+<span class="k">[models.12-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BooreEtAl2014&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;NRCan15SiteTermLinear&quot;</span><span class="w"> </span><span class="c1"># Use NRCan15 site term (&quot;linear&quot; kind)</span>
+
+<span class="k">[models.13-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AtkinsonBoore2006Modified2011&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CEUS2020SiteTerm_refVs30=760&quot;</span><span class="w"> </span><span class="c1"># Use Stewart et al. (2020) site term with a reference Vs30 of 760 m/s</span>
+
+<span class="k">[models.14-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AtkinsonMacias2009&quot;</span>
+<span class="na">basin_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CB14BasinTerm&quot;</span><span class="w"> </span><span class="c1"># Apply CB14 basin adjustment</span>
+
+<span class="k">[models.15-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;KuehnEtAl2020SInter&quot;</span>
+<span class="na">basin_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;M9BasinTerm&quot;</span><span class="w"> </span><span class="c1"># Apply M9 basin adjustment</span>
+
+<span class="k">[models.16-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CampbellBozorgnia2014&quot;</span>
+<span class="na">add_delta_sigma_to_total_sigma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"> </span><span class="c1"># Add a delta to the total GMPE sigma</span>
+
+<span class="k">[models.17-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;CampbellBozorgnia2014&quot;</span>
+<span class="na">set_total_sigma_as_tau_plus_delta</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.5</span><span class="w"> </span><span class="c1"># Set total sigma to square root of (tau**2 + delta**2)</span>
+
+<span class="na">[models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True&quot;</span><span class="w"> </span><span class="c1"># Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim</span>
+<span class="na">fix_total_sigma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">PGA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">0.750, &#39;SA(0.1)&#39;: 0.800, &#39;SA(0.5)&#39;: 0.850}&quot;</span>
+
+<span class="na">[ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True&quot;</span>
+<span class="na">site_term</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;BA08SiteTerm&quot;</span><span class="w"> </span><span class="c1"># Arbitrary for testing execution of this capability</span>
+</pre></div>
+</div>
+</li>
+<li><p>Using conditional GMPEs within an SMT Comparison <code class="docutils literal notranslate"><span class="pre">.toml</span></code>.</p></li>
+</ol>
+<blockquote>
+<div><p>Conditional GMPEs can also be specified within the SMT’s Comparison module. Like within the OpenQuake Engine, these leverage ModifiableGMPE to make it possible to specify a different conditional GMPE for each intensity measure we want to compute predictions for in combination with an “underlying” GMPE.</p>
+<p>NOTE: The user should be mindful that if an intensity measure is not specified within the conditional GMPE’s entry within the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course, if the underlying GMPE does not support a requested intensity
+measure then an error is raised as within a “regular” GMPE).</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[models]</span>
+
+<span class="na">[models.0-ModifiableGMPE] # Base GMPE and conditional GMPE both with multiple inputs</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;[AbrahamsonEtAl2014]\nregion=&quot;</span><span class="na">JPN&quot;\nusgs_basin_scaling</span><span class="o">=</span><span class="s">True&#39;</span>
+<span class="na">conditional_gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">IA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;[MacedoEtAl2019SInter]\nregion=Japan&#39;</span><span class="na">}&quot;</span>
+
+<span class="na">[models.1-ModifiableGMPE] # Checking works with multiple conditional GMPEs/conditioned imts, where one of the GMPEs has no inputs</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;AbrahamsonGulerce2020SInter&quot;</span>
+<span class="na">conditional_gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">IA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;[MacedoEtAl2019SInter]\nregion=Japan\nrho_pga_sa1=0.52&#39;</span><span class="na">, &#39;PGV&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;AbrahamsonBhasin2020&#39;</span><span class="na">}&quot;</span>
+
+<span class="na">[ratios_baseline_gmm.ModifiableGMPE] # This one is a bit complex</span><span class="o">:</span><span class="w"> </span><span class="s">it is using the IA predicted by the MacedoEtAl2019SInter</span>
+<span class="w">                                     </span><span class="c1"># GMPE with KuehnEtAl2020SInter as the underlying GMM, and then computing ratios against</span>
+<span class="w">                                     </span><span class="c1"># against the IA predicted by the two conditional GMPEs specified above.</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&#39;[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563&#39;</span>
+<span class="na">conditional_gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">IA&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;[MacedoEtAl2019SInter]\nregion=Japan&#39;</span><span class="na">}&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+<ol class="arabic simple" start="12">
+<li><p>Using indirect-approach AvgSA GMPEs within an SMT Comparison <code class="docutils literal notranslate"><span class="pre">.toml</span></code>.</p></li>
+</ol>
+<blockquote>
+<div><p>Indirect-approach AvgSA GMPEs can also be specified within the SMT’s Comparison module. The SMT permits specified of the averaging periods as either a list (i.e., using the <code class="docutils literal notranslate"><span class="pre">GenericGmpeAvgSA</span></code> GSIM class) OR by constructing an array from a specified lower averaging period, upper averaging period and
+a required number of periods (i.e., using the <code class="docutils literal notranslate"><span class="pre">GmpeIndirectAvgSA</span></code> GSIM class). The user must also specify an inter-period (cross) correlation model available within the Engine (see <code class="docutils literal notranslate"><span class="pre">oq-engine\openquake\hazardlib\gsim\mgmpe\generic_gmpe_avgsa.py</span></code> for the available models and also more info on the
+<code class="docutils literal notranslate"><span class="pre">GenericGmpeAvgSA</span></code> and <code class="docutils literal notranslate"><span class="pre">GmpeIndirectAvgSA</span></code> indirect-approach AvgSA GSIM classes) and an underlying GMPE.</p>
+<p>NOTE: The user should be mindful that if a non-AvgSA intensity measure is specified within the <code class="docutils literal notranslate"><span class="pre">.toml</span></code> file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course again, if the underlying GMPE does not support a requested intensity measure then an error
+is raised as within a “regular” GMPE).</p>
+<blockquote>
+<div><div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[models]</span>
+
+<span class="k">[models.0-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000&quot;</span>
+<span class="na">GmpeIndirectAvgSA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">corr_func&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;eshm20&#39;</span><span class="na">, &#39;t_low&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">0.2, &#39;t_high&#39;: 1.5, &#39;n_per&#39;: 10}&quot;</span>
+
+<span class="k">[models.1-ModifiableGMPE]</span>
+<span class="na">gmpe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000&quot;</span>
+<span class="na">GenericGmpeAvgSA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;{&#39;</span><span class="na">corr_func&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">&#39;eshm20&#39;</span><span class="na">, &#39;avg_periods&#39;</span><span class="o">:</span><span class="w"> </span><span class="s">[0.2, 0.85, 1.5]}&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+</div></blockquote>
+<section id="references">
+<h3>References<a class="headerlink" href="#references" title="Link to this heading"></a></h3>
+<p>Abrahamson, N. A. and R. R. Youngs (1992). “A Stable Algorithm for Regression Analysis Using the Random Effects Model”. In: Bulletin of the Seismological Society of America 82(1), pages 505 – 510.</p>
+<p>Kale, O and S. Akkar (2013). “A New Procedure for Selecting and Ranking Ground-Motion Prediction Equations (GMPES): The Euclidean Distance-Based Ranking (EDR) Method”. In: Bulletin of the Seismological Society of America 103(2A), pages 1069 – 1084.</p>
+<p>Kotha, S. -R., G. Weatherill, and F. Cotton (2020). “A Regionally Adaptable Ground-Motion Model for Shallow Crustal Earthquakes in Europe.” In: Bulletin  of Earthquake Engineering 18, pages 4091 – 4125.</p>
+<p>Rodriguez-Marek, A., G. A. Montalva, F. Cotton, and F. Bonilla (2011). “Analysis of Single-Station Standard Deviation using the KiK-Net data”. In: Bulletin of the Seismological Society of America 101(3), pages 1242 –1258.</p>
+<p>Sammon, J. W. (1969). “A Nonlinear Mapping for Data Structure Analysis.” In: IEEE Transactions on Computers C-18 (no. 5), pages 401 - 409.</p>
+<p>Scherbaum, F., E. Delavaud, and C. Riggelsen (2009). “Model Selection in Seismic Hazard Analysis: An Information-Theoretic Perspective”. In: Bulletin of the Seismological Society of America 99(6), pages 3234 – 3247.</p>
+<p>Scherbaum, F., N. M., Kuehn, M. Ohrnberger and A. Koehler (2010). “Exploring the proximity of ground-motion models using high-dimensional visualization techniques.” In: Earthquake Spectra 26(4), pages 1117 – 1138.</p>
+<p>Weatherill G., S. -R. Kotha and F. Cotton. (2020). “A Regionally Adaptable  “Scaled Backbone” Ground Motion Logic Tree for Shallow Seismicity in  Europe: Application to the 2020 European Seismic Hazard Model.” In: Bulletin of Earthquake Engineering 18, pages 5087 – 5117.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sub.html" class="btn btn-neutral float-left" title="SUBduction (sub) module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sep.html" class="btn btn-neutral float-right" title="Secondary Perils Analysis using the OQ-MBTK" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

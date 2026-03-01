@@ -1,0 +1,29 @@
+openquake.aft.tests package
+===========================
+
+Submodules
+----------
+
+openquake.aft.tests.test\_aftershock\_probabilities module
+----------------------------------------------------------
+
+.. automodule:: openquake.aft.tests.test_aftershock_probabilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.aft.tests.test\_rupture\_distances module
+---------------------------------------------------
+
+.. automodule:: openquake.aft.tests.test_rupture_distances
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.aft.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

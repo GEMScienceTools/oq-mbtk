@@ -1,0 +1,196 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model Building Toolkit (mbt) module &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SUBduction (sub) module" href="sub.html" />
+    <link rel="prev" title="Model ANalysis (man) module" href="man.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model Building Toolkit (mbt) module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#available-mbt-and-wkf-functions">Available mbt and wkf functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#catalogue-tools">Catalogue tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tectonic-regionalisation-tools">Tectonic regionalisation tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mfd-functions">MFD functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#declustering">Declustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distributed-seismicity-tools">Distributed seismicity tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fault-modeling-tools">Fault modeling tools</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-useful-functions">Other useful functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Model Building Toolkit (mbt) module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/mbt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="model-building-toolkit-mbt-module">
+<h1>Model Building Toolkit (mbt) module<a class="headerlink" href="#model-building-toolkit-mbt-module" title="Link to this heading"></a></h1>
+<p>The <span class="target" id="index-0"></span>Model Building Toolkit module contains code for building a PSHA earthquake occurrence
+model. The main goals of this tools are to:</p>
+<ol class="arabic simple">
+<li><p>Streamline the process of building a PSHA earthquake occurrence model</p></li>
+<li><p>Ensure that the process adopted to build the model is reproducible and
+extendable.</p></li>
+</ol>
+<p>Here you can find information on the available functions including their inputs and outputs.
+The tools in the mbt cover many important aspects of model construction. Some other functions are instead
+included in the wkf
+For an example of how they might be used in a workflow, see the SSC workflow module.</p>
+<section id="available-mbt-and-wkf-functions">
+<h2>Available mbt and wkf functions<a class="headerlink" href="#available-mbt-and-wkf-functions" title="Link to this heading"></a></h2>
+<p>The <cite>mbt</cite> functions exist as part of the original version of the mbtk, when it was smaller and relied solely on a sequence of jupyter notebooks. Many functions that were here have been improved and/or moved to other locations. The <cite>wkf</cite> functions add further tools for building hazard models in the SSC workflow.</p>
+<section id="catalogue-tools">
+<h3>Catalogue tools<a class="headerlink" href="#catalogue-tools" title="Link to this heading"></a></h3>
+</section>
+<section id="tectonic-regionalisation-tools">
+<h3>Tectonic regionalisation tools<a class="headerlink" href="#tectonic-regionalisation-tools" title="Link to this heading"></a></h3>
+<p>These are used in conjunction with the <a class="reference external" href="https://gemsciencetools.github.io/oq-mbtk/contents/sub.html">subduction tools</a> for classifying events in subduction regions.</p>
+</section>
+<section id="mfd-functions">
+<h3>MFD functions<a class="headerlink" href="#mfd-functions" title="Link to this heading"></a></h3>
+</section>
+<section id="declustering">
+<h3>Declustering<a class="headerlink" href="#declustering" title="Link to this heading"></a></h3>
+<p>Primarily, the declustering is handled in the <a class="reference external" href="https://github.com/gem/oq-engine/tree/master/openquake/hmtk">hmtk</a> module of the OpenQuake engine, but this function in the mbtk
+is most commonly used by the hazard team (for now).</p>
+</section>
+<section id="distributed-seismicity-tools">
+<h3>Distributed seismicity tools<a class="headerlink" href="#distributed-seismicity-tools" title="Link to this heading"></a></h3>
+</section>
+<section id="fault-modeling-tools">
+<h3>Fault modeling tools<a class="headerlink" href="#fault-modeling-tools" title="Link to this heading"></a></h3>
+<p>The fault modelling tools are used to create fault sources from fault data (trace, slip rate, dip, etc.) in json format and a dictionary of parameters that define modelling assumptions and how ruptures will be generated from the fault source. The functions use the following defaults:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;unnamed&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;b_value&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span>
+            <span class="s1">&#39;bin_width&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+            <span class="s1">&#39;m_min&#39;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">,</span>
+            <span class="s1">&#39;m_max&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;m_char&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;m_cli&#39;</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
+            <span class="s1">&#39;m_upper&#39;</span><span class="p">:</span> <span class="mf">10.</span><span class="p">,</span>
+            <span class="s1">&#39;slip_class&#39;</span><span class="p">:</span> <span class="s1">&#39;mle&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;aseismic_coefficient&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+            <span class="s1">&#39;upper_seismogenic_depth&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+            <span class="s1">&#39;lower_seismogenic_depth&#39;</span><span class="p">:</span> <span class="mf">35.</span><span class="p">,</span>
+            <span class="s1">&#39;rupture_mesh_spacing&#39;</span><span class="p">:</span> <span class="mf">2.</span><span class="p">,</span>
+            <span class="s1">&#39;rupture_aspect_ratio&#39;</span><span class="p">:</span> <span class="mf">2.</span><span class="p">,</span>
+            <span class="s1">&#39;minimum_fault_length&#39;</span><span class="p">:</span> <span class="mf">5.</span><span class="p">,</span>
+            <span class="s1">&#39;tectonic_region_type&#39;</span><span class="p">:</span> <span class="s1">&#39;Active Shallow Crust&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;temporal_occurrence_model&#39;</span><span class="p">:</span> <span class="n">hz</span><span class="o">.</span><span class="n">tom</span><span class="o">.</span><span class="n">PoissonTOM</span><span class="p">(</span><span class="mf">1.0</span><span class="p">),</span>
+            <span class="s1">&#39;magnitude_scaling_relation&#39;</span><span class="p">:</span> <span class="s1">&#39;Leonard2014_Interplate&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;width_scaling_relation&#39;</span><span class="p">:</span> <span class="s1">&#39;Leonard2014_Interplate&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;subsurface_length&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;rigidity&#39;</span><span class="p">:</span> <span class="mf">32e9</span><span class="p">,</span>
+            <span class="s1">&#39;mfd_type&#39;</span><span class="p">:</span> <span class="s1">&#39;DoubleTruncatedGR&#39;</span>
+         <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="other-useful-functions">
+<h3>Other useful functions<a class="headerlink" href="#other-useful-functions" title="Link to this heading"></a></h3>
+<p>These are mostly used within the model-building workflow</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="man.html" class="btn btn-neutral float-left" title="Model ANalysis (man) module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sub.html" class="btn btn-neutral float-right" title="SUBduction (sub) module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

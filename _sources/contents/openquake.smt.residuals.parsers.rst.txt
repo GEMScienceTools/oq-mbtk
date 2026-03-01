@@ -1,0 +1,69 @@
+openquake.smt.residuals.parsers package
+=======================================
+
+Submodules
+----------
+
+openquake.smt.residuals.parsers.asa\_database\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.asa_database_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.base\_database\_parser module
+-------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.base_database_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.esm\_database\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_database_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.esm\_flatfile\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_flatfile_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.esm\_url\_flatfile\_parser module
+-----------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.esm_url_flatfile_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.gem\_flatfile\_parser module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.gem_flatfile_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.parsers.ngawest2\_flatfile\_parser module
+-----------------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.parsers.ngawest2_flatfile_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.residuals.parsers
+   :members:
+   :show-inheritance:
+   :undoc-members:

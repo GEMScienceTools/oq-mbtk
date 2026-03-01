@@ -1,0 +1,101 @@
+openquake.fnm.inversion package
+===============================
+
+Submodules
+----------
+
+openquake.fnm.inversion.fastmath module
+---------------------------------------
+
+.. automodule:: openquake.fnm.inversion.fastmath
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.fermi\_importer module
+----------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.fermi_importer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.nnls module
+-----------------------------------
+
+.. automodule:: openquake.fnm.inversion.nnls
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.osha\_importer module
+---------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.osha_importer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.particle\_swarm\_optimization module
+------------------------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.particle_swarm_optimization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.plausibility\_regularization module
+-----------------------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.plausibility_regularization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.plots module
+------------------------------------
+
+.. automodule:: openquake.fnm.inversion.plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.simulated\_annealing module
+---------------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.simulated_annealing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.soe\_builder module
+-------------------------------------------
+
+.. automodule:: openquake.fnm.inversion.soe_builder
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.solver module
+-------------------------------------
+
+.. automodule:: openquake.fnm.inversion.solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.fnm.inversion.utils module
+------------------------------------
+
+.. automodule:: openquake.fnm.inversion.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.fnm.inversion
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,77 @@
+openquake.smt.residuals package
+===============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.smt.residuals.parsers
+
+Submodules
+----------
+
+openquake.smt.residuals.context\_db module
+------------------------------------------
+
+.. automodule:: openquake.smt.residuals.context_db
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.gmpe\_residuals module
+----------------------------------------------
+
+.. automodule:: openquake.smt.residuals.gmpe_residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.residual\_plotter module
+------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.residual_plotter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.residual\_plotter\_utils module
+-------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.residual_plotter_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.sm\_database module
+-------------------------------------------
+
+.. automodule:: openquake.smt.residuals.sm_database
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.sm\_database\_selector module
+-----------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.sm_database_selector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.residuals.sm\_database\_visualiser module
+-------------------------------------------------------
+
+.. automodule:: openquake.smt.residuals.sm_database_visualiser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:

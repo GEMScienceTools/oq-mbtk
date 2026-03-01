@@ -1,0 +1,55 @@
+openquake.smt package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.smt.comparison
+   openquake.smt.residuals
+   openquake.smt.tests
+
+Submodules
+----------
+
+openquake.smt.response\_spectrum module
+---------------------------------------
+
+.. automodule:: openquake.smt.response_spectrum
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.response\_spectrum\_smoothing module
+--------------------------------------------------
+
+.. automodule:: openquake.smt.response_spectrum_smoothing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.utils module
+--------------------------
+
+.. automodule:: openquake.smt.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.utils\_intensity\_measures module
+-----------------------------------------------
+
+.. automodule:: openquake.smt.utils_intensity_measures
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt
+   :members:
+   :show-inheritance:
+   :undoc-members:

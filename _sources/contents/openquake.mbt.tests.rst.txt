@@ -1,0 +1,39 @@
+openquake.mbt.tests package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.mbt.tests.notebooks
+   openquake.mbt.tests.tools
+   openquake.mbt.tests.workflows
+
+Submodules
+----------
+
+openquake.mbt.tests.adaptive\_smoothing\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.mbt.tests.adaptive_smoothing_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.mbt.tests.oqt\_project\_test module
+---------------------------------------------
+
+.. automodule:: openquake.mbt.tests.oqt_project_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.mbt.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:
