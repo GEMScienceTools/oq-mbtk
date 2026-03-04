@@ -106,6 +106,10 @@ class Configurations(object):
             # Get lt weights
             self.get_lt_weights(self.gmpes_list)
 
+        # Raise an error if no GMMs specified
+        if len(self.gmpes_list) < 1:
+            raise ValueError("User has not specified any GMPEs in the config file.")
+
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
@@ -255,7 +259,6 @@ class Configurations(object):
         else:
             value = f"[{key}] "
         if len(models[key]):
-            models[key].pop('style', None)
             value += '\n' + str(toml.dumps(models[key]))
         return value.strip()
 
@@ -352,6 +355,11 @@ class Configurations(object):
             # Store GMC's weights
             lt_weight[idx_trt] = lt_gmc
 
+        # Add any other GMMs specified in the xml dict
+        if "other_gmpes" in xml_dic:
+            for gmm in xml_dic["other_gmpes"]: # NOTE: GMMs must use OQ GSIM from string syntax - please
+                gmpe_list.append(gmm)          # see example in 'test_xml_gmc' unit test which is within
+                                               # oq-mbtk.openquake.smt.test.comparison.comparison_test.py
         # Add GMMs
         setattr(self, 'gmpes_list', gmpe_list)
         
