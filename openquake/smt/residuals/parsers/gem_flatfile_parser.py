@@ -91,11 +91,11 @@ M_PRECEDENCE = ["Mw", "Ms", "ML"]
 
 class GEMFlatfileParser(SMDatabaseReader):
     """
-    Parses the data from the flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects.
     """
     def parse(self, location='./'):
         """
-        Parse the dataset
+        Parse the dataset.
         """
         assert os.path.isfile(self.input_files)
         headers = getline(self.input_files, 1).rstrip("\n").split(",")
@@ -153,7 +153,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_record(self, metadata):
         """
-        Parse a record
+        Parse a record.
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join(
@@ -187,7 +187,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_event_data(self, metadata):
         """
-        Parses the event metadata
+        Parses the event metadata.
         """
         # ID and Name (name not in file so use ID again)
         eq_id = metadata["event_id"]
@@ -223,8 +223,8 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_magnitudes(self, metadata):
         """
-        An order of precedence is required and the preferred magnitude will be
-        the highest found
+        An order of precedence is required and the preferred magnitude
+        will bethe highest found.
         """
         pref_mag = None
         mag_list = []
@@ -241,7 +241,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_rupture_mechanism(self, metadata, eq_id, eq_name, mag, depth):
         """
-        Parse rupture mechanism
+        Parse rupture mechanism.
         """
         # Get the SoF
         sof = metadata["fm_type_code"]
@@ -285,7 +285,7 @@ class GEMFlatfileParser(SMDatabaseReader):
         """
         Parse the distances provided in the flatfile. If not provided
         then we can calculate by constructing a finite rupture within
-        the engine (this occurs within )
+        the OpenQuake Engine.
         """
         repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
         if pd.isnull(repi):
@@ -308,7 +308,7 @@ class GEMFlatfileParser(SMDatabaseReader):
 
     def _parse_site_data(self, metadata):
         """
-        Parses the site information
+        Parses the site information.
         """
         # Basic site/station information
         network_code = metadata["network_code"].strip()

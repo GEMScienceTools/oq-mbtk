@@ -8,7 +8,7 @@ import subprocess
 import shutil
 import unittest
 import numpy
-import openquake.man.model as model
+import openquake.man.checking_utils.source_model_utils as model
 import openquake.man.tools.csv_output as csv
 from openquake.mbt.tools.mfd import EEvenlyDiscretizedMFD
 

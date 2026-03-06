@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tests for execution of ESM Flatfile Parser
+Tests for execution of ESM Flatfile Parser.
 """
 import os
 import shutil
@@ -83,7 +83,7 @@ BASE = os.path.join(os.path.dirname(__file__), "data")
 
 class ESMFlatfileParserTestCase(unittest.TestCase):
     """
-    Tests the parsing of the ESM flatfile
+    Tests the parsing of the ESM flatfile.
     """
     @classmethod
     def setUpClass(cls):
@@ -95,7 +95,7 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
 
     def test_esm_flatfile_parser(self):
         """
-        Tests the parsing of the ESM flatfile
+        Tests the parsing of the ESM flatfile.
         """
         # Parse
         parser = ESMFlatfileParser.autobuild("000", "ESM Test",
@@ -119,6 +119,6 @@ class ESMFlatfileParserTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """
-        Remove the database
+        Remove the database.
         """
         shutil.rmtree(cls.db_file)
