@@ -355,7 +355,6 @@ def solve_llsq(G, d, weights=None, **kwargs):
 
 import numba as nb
 
-
 @nb.njit(fastmath=True)
 def nnls_pg(
     A_data,
@@ -371,20 +370,25 @@ def nnls_pg(
     accept_norm,
     stall_val,
     min: np.float64 = 0.0,
+    l_norm: int = 2,
+    delta: np.float64 = 1e-3,
 ):
     m = b.size
     n = x.size
-    r = b.copy()  # residual = b - A x
-    g = np.empty(n)  # gradient = -A^T r
-    y = x.copy()  # Nesterov acceleration
+
+    # residual, gradient, Nesterov aux
+    r = b.copy()              # reused for residual and (for L1) dL/dr
+    g = np.empty(n)           # gradient in parameter space
+    y = x.copy()
     t = 1.0
-    # crude Lipschitz estimate via power iteration (3 sweeps)
+
+    # Lipschitz estimate for ATA via 3 power iterations
     z = np.random.randn(n)
     z /= np.linalg.norm(z)
     Az = np.empty_like(b)
     ATAz = np.empty(n)
 
-    pred = np.zeros(len(b))
+    pred = np.zeros(m)
     misfit_history = np.zeros(maxit)
 
     mat_vec_mul = spspmm_csr
@@ -393,32 +397,60 @@ def nnls_pg(
         mat_vec_mul(AT_data, AT_indices, AT_indptr, Az, ATAz)
         z = ATAz / norm2(ATAz)
     L = np.dot(z, ATAz)
+    if L <= 0.0:
+        L = 1.0
     alpha = 1.0 / L
 
     stall_window = 500
 
     for k in range(maxit):
-        # gradient g = A^T(A y - b)  (note r reused)
+        # r <- A y - b
         mat_vec_mul(A_data, A_indices, A_indptr, y, r)
         r -= b
-        mat_vec_mul(AT_data, AT_indices, AT_indptr, r, g)
-        y -= alpha * g  # gradient step
-        # projection → ℝⁿ₊
-        # np.maximum(y, 0, out=y)
-        project_to_min(y, min=min)
-        # Nesterov momentum
-        t_next = 0.5 * (1 + np.sqrt(1 + 4 * t * t))
-        x_next = y + ((t - 1) / t_next) * (y - x)
 
+        # For L2: d(½||r||²)/dr = r
+        # For pseudo-Huber: dL/dr = r / sqrt(1 + (r/delta)^2)
+        if l_norm == 1:
+            for i in range(m):
+                ri = r[i]
+                t_loc = ri / delta
+                r[i] = ri / np.sqrt(1.0 + t_loc * t_loc)
+        elif l_norm != 2:
+            raise ValueError("l_norm must be 1 (pseudo-Huber) or 2 (L2)")
+
+        # g <- A^T * dL/dr
+        mat_vec_mul(AT_data, AT_indices, AT_indptr, r, g)
+
+        # gradient step
+        y -= alpha * g
+        project_to_min(y, min=min)
+
+        # Nesterov acceleration
+        t_next = 0.5 * (1.0 + np.sqrt(1.0 + 4.0 * t * t))
+        x_next = y + ((t - 1.0) / t_next) * (y - x)
+
+        # misfit at y
         mat_vec_mul(A_data, A_indices, A_indptr, y, pred)
-        misfit = norm2(pred - b)
+
+        if l_norm == 2:
+            # keep existing L2 behaviour (uses norm2)
+            misfit = norm2(pred - b)
+        else:
+            # pseudo-Huber loss: δ² (sqrt(1 + (r/δ)²) - 1) summed
+            misfit = 0.0
+            for i in range(m):
+                diff = pred[i] - b[i]
+                t_loc = diff / delta
+                misfit += delta * delta * (np.sqrt(1.0 + t_loc * t_loc) - 1.0)
+
         misfit_history[k] = misfit
+
         # stop on misfit
         if misfit < accept_norm:
             print("misfit below threshold")
             return y, misfit_history
-        # stopping test on projected gradient
-        # if np.linalg.norm(np.minimum(y, g)) / b.size < tol:
+
+        # stopping test on projected gradient (unchanged)
         if projected_grad_ratio(y, g, m) < tol:
             print("gradient below threshold")
             return y, misfit_history
@@ -431,7 +463,7 @@ def nnls_pg(
 
         x, y, t = y, x_next, t_next
 
-    project_to_min(y)
+    project_to_min(y, min=min)
     return y, misfit_history
 
 
@@ -453,30 +485,48 @@ def solve_nnls_pg(
     accept_norm=1e-6,
     copy=True,
     stall_val=1e-8,
+    l_norm: int = 2,
+    delta: float = 1e-3,
 ):
     """
-    Solve  min_x ½‖Ax – b‖²  subject to  x ≥ 0   with the projected‑gradient
-    NNLS kernel `nnls_pg`.
+    Solve  min_x ½‖Ax – b‖²  (or pseudo-Huber “L1” if l_norm=1)
+    subject to  x ≥ min   with the projected-gradient NNLS kernel `nnls_pg`.
 
     Parameters
     ----------
     A : (m, n) sparse matrix (CSR/CSC/COO/LinearOperator accepted)
         The design matrix.  Internally coerced to CSR float64.
     b : (m,) array_like
-        Right‑hand‑side vector.
+        Right-hand-side vector.
+    min : float, default 0.0
+        Component-wise lower bound for x (usually 0.0).
     x0 : (n,) array_like or None, optional
-        Warm‑start.  If None, the kernel will start from the all‑zeros vector.
+        Warm-start.  If None, the kernel will start from the all-zeros vector.
+    weights : array_like, 'equalize', or None
+        Optional observation weights. If 'equalize', uses
+        `get_obs_equalization_weights(b)`.
     max_iters : int, default 1000
-        Maximum projected‑gradient iterations.
-    accept_norm : float, default 1e‑6
-        KKT tolerance passed straight to the kernel.
+        Maximum projected-gradient iterations.
+    accept_grad : float, default 1e-6
+        Projected gradient tolerance passed to the kernel.
+    accept_norm : float, default 1e-6
+        Misfit tolerance passed to the kernel.
     copy : bool, default True
         Whether to copy/convert `A` to CSR float64 even if already CSR.
+    stall_val : float, default 1e-8
+        Stall threshold for the fixed sliding-window stopping test.
+    l_norm : int, default 2
+        2 → standard L2 least squares.
+        1 → pseudo-Huber “L1” (robust) loss.
+    delta : float, default 1e-3
+        Pseudo-Huber smoothing parameter (only used if l_norm == 1).
 
     Returns
     -------
     x : (n,) ndarray
-        Non‑negative least‑squares solution.
+        Non-negative solution.
+    misfit_history : (k,) ndarray
+        Misfit values per iteration (truncated to the iterations actually run).
     """
 
     if weights is not None:
@@ -496,7 +546,7 @@ def solve_nnls_pg(
     b = np.asarray(b, dtype=np.float64)
     n = A_sparse.shape[1]
     if b.ndim != 1:
-        raise ValueError("`b` must be a 1‑D array.")
+        raise ValueError("`b` must be a 1-D array.")
     if A_sparse.shape[0] != b.size:
         raise ValueError(
             "Incompatible shapes: A is %s but b is length %d"
@@ -527,8 +577,9 @@ def solve_nnls_pg(
         accept_norm,
         stall_val,
         min=min,
+        l_norm=l_norm,
+        delta=delta,
     )
-    # resids = A @ x - b
 
     misfit_history = misfit_history[misfit_history >= 0.0]
 
