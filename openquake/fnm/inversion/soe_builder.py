@@ -1392,6 +1392,8 @@ def make_eqns(
     regional_abs_mfds=None,
     regional_rel_mfds=None,
     fault_abs_mfds=None,
+    fault_abs_mfd_mode: str = "standard",
+    fault_abs_mfd_ridge: float | None = None,
     ridge: float = 0.0,
     ridge_weight: float = 1.0,
     ridge_cumulative: bool = False,
@@ -1429,17 +1431,38 @@ def make_eqns(
         rel_mode = None
 
     if fault_abs_mfds is not None:
-        if regional_abs_mfds is None:
-            regional_abs_mfds = fault_abs_mfds
+        if fault_abs_mfd_mode == "ridge":
+            logging.info("Making fault abs MFD ridge regularization eqns")
+            _fault_ridge = fault_abs_mfd_ridge if fault_abs_mfd_ridge is not None else ridge
+            ridge_result = make_ridge_regularization_eqns_from_fault_abs_mfds(
+                fault_abs_mfds=fault_abs_mfds,
+                rups=rups,
+                ridge=_fault_ridge,
+                ridge_weight=ridge_weight,
+                default_rate=ridge_default_rate,
+                cumulative=ridge_cumulative,
+            )
+            if ridge_result is not None and ridge_result[-1] is not None:
+                lhs, rhs, errs, metadata = ridge_result
+                metadata["start_idx"] = current_eq_idx
+                metadata["end_idx"] = current_eq_idx + metadata["n_eqs"]
+                current_eq_idx += metadata["n_eqs"]
+                lhs_set.append(lhs)
+                rhs_set.append(rhs)
+                err_set.append(errs)
+                metadata_set.append(metadata)
         else:
-            if set(regional_abs_mfds.keys()).isdisjoint(
-                set(fault_abs_mfds.keys())
-            ):
-                regional_abs_mfds.update(fault_abs_mfds)
+            if regional_abs_mfds is None:
+                regional_abs_mfds = fault_abs_mfds
             else:
-                raise ValueError(
-                    "regional_abs_mfds and fault_abs_mfds may not share keys"
-                )
+                if set(regional_abs_mfds.keys()).isdisjoint(
+                    set(fault_abs_mfds.keys())
+                ):
+                    regional_abs_mfds.update(fault_abs_mfds)
+                else:
+                    raise ValueError(
+                        "regional_abs_mfds and fault_abs_mfds may not share keys"
+                    )
 
     if fault_rel_mfds is not None:
         if regional_rel_mfds is None:
