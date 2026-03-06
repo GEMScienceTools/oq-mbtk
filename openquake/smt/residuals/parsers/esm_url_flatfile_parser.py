@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parser for a flatfile downloaded from the esm custom url database 
+Parser for a flatfile downloaded from the esm custom url database.
 --> (https://esm-db.eu/esmws/flatfile/1/)
 
 This parser assumes you have selected all available headers in your URL search
-when downloading the flatfile
+when downloading the flatfile.
 """
 import os
 import tempfile
@@ -169,7 +169,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
 
 def _parse_esm_url(esm):
     """
-    Convert from esm URL format flatfile to esm18 format flatfile
+    Convert from esm URL format flatfile to esm18 format flatfile.
     """
     # Handle empty fm type values
     esm['fm_type_code'] = [fm if pd.notnull(fm) else "U" for fm in esm.fm_type_code]
@@ -530,11 +530,11 @@ def _parse_esm_url(esm):
 
 class ESMFlatfileParserURL(SMDatabaseReader):
     """
-    Parses the data from the flatfile to a set of metadata objects
+    Parses the data from the flatfile to a set of metadata objects.
     """
     def parse(self, location='./'):
         """
-        Parse the flatfile
+        Parse the flatfile.
         """
         assert os.path.isfile(self.input_files)
         headers = getline(self.input_files, 1).rstrip("\n").split(";")
@@ -602,7 +602,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
 
     def _parse_record(self, metadata):
         """
-        Parse a record
+        Parse a record.
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"],

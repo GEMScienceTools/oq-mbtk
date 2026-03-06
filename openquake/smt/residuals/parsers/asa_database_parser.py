@@ -22,7 +22,7 @@ Detailed documentation on the format is here:
 https://aplicaciones.iingen.unam.mx/AcelerogramasRSM/DscAsa.aspx
 
 Each file contains the acceleration time series for all 3 components
-and the corresponding metadata
+and the corresponding metadata.
 """
 import os
 import re
@@ -101,7 +101,7 @@ def _get_metadata_from_file(file_str):
 class ASADatabaseParser(SMDatabaseReader):
     """
     Parser for extracting metadata from UNAM and CICESE
-    (ASA format) records
+    (ASA format) records.
     """
     ORGANIZER = []
 
@@ -122,7 +122,7 @@ class ASADatabaseParser(SMDatabaseReader):
     def _sort_files(self):
         """
         Searches through the directory and organise the files associated
-        with a particular recording into a dictionary
+        with a particular recording into a dictionary.
         """
         for file_str in sorted(os.listdir(self.input_files)):
 
@@ -142,7 +142,7 @@ class ASADatabaseParser(SMDatabaseReader):
 
     def parse_metadata(self, metadata, file_dict):
         """
-        Parses the metadata dictionary
+        Parses the metadata dictionary.
         """
         file_str = metadata["NOMBRE DEL ARCHIVO"]
         file_info = _get_info_from_archive_name(file_str)
@@ -419,7 +419,7 @@ class ASADatabaseParser(SMDatabaseReader):
 
     def _parse_component_data(self, wfid, metadata):
         """
-        Returns the information specific to a component
+        Returns the information specific to a component.
         """
         units_provided = metadata["UNIDADES DE LOS DATOS"]
         # Consider only units within parenthesis
@@ -489,7 +489,7 @@ class ASATimeSeriesParser(SMTimeSeriesReader):
         Parses the time history and returns the time history of the specified
         component(s). All 3 components are provided in every ASA format file. Note
         that components are defined with various names, and are not always
-        given in the same order
+        given in the same order.
         """
         # The components are definied using the following names
         comp_names = {'X': ['ENE', 'N90E', 'N90E;', 'N90W', 'N90W;',

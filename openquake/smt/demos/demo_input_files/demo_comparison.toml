@@ -7,7 +7,7 @@ minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
 maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
 dist_type = 'repi' # Specify distance metric for trellis and response spectra
 dist_list = [10, 100, 250] # Distance intervals for use in spectra plots
-Nstd = 1 # Truncation for GMM sigma distribution
+Nstd = 0 # Truncation for GMM sigma distribution
 
 [site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
 vs30 = 800
@@ -80,6 +80,6 @@ lt_weight_gmc2_plot_lt_only = 0.50
 # Also specify a GMM to compute ratios of the attenuation against (GMM/baseline)
 [ratios_baseline_gmm.BooreEtAl2020]
 
-[custom_colors]
+[custom_plotting]
 custom_colors_flag = false # Set to true for custom colours in plots)
 custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']

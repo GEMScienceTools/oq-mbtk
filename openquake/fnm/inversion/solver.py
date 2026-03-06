@@ -50,15 +50,46 @@ from openquake.fnm.inversion.fastmath import (
 )
 
 
-def weight_from_error(error, zero_error=1e-10):
-    if error == 0:
-        error = zero_error
+def weight_from_error(error, min_error=1e-10, zero_error=None, max_weight=None):
+    """
+    Convert an uncertainty-like value (error / sigma) into a row weight.
 
-    return 1 / error  # **2
+    Parameters
+    ----------
+    error : float
+        Error/sigma value.
+    min_error : float
+        Floor applied to errors to prevent excessively large weights.
+    zero_error : float or None
+        Replacement error when `error` is exactly zero. If None, the zero value
+        is handled by `min_error`.
+    max_weight : float or None
+        Optional cap on the returned weight.
+    """
+    error = float(error)
+    if error == 0.0 and zero_error is not None:
+        error = float(zero_error)
+    if error < float(min_error):
+        error = float(min_error)
+
+    weight = 1.0 / error  # **2
+    if max_weight is not None and weight > float(max_weight):
+        weight = float(max_weight)
+    return weight
 
 
-def weights_from_errors(errors, zero_error=1e-10):
-    return np.array([weight_from_error(error, zero_error) for error in errors])
+def weights_from_errors(errors, min_error=1e-10, zero_error=None, max_weight=None):
+    return np.array(
+        [
+            weight_from_error(
+                error,
+                min_error=min_error,
+                zero_error=zero_error,
+                max_weight=max_weight,
+            )
+            for error in errors
+        ]
+    )
 
 
 def solve_dense_svd(A, d):
@@ -370,7 +401,6 @@ def nnls_pg(
         L = 1.0
     alpha = 1.0 / L
 
-    # stall detection window (mirrors GPU implementation)
     stall_window = 500
 
     for k in range(maxit):
@@ -425,19 +455,10 @@ def nnls_pg(
             print("gradient below threshold")
             return y, misfit_history
 
-        # stall detection: use fixed sliding window and range < stall_val
         if k > stall_window:
-            start = k - stall_window
-            max_v = misfit_history[start]
-            min_v = misfit_history[start]
-            for j in range(start + 1, k + 1):
-                v = misfit_history[j]
-                if v > max_v:
-                    max_v = v
-                if v < min_v:
-                    min_v = v
-            if (max_v - min_v) < stall_val:
-                print("inversion stalled at", k)
+            w = misfit_history[k - stall_window:k]
+            if float(np.max(w) - np.min(w)) < stall_val:
+                print(f"inversion stalled at {k}")
                 return y, misfit_history
 
         x, y, t = y, x_next, t_next
@@ -456,8 +477,8 @@ def get_obs_equalization_weights(rhs, eps=None):
 def solve_nnls_pg(
     A,
     b,
-    min=0.0,
     x0=None,
+    min=0.0,
     weights=None,
     max_iters=1000,
     accept_grad=1e-6,
@@ -509,7 +530,7 @@ def solve_nnls_pg(
     """
 
     if weights is not None:
-        if weights == 'equalize':
+        if isinstance(weights, str) and weights == 'equalize':
             weights = get_obs_equalization_weights(b)
         assert len(weights) == len(b)
         A = ssp.diags(weights).dot(A)

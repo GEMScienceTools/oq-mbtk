@@ -17,7 +17,7 @@ Within a residual analysis, the information provided in each ground-motion recor
 
 When computing the expected ground-motions by each GMPE, the SMT leverages the OpenQuake Engine's capabilities to construct a finite rupture for each event from the available information for each earthquake, from which the distance types required for each GMPE (e.g. rjb, rrup) can be computed relative to each site (i.e. station) in the flatfile if missing for the given record. NOTE: The distance metrics in the flatfile will inherently be the result of a different finite rupture from that modelled within OpenQuake Engine for distance metric computation - if the user requires complete consistency between the considered distance metrics, the user can just remove all distance metrics provided apriori within the inputted flatfile/ground-motion database to ensure all of the metrics are computed using OpenQuake Engine instead.
 
-Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the ``ASADatabaseMetadataReader`` (found in ``oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser``) can be used to parse ASA format files to construct an equivalent ground-motion database.
+Parsers are provided in the smt for the most widely used flatfile formats (e.g. ESM, NGAWest2). The currently available parsers within the smt module can be found in ``oq-mbtk\openquake\smt\residuals\parsers``. Some of the parsers here can read in non-flatfile format ground-motion databases - e.g. the ``ASADatabaseMetadataReader`` (found in ``oq-mbtk\openquake\smt\residuals\parsers\asa_database_parser.py``) can be used to parse ASA format files to construct an equivalent ground-motion database.
 
 In this example, we will consider the ESM (Engineering Strong-Motion database) 2018 format parser for the parsing of a subset of the ESM 2018 flatfile comprising of active shallow crustal earthquakes from Albania and the surrounding regions. The example residual analysis considered here consequently focuses on identifying the most appropriate GMPEs for predicting ground-motions generated from active shallow crustal earthquakes in Albania.
    
@@ -114,8 +114,8 @@ We can specify the inputs to perform a residual analysis with as follows:
        
        [models.LanzanoEtAl2019_RJB_OMO]
     
-       # Examples below of some GMPEs not considered in this residual analysis
-       # with additional  parameters than be specified within a toml file
+       # Examples below of how some GMPEs not considered in this residual analysis
+       # with additional parameters can be specified within the SMT Comparison toml
     
        [models.AbrahamsonGulerce2020SInter]
        region = "CAS" # String representation in a list of GMMs would be "[AbrahamsonGulerce2020SInter]\nregion='CAS'"     
@@ -126,7 +126,7 @@ We can specify the inputs to perform a residual analysis with as follows:
        [imts]
        imt_list = ['PGA', 'SA(0.2)', 'SA(0.6)', 'SA(1.0)']    
           
-3. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module.
+3. Following specification of the GMPEs and intensity measures, we can now compute the ground-motion residuals using the Residuals module's capabilities.
 
    We first need to get the metadata from the parsed ``.pkl`` file (stored within the metadata folder):
 
@@ -468,10 +468,12 @@ Comparing GMPEs
         fname = "gmc.xml" # Path to a regular OQ GMC XML which inherently has a weight per GMM
         trt = "Active Shallow Crust" # GMC LT to use from the provided XML (or set to "all" to use all LTs)
         plot_lt_only = false # If false plot the individual GMMs, if true then plot only the weighted mean LTs
+        other_gmpes = ["[ChiouYoungs2014]\nregion='JPN'", "KothaEtAl2020ESHM20"] # Other GMMs to plot
 
-        [custom_colors]
-        custom_colors_flag = false # Set to true for custom colours in plots)
+        [custom_plotting]
+        custom_colors_flag = false # Set to true for custom colours in plots
         custom_colors_list = ['lime', 'dodgerblue', 'gold', '0.8']
+        custom_lt_labels = "{'lt_gmc_1': 'updated LT', 'original LT': 'test_lt2'}" # Dict (as a string) specifying custom label for each LT (optional)
             
 3. Trellis Plots 
 
@@ -487,6 +489,9 @@ Comparing GMPEs
     Trellis plots for input parameters specified in toml file:
        .. image:: /contents/smt_images/TrellisPlots.png
    
+   The user can also automatically plot observations from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which must be the path to a CSV file
+   containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within ``openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv``.
+
 4. Spectra Plots
 
    We can also plot response spectra:
@@ -499,9 +504,13 @@ Comparing GMPEs
     Response spectra plots for input parameters specified in toml file:
         .. image:: /contents/smt_images/ResponseSpectra.png
 
+   Similarly to within the trellis plotting, the user can also automatically observations (spectra) from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which represents the path to a CSV file
+   a GEM-format ground-motion flatfile.
+
 5. Plot of Spectra from a Record
 
-   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input for the record spectra is provided in the demo files:
+   The spectra of a processed record can also be plotted along with predictions by the selected GMPEs for the same ground-shaking scenario. An example of the input files for this capability using a record of the 1993 Chamoli earthquake can be found in the test files for the
+   Comparison module (``oq-mbtk\openquake\smt\tests\comparison\data\inputs``). A comparison of a record's spectra against some GMPEs can be generated as follows:
 
     .. code-block:: ini
     
@@ -513,7 +522,7 @@ Comparing GMPEs
 
 6. Plot of ratios of attenuation curves
 
-   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
+   The ratios of the median predictions from each GMPE and a baseline GMPE (specified in the ``.toml`` file - see above) can also be plotted. It should be noted that ratios are not computed/plotted for any specified GMC logic trees. An example is provided in the demo files:
 
     .. code-block:: ini
     
@@ -571,7 +580,7 @@ Comparing GMPEs
     Matrix plots of Euclidean distance between GMPEs (median predicted ground-motion) for input parameters specified in toml file:
        .. image:: /contents/smt_images/Median_Euclidean.png
     
-10. Using ModifiableGMPE to modify GMPEs within a ``.toml``. 
+10. Using ModifiableGMPE to modify GMPEs within an SMT Comparison ``.toml``. 
 
     In addition to specifying predefined arguments for each GMPE, the user can also modify GMPEs using ModifiableGMPE (found in ``oq-engine\openquake\hazardlib\gsim\mgmpe\modifiable_gmpe.py``).
    
@@ -581,79 +590,134 @@ Comparing GMPEs
    
     .. code-block:: ini
 
+        [models]
+
         [models.0-ModifiableGMPE]
-        gmpe='YenierAtkinson2015BSSA'
-        sigma_model='al_atik_2015_sigma' # Use Al Atik (2015) sigma model
+        gmpe = "YenierAtkinson2015BSSA"
+        sigma_model = 'al_atik_2015_sigma' # Use Al Atik (2015) sigma model
 
         [models.1-ModifiableGMPE]
-        gmpe='CampbellBozorgnia2014'
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Fix total sigma per IMT
-        
+        gmpe = "CampbellBozorgnia2014"
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" # Set total sigma per imt
+
         [models.2-ModifiableGMPE]
-        gmpe='CampbellBozorgnia2014'
-        with_betw_ratio = 1.7 # Add between-event and within-event sigma using
-                              # ratio of 1.7 to partition total sigma
-                
+        gmpe = "CampbellBozorgnia2014"
+        with_betw_ratio = 1.7 # Add between-event and within-event sigma using ratio of 1.7 to partition total sigma
+               
         [models.3-ModifiableGMPE]
-        gmpe='CampbellBozorgnia2014'
-        set_between_epsilon = 0.5 # Shift the mean with formula mean --> mean + epsilon_tau * between event
-                               
+        gmpe = "CampbellBozorgnia2014"
+        set_between_epsilon = 1.5 # Set between-event epsilon (i.e. tau epsilon)
+                              
         [models.4-ModifiableGMPE]
-        gmpe='CampbellBozorgnia2014'
-        add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
-        
+        gmpe = "AbrahamsonEtAl2014"
+        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
+
         [models.5-ModifiableGMPE]
-        gmpe='CampbellBozorgnia2014'
-        set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
-                               
-        [models.6-ModifiableGMPE]
-        gmpe='ChiouYoungs2014'
-        median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all IMTs
-        
-        [models.7-ModifiableGMPE]
-        gmpe='ChiouYoungs2014'
+        gmpe = "AbrahamsonEtAl2014"
         median_scaling_vector = "{'PGA': 1.10, 'SA(0.1)': 1.15, 'SA(0.5)': 1.20}" # Scale median by imt-dependent factor
-        
+
+        [models.6-ModifiableGMPE]
+        gmpe = "KothaEtAl2020"
+        sigma_scaling_scalar = 1.05 # Scale sigma by factor of 1.05 over all imts
+
+        [models.7-ModifiableGMPE]
+        gmpe = "KothaEtAl2020"
+        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by imt-dependent factor
+
         [models.8-ModifiableGMPE]
-        gmpe='KothaEtAl2020'
-        sigma_scaling_scalar = 1.25 # Scale sigma by factor of 1.25 over all IMTs
-        
+        gmpe = "BooreEtAl2014"
+        site_term = "CY14SiteTerm" # Use CY14 site term
+
         [models.9-ModifiableGMPE]
-        gmpe='KothaEtAl2020'
-        sigma_scaling_vector = "{'PGA': 1.20, 'SA(0.1)': 1.15, 'SA(0.5)': 1.10}" # Scale sigma by IMT-dependent factor
-        
+        gmpe = "AtkinsonMacias2009"
+        site_term = 'BA08SiteTerm' # Use BA08 site term
+
         [models.10-ModifiableGMPE]
-        gmpe='AtkinsonMacias2009'
-        site_term='BA08SiteTerm' # use BA08 site term
+        gmpe = "EMME24BB_GMM1SGM1"
+        site_term = "BSSA14SiteTerm" # Use BSSA14 site term
 
         [models.11-ModifiableGMPE]
-        gmpe='BooreEtAl2014'
-        site_term='CY14SiteTerm' # Use CY14 site term
+        gmpe = "BooreEtAl2014"
+        site_term = "NRCan15SiteTerm" # Use NRCan15 site term ("base" kind)
 
         [models.12-ModifiableGMPE]
-        gmpe='BooreEtAl2014'
-        site_term='NRCan15SiteTerm' # Use NRCan15 non-linear site term
-        
+        gmpe = "BooreEtAl2014"
+        site_term = "NRCan15SiteTermLinear" # Use NRCan15 site term ("linear" kind)
+
         [models.13-ModifiableGMPE]
-        gmpe='BooreEtAl2014'
-        site_term='NRCan15SiteTermLinear' # Use NRCan15 linear site term
+        gmpe = "AtkinsonBoore2006Modified2011"
+        site_term = "CEUS2020SiteTerm_refVs30=760" # Use Stewart et al. (2020) site term with a reference Vs30 of 760 m/s
 
         [models.14-ModifiableGMPE]
-        gmpe='AtkinsonMacias2009'
-        basin_term='CB14BasinTerm' # Apply CB14 basin adjustment
+        gmpe = "AtkinsonMacias2009"
+        basin_term = "CB14BasinTerm" # Apply CB14 basin adjustment
 
         [models.15-ModifiableGMPE]
-        gmpe='KuehnEtAl2020SInter'
-        basin_term='M9BasinTerm' # Apply M9 basin adjustment
-            
-        [models.16-ModifiableGMPE] # Additional inputs in underlying GMM
-        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true' # Follows OQ syntax for specifying GMM with additional inputs from string within openquake.hazardlib.valid.gsim
-        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}"
+        gmpe = "KuehnEtAl2020SInter"
+        basin_term = "M9BasinTerm" # Apply M9 basin adjustment
+
+        [models.16-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+
+        [models.17-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
+
+        [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
+        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
+        fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
 
         [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
-        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=true'
-        site_term = 'BA08SiteTerm' # Arbitrary for testing execution of this capability
+        gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"
+        site_term = "BA08SiteTerm" # Arbitrary for testing execution of this capability
         
+11. Using conditional GMPEs within an SMT Comparison ``.toml``. 
+
+   Conditional GMPEs can also be specified within the SMT's Comparison module. Like within the OpenQuake Engine, these leverage ModifiableGMPE to make it possible to specify a different conditional GMPE for each intensity measure we want to compute predictions for in combination with an "underlying" GMPE.
+   
+   NOTE: The user should be mindful that if an intensity measure is not specified within the conditional GMPE's entry within the ``.toml`` file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course, if the underlying GMPE does not support a requested intensity
+   measure then an error is raised as within a "regular" GMPE).
+
+    .. code-block:: ini
+
+        [models]
+
+        [models.0-ModifiableGMPE] # Base GMPE and conditional GMPE both with multiple inputs
+        gmpe = '[AbrahamsonEtAl2014]\nregion="JPN"\nusgs_basin_scaling=True' 
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+
+        [models.1-ModifiableGMPE] # Checking works with multiple conditional GMPEs/conditioned imts, where one of the GMPEs has no inputs
+        gmpe = "AbrahamsonGulerce2020SInter"
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan\nrho_pga_sa1=0.52', 'PGV': 'AbrahamsonBhasin2020'}"
+
+        [ratios_baseline_gmm.ModifiableGMPE] # This one is a bit complex: it is using the IA predicted by the MacedoEtAl2019SInter
+                                             # GMPE with KuehnEtAl2020SInter as the underlying GMM, and then computing ratios against
+                                             # against the IA predicted by the two conditional GMPEs specified above.
+        gmpe = '[KuehnEtAl2020SInter]\region=JPN\nsigma_mu_epsilon=1.35563' 
+        conditional_gmpe = "{'IA': '[MacedoEtAl2019SInter]\nregion=Japan'}"
+
+12. Using indirect-approach AvgSA GMPEs within an SMT Comparison ``.toml``. 
+
+   Indirect-approach AvgSA GMPEs can also be specified within the SMT's Comparison module. The SMT permits specified of the averaging periods as either a list (i.e., using the ``GenericGmpeAvgSA`` GSIM class) OR by constructing an array from a specified lower averaging period, upper averaging period and
+   a required number of periods (i.e., using the ``GmpeIndirectAvgSA`` GSIM class). The user must also specify an inter-period (cross) correlation model available within the Engine (see ``oq-engine\openquake\hazardlib\gsim\mgmpe\generic_gmpe_avgsa.py`` for the available models and also more info on the
+   ``GenericGmpeAvgSA`` and ``GmpeIndirectAvgSA`` indirect-approach AvgSA GSIM classes) and an underlying GMPE.
+   
+   NOTE: The user should be mindful that if a non-AvgSA intensity measure is specified within the ``.toml`` file, then the underlying GMPE is providing the predictions for the given intensity measure (and of course again, if the underlying GMPE does not support a requested intensity measure then an error
+   is raised as within a "regular" GMPE).
+
+    .. code-block:: ini
+      
+        [models]
+
+        [models.0-ModifiableGMPE]
+        gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
+        GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
+
+        [models.1-ModifiableGMPE]
+        gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+        GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
 
 References
 ==========

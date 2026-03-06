@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Parse the ESM18 flatfile into SMT metadata
+Parse the ESM18 flatfile into SMT metadata.
 """
 import os
 import csv
@@ -321,7 +321,7 @@ NETWORK = {
 
 def parse_event_data(metadata, rupture_parser):
     """
-    Parses the event metadata
+    Parses the event metadata.
     """
     # ID and Name (name not in file so use ID again)
     eq_id = metadata["event_id"]
@@ -360,7 +360,7 @@ def parse_event_data(metadata, rupture_parser):
 def parse_magnitudes(metadata):
     """
     An order of precedence is required and the preferred magnitude
-    will be the highest found
+    will be the highest found.
     """
     pref_mag = None
     mag_list = []
@@ -387,7 +387,7 @@ def parse_magnitudes(metadata):
 
 def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     """
-    If rupture data is available - parse it, otherwise return None
+    If rupture data is available - parse it, otherwise return None.
     """
     # Get SoF
     sof = metadata["fm_type_code"]
@@ -467,7 +467,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
 
 def parse_distances(metadata, hypo_depth):
         """
-        Parse the distances
+        Parse the distances.
         """
         repi = utils.positive_float(metadata["epi_dist"], "epi_dist")
         razim = utils.positive_float(metadata["epi_az"], "epi_az")
@@ -502,7 +502,7 @@ def parse_distances(metadata, hypo_depth):
 
 def parse_site_data(metadata):
     """
-    Parses the site information
+    Parses the site information.
     """
     network_code = metadata["network_code"].strip()
     station_code = metadata["station_code"].strip()
@@ -550,7 +550,7 @@ def parse_site_data(metadata):
 
 def parse_ground_motion(location, row, record, headers):
     """
-    Parse the ground-motion data
+    Parse the ground-motion data.
     """
     # Get the data
     scalars, spectra = retreive_ground_motion_from_row(row, headers)
@@ -638,7 +638,7 @@ def parse_ground_motion(location, row, record, headers):
 
 def retreive_ground_motion_from_row(row, header_list):
     """
-    Get the ground motion data from a row (record) in the database
+    Get the ground motion data from a row (record) in the database.
     """
     imts = ["U", "V", "W", "rotD00", "rotD100", "rotD50"]
     spectra = []
@@ -695,7 +695,7 @@ def retreive_ground_motion_from_row(row, header_list):
 
 def parse_waveform_data(metadata, wfid):
     """
-    Parse the waveform data
+    Parse the waveform data.
     """
     if 'late_triggered_flag' in metadata:
         late_trigger = utils.vint(
@@ -743,7 +743,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def parse(self, location="./"):
         """
-        Parse the flatfile
+        Parse the flatfile.
         """
         assert os.path.isfile(self.input_files)
         headers = getline(self.input_files, 1).rstrip("\n").split(",")
@@ -803,7 +803,7 @@ class ESMFlatfileParser(SMDatabaseReader):
 
     def _parse_record(self, metadata):
         """
-        Parse a record
+        Parse a record.
         """
         # Waveform ID not provided in file so concatenate Event and Station ID
         wfid = "_".join([metadata["event_id"],

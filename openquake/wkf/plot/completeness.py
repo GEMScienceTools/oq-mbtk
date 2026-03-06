@@ -40,7 +40,19 @@ from openquake.mbt.tools.model_building.plt_mtd import create_mtd
 def completeness_plot(fname_input_pattern, fname_config, outdir, skip=[],
                       yealim='', **kwargs):
     """
-    Analyze the catalogue
+    Plot the density of events in time using `mbt.tools.model_building.plot_mtd`.
+    
+    :param fname_input: 
+    	name of input file for catalogue
+    :param fname_config:
+    	configuration file, should contain a `completeness_table` for each zone to be plotted
+    	or a default completeness_table to be used
+    :param outdir:
+    	Output folder for figures
+    :param skip:
+    	optional list of source IDs to skip
+    :param yealim:
+    	optional upper and lower year limits
     """
 
     create_folder(outdir)

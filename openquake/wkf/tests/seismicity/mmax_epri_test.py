@@ -26,6 +26,7 @@
 
 import os
 import unittest
+import tempfile
 import numpy as np
 import pandas as pd
 from openquake.wkf.seismicity.mmax_epri import (
@@ -76,4 +77,6 @@ class CompositeLikelihoodTest(unittest.TestCase):
         pri_mean = 6.4
         pri_std = 0.85
         wei, mag = get_mmax_pmf(pri_mean, pri_std, bins, mupp=mupp,
-                                likelihood=lkl, fig_name='/tmp/mmax.png')
+                                likelihood=lkl,
+                                fig_name=os.path.join(
+                                    tempfile.mkdtemp(), 'mmax.png'))
