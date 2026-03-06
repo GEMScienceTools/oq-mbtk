@@ -67,8 +67,10 @@ def weight_from_error(error, min_error=1e-10, zero_error=None, max_weight=None):
         Optional cap on the returned weight.
     """
     error = float(error)
-    if error == 0.0 and zero_error is not None:
+    if (np.isnan(error) or error == 0.0) and zero_error is not None:
         error = float(zero_error)
+    elif np.isnan(error):
+        error = 0.0
     if error < float(min_error):
         error = float(min_error)
 

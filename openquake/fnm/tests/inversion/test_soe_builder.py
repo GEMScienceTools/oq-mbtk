@@ -374,13 +374,62 @@ def test_make_eqns_fault_abs_mfds_ridge_mode_only():
         mfd=None,
         fault_abs_mfds=fault_abs_mfds,
         fault_abs_mfd_mode="ridge",
-        ridge=4.0,
+        fault_abs_mfd_ridge=4.0,
+        ridge=0.0,
         return_sparse=False,
     )
 
     np.testing.assert_allclose(lhs, lhs0.todense())
     np.testing.assert_allclose(rhs, rhs0)
     np.testing.assert_allclose(err, err0)
+
+
+def test_make_eqns_fault_abs_mfds_ridge_mode_with_global_ridge():
+    import scipy.sparse as ssp
+    from openquake.fnm.inversion.soe_builder import make_ridge_regularization_eqns
+
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs_fault, rhs_fault, err_fault, _ = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+    lhs_global, rhs_global, err_global, _ = make_ridge_regularization_eqns(
+        rups=rups,
+        ridge=4.0,
+    )
+    lhs_expected = np.vstack([lhs_fault.todense(), lhs_global.todense()])
+    rhs_expected = np.concatenate([rhs_fault, rhs_global])
+    err_expected = np.concatenate([err_fault, err_global])
+
+    lhs, rhs, err = make_eqns(
+        rups=rups,
+        faults=None,
+        slip_rate_eqns=False,
+        mfd=None,
+        fault_abs_mfds=fault_abs_mfds,
+        fault_abs_mfd_mode="ridge",
+        fault_abs_mfd_ridge=4.0,
+        ridge=4.0,
+        return_sparse=False,
+    )
+
+    np.testing.assert_allclose(lhs, lhs_expected)
+    np.testing.assert_allclose(rhs, rhs_expected)
+    np.testing.assert_allclose(err, err_expected)
 
 
 def test_make_abs_mfd_eqns_faults():
