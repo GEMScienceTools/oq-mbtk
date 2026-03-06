@@ -1465,6 +1465,9 @@ def make_eqns(
                     )
 
     if fault_rel_mfds is not None:
+        for entry in fault_rel_mfds.values():
+            if isinstance(entry, dict) and "mode" not in entry:
+                entry["mode"] = mfd_rel_mode
         if regional_rel_mfds is None:
             regional_rel_mfds = fault_rel_mfds
         else:
