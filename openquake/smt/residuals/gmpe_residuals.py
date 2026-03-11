@@ -176,7 +176,7 @@ class Residuals(object):
             else:
                 assert hasattr(gmpe_i, "gmpe_table")
                 # Tabular GMM specified using an alias
-                pers = gmpe_i.imls["T"]
+                pers = gmpe_i.imtls["T"]
 
             # Store min/max periods for given GMM
             if sa is True:
