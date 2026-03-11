@@ -42,6 +42,10 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residual_means_and_stds)
 
 
+ # Prevent interactive matplotlib backend issue in local pytest (Tcl/Tk issues)
+plt.switch_backend('Agg')
+
+
 ### General Utils
 def manage_imts(residuals):
     """
