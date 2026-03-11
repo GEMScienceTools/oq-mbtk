@@ -662,9 +662,17 @@ Comparing GMPEs
 
         [models.17-ModifiableGMPE]
         gmpe = "CampbellBozorgnia2014"
+        add_delta_sigma_to_tau = -0.1 # Add a delta to the tau
+
+        [models.18-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_sigma_to_phi = -0.15 # Add a delta to the phi
+
+        [models.19-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
         set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
-        [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
+        [models.20-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
 

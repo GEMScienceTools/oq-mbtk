@@ -399,6 +399,12 @@ def build_mgmpe(gmpe):
             elif 'add_delta_sigma_to_total_sigma' in par:
                 idx_params.append(idx)
                 delta_std = float(par.split('=')[1])
+            elif 'add_delta_sigma_to_tau' in par:
+                idx_params.append(idx)
+                delta_tau = float(par.split('=')[1])
+            elif 'add_delta_sigma_to_phi' in par:
+                idx_params.append(idx)
+                delta_phi = float(par.split('=')[1])
             elif 'set_total_sigma_as_tau_plus_delta' in par:
                 idx_params.append(idx)
                 total_set_to_tau_and_delta = float(par.split('=')[1])
@@ -452,7 +458,15 @@ def build_mgmpe(gmpe):
     # Add delta to total sigma
     if 'add_delta_sigma_to_total_sigma' in gmpe:
         kw_mgmpe['add_delta_std_to_total_std'] = {'delta': delta_std}
-            
+
+    # Add delta to tau
+    if 'add_delta_sigma_to_tau' in gmpe:
+        kw_mgmpe['add_delta_std_to_tau_std'] = {'delta': delta_tau}
+
+    # Add delta to phi
+    if 'add_delta_sigma_to_phi' in gmpe:
+        kw_mgmpe['add_delta_std_to_phi_std'] = {'delta': delta_phi}
+
     # Set total sigma to sqrt(tau**2 + delta**2)
     if 'set_total_sigma_as_tau_plus_delta' in gmpe:
         kw_mgmpe['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
