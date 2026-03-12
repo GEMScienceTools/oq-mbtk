@@ -880,7 +880,7 @@ class GroundMotionDatabase(ContextDB):
         oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
-        ctxs = list(ctxm.get_ctx_iter([rup], site))
+        ctxs = ctxm.get_ctxs([rup], site)
 
         return ctxs[0]
 
