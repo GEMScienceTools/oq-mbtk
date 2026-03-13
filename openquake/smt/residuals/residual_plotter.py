@@ -25,7 +25,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
-from math import floor, ceil
 from scipy.stats import norm
 from cycler import cycler
 
@@ -40,10 +39,6 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_with_distance,
                                                     residuals_with_depth,
                                                     _get_residual_means_and_stds)
-
-
- # Prevent interactive matplotlib backend issue in local pytest (Tcl/Tk issues)
-plt.switch_backend('Agg')
 
 
 ### General Utils
@@ -357,11 +352,11 @@ class ResidualScatterPlot(BaseResidualPlot):
         return nrow, ncol
 
     def get_axis_xlim(self, res_data, res_type):
-        return floor(np.min(res_data['x'])), ceil(np.max(res_data['x']))
+        return np.floor(np.min(res_data['x'])), np.ceil(np.max(res_data['x']))
 
     def get_axis_ylim(self, res_data, res_type):
-        max_lim = ceil(np.nanmax(np.fabs(res_data['y'])))
-        return -max_lim, max_lim
+        ylim = np.ceil(np.nanmax(np.fabs(res_data['y']))) + 1.0
+        return -ylim, ylim
     
     def get_axis_title(self, res_data, res_type):
         sigma_label = get_sigma_label(res_type)
@@ -440,7 +435,7 @@ class ResidualWithDistance(ResidualScatterPlot):
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         if self.plot_type == "log":
-            return 0.1, 10.0 ** (ceil(np.log10(np.nanmax(x))))
+            return 0.1, 10.0 ** (np.ceil(np.log10(np.nanmax(x))))
         else:
             if self.distance_type == "rcdpp":
                 return np.nanmin(x), np.nanmax(x)
@@ -1064,8 +1059,8 @@ class ResidualWithSite(ResidualPlot):
         title_string = "%s - %s - %s" % (gmm_label, self.imt, sigma_label)
         ax.set_title(title_string, fontsize=11)
 
-        max_lim = ceil(np.max(np.fabs(yvals)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(yvals))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.set_ylabel("%s" % sigma_label, fontsize=12)
         ax.grid()
 
@@ -1188,8 +1183,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaW_es)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaW_es))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
 
@@ -1230,8 +1225,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaS2S_s)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaS2S_s))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
         
@@ -1253,8 +1248,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaWS_es)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaWS_es))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta WS_{es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
         

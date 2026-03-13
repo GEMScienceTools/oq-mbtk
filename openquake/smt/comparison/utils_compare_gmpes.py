@@ -225,6 +225,7 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
             store_per_mag[mag_key] = store_per_gmpe
 
             # Add grid
+            pyplot.gca().set_axisbelow(True)
             pyplot.grid(axis='both', which='both', alpha=0.5)
             
             # Plot data too if required/any retrieved
@@ -414,7 +415,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                             color=col,
                             linewidth=2,
                             linestyle='-',
-                            label=clean_gmm_label(gmpe))
+                            label=clean_gmm_label(gmpe),
+                            zorder=1)
                     if config.nstd > 0:
                         ax.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
                         ax.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
@@ -466,10 +468,11 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                 # NOTE: Units are converted to OQ GSIM units in helper functions
                 for idx_rec, rec in subset.iterrows():
                     ax.plot(rec["spectra_periods"], rec["spectra_rotD50"],
-                            color='k', linewidth=1.5, zorder=0)
+                            color='k', linewidth=1.5)
 
             # Add grid and set xlims
             ax.set_xlim(min(periods), max(periods))
+            ax.set_axisbelow(True)
             ax.grid(True)
             if config.nstd > 0 or obs_data_fname is not None:
                 ax.semilogy()
@@ -624,6 +627,7 @@ def plot_ratios_util(config, output_directory):
                                    config.dist_type)
     
                 # Add grid
+                pyplot.gca().set_axisbelow(True)
                 pyplot.grid(axis='both', which='both', alpha=0.5)
 
     # Finalise plots
@@ -853,6 +857,7 @@ def plot_sammons_util(imt_list,
         else:
             assert mtxs_type == '16th_perc'
             pyplot.title(str(imt) + ' (16th percentile)', fontsize='14')
+        pyplot.gca().set_axisbelow(True)
         pyplot.grid(axis='both', which='both', alpha=0.5)
 
     # Tidy and save
