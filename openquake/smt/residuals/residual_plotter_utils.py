@@ -43,8 +43,7 @@ def _get_residuals_density_distribution(residuals, gmpe, imt, bin_width=0.5):
 
     for res_type in data.keys():
 
-        vals, bins = _get_histogram_data(
-            data[res_type], bin_width=bin_width)
+        vals, bins = _get_histogram_data(data[res_type], bin_width=bin_width)
 
         mean = statistics[res_type]["Mean"]
         stddev = statistics[res_type]["Std Dev"]
@@ -68,8 +67,9 @@ def _get_histogram_data(data, bin_width=0.5):
         np.ceil(np.nanmax(data)) + bin_width,
         bin_width
         )
-    # Work on finite numbers to prevent np.histogram raising
+    
     vals = np.histogram(data[np.isfinite(data)], bins, density=True)[0]
+    
     return vals.astype(float), bins
 
 
@@ -78,9 +78,9 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     Retreives the histogram of the likelihoods.
     """
     bins = np.arange(0.0, 1.0 + bin_width, bin_width)
-    # Work on finite numbers to prevent np.histogram raising:
     vals = np.histogram(
         lh_values[np.isfinite(lh_values)], bins, density=True)[0]
+    
     return vals.astype(float), bins
 
 
@@ -98,6 +98,7 @@ def _get_magnitudes(residuals, gmpe, imt, res_type):
             nval = np.ones(len(ctx["Ctx"].repi))
             nval = nval[keep]
         magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
+    
     return magnitudes
 
 
@@ -115,6 +116,7 @@ def _get_depths(residuals, gmpe, imt, res_type):
             nvals = np.ones(len(ctx["Ctx"].repi))
             nvals = nvals[keep]
         depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
+    
     return depths
 
 
