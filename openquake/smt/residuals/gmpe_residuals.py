@@ -510,7 +510,8 @@ class Residuals(object):
         for ctxt in self.contexts:
             magnitudes = np.hstack([
                 magnitudes,
-                ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
+                ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))]
+                )
             
         return magnitudes
 
@@ -558,10 +559,13 @@ class Residuals(object):
 
                 # Into a dataframe and rename some columns
                 ctx_df = pd.DataFrame(ctx_and_imt)
-                ctx_df = ctx_df.rename(columns={"custom_site_id": "st_code",
-                                                "lons": "st_lon",
-                                                "lats": "st_lat",
-                                                "depths": "st_elevation"})
+                ctx_df = ctx_df.rename(
+                    columns={
+                        "custom_site_id": "st_code",
+                        "lons": "st_lon",
+                        "lats": "st_lat",
+                        "depths": "st_elevation"}
+                        )
 
                 # Store the DataFrame for the event
                 store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
