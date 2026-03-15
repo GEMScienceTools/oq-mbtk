@@ -60,8 +60,12 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     residuals.compute_residuals(database, component=comp)
 
     # Export the residuals to a text file
-    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp}.txt")
-    residuals.export_residuals(exp_dir)
+    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp.lower()}.txt")
+    #residuals.export_residuals(exp_dir)
+
+    # Pickle the residuals too
+    exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp.lower()}.pkl")
+    residuals.pickle_residuals(exp_dir)
 
     # Export magnitude distance plot and geographical coverage of eqs/stations
     mag_dist = os.path.join(out_dir, 'mag_dist.png')
