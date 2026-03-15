@@ -433,6 +433,7 @@ class Residuals(object):
                         )
                     residual[gmpe][imtx]["Inter event"] = inter
                     residual[gmpe][imtx]["Intra event"] = intra
+                    
         context["Residual"] = residual
         
         return context
