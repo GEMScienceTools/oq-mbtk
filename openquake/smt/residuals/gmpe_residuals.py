@@ -462,8 +462,7 @@ class Residuals(object):
         # Get number of values
         nvals = len(mean)
 
-        # Use mean tau/phi (the Abrahamson and Youngs 1992 only 
-        # considers homoskedastic sigma not heteroskedastic)
+        # Use mean tau/phi of given GMM (AY92 only considers homoskedastic sigma)
         tau = np.mean(inter)
         phi = np.mean(intra)
 
