@@ -459,7 +459,7 @@ class Residuals(object):
         :param normalise: bool which if True normalises the residuals using
                           the corresponding GMPE sigma components
         """
-        # Get number of values
+        # Get number of values (records for given event)
         nvals = len(mean)
 
         # Use mean tau/phi of given GMM (AY92 only considers homoskedastic sigma)
