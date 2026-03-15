@@ -61,7 +61,7 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
 
     # Export the residuals to a text file
     exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp.lower()}.txt")
-    #residuals.export_residuals(exp_dir)
+    residuals.export_residuals(exp_dir)
 
     # Pickle the residuals too
     exp_dir = os.path.join(out_dir, f"residuals_hrz_comp_def_of_{comp.lower()}.pkl")

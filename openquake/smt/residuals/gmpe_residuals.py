@@ -462,18 +462,23 @@ class Residuals(object):
         # Get number of values
         nvals = float(len(mean))
 
+        # To handle heterscedastic GMMs tau and phi can vary per record
+        # so use averages to ensure inter-event per record is the same
+        tau = np.mean(inter)
+        phi = np.mean(intra)
+
         # Total variance for all observations combining GMPE tau and phi
-        v = nvals * (inter ** 2.) + (intra ** 2.)
-                                                  
-        # Compute the inter-event
-        inter_res = ((inter ** 2.) * sum(obs - mean)) / v
+        v = nvals * (tau ** 2.) + (phi ** 2.)
+
+        # Compute the inter-event (numpy ones is for index management)
+        inter_res = ((tau ** 2.) * np.sum(obs - mean) / v) * np.ones(len(mean))
 
         # Compute the intra-event
         intra_res = obs - (mean + inter_res)
 
         # Whether to normalise or not
         if normalise:
-            return inter_res / inter, intra_res / intra
+            return inter_res / tau, intra_res / intra
         else:
             return inter_res, intra_res
 
