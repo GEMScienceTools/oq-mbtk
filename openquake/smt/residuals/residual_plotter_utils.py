@@ -319,7 +319,7 @@ def _get_residual_means_and_stds(residuals):
     Get the mean and sigma of the distributions of residuals
     for each gmpe and imt.
     """
-    # Get all residuals for all GMPEs at all IMTs
+    # Get all residuals for all GMPEs at all IMTs in a dict
     res_statistics = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
