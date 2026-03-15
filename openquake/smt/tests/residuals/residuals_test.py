@@ -185,6 +185,17 @@ class ResidualsTestCase(unittest.TestCase):
         out_loc = os.path.join(self.out_location, "residuals.txt")
         self.residuals.export_residuals(out_loc)
 
+    def test_pickle_execution(self):
+        """
+        Tests execution of the residuals pickling function.
+        """
+        out_loc = os.path.join(self.out_location, "residuals.pkl")
+        self.residuals.pickle_residuals(out_loc)
+        # Also check it can be loaded again as a residuals object
+        with open(out_loc, 'rb') as f:
+            residuals = pickle.load(f)
+            assert isinstance(residuals, res.Residuals)
+
     def test_llh_execution(self):
         """
         Tests basic execution of loglikelihood score (Scherbaum et al.

@@ -20,6 +20,7 @@ Module to get GMPE residuals.
 """
 import sys
 import warnings
+import pickle
 import copy
 import re
 import toml
@@ -578,6 +579,13 @@ class Residuals(object):
                 f.write(f"Event:{ev} IMT: {imt}\n")
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
+
+    def pickle_residuals(self, out_fname):
+        """
+        Pickle the residuals object.
+        """
+        with open(out_fname, 'wb') as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def export_gmc_xml(self, weight_metric, out_fname):
         """
