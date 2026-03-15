@@ -807,9 +807,9 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
     sigmas = np.concatenate([res_dists[0].loc['Std Dev'],
                              res_dists[1].loc['Std Dev'],
                              res_dists[2].loc['Std Dev']])
-    mean_y_bound = np.max([np.abs(np.min(means)), np.abs(np.max(means))])
+    mean_y_bound = np.max([np.abs(np.nanmin(means)), np.abs(np.nanmax(means))])
     sigma_y_bound_non_centered = np.max(
-        [np.abs(np.max(sigmas)), np.abs(np.max(sigmas))])
+        [np.abs(np.nanmax(sigmas)), np.abs(np.nanmin(sigmas))])
     sigma_y_bound = min(np.abs(1-sigma_y_bound_non_centered),
                         np.abs(1+sigma_y_bound_non_centered))
     for ax_index in range(0, 3):
