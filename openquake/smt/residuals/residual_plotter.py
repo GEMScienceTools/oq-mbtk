@@ -26,7 +26,6 @@ import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
 from scipy.stats import norm
-from cycler import cycler
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
@@ -491,18 +490,15 @@ def plot_llh_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_llh = manage_imts(residuals)
 
-    # Define colours for GMMs
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-        
     # Plot LLH values w.r.t. period
     llh_with_imt = pd.DataFrame(residuals.llh).drop('all')
     fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
-    ax_llh.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         y_llh = np.array(llh_with_imt[gmpe])
-        ax_llh.scatter(x_llh.imt_float, y_llh)
+        ax_llh.scatter(x_llh.imt_float, y_llh, color=color)
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_llh.plot(x_llh.imt_float, y_llh, label=tmp)
+        ax_llh.plot(x_llh.imt_float, y_llh, color=color, label=tmp)
     ax_llh.margins(x=0)
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('LLH', fontsize='12')
@@ -528,19 +524,16 @@ def plot_edr_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
 
-    # Define colours for GMMs
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-    
     # Plot EDR w.r.t. period
     EDR_with_imt = {}
     fig_EDR, ax_EDR = plt.subplots(figsize=(10, 8))
-    ax_EDR.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         EDR_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR = EDR_with_imt.EDR
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
-        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp)
+        ax_EDR.scatter(x_with_imt.imt_float, y_EDR, color=color)
+        ax_EDR.plot(x_with_imt.imt_float, y_EDR, color=color, label=tmp)
     ax_EDR.margins(x=0)
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
@@ -553,13 +546,13 @@ def plot_edr_with_period(residuals, filename):
     # Plot median pred. correction factor w.r.t. period
     kappa_with_imt = {}
     fig_kappa, ax_kappa = plt.subplots(figsize=(10, 8))
-    ax_kappa.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         kappa_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_kappa = kappa_with_imt["sqrt Kappa"]
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
-        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp)
+        ax_kappa.scatter(x_with_imt.imt_float, y_kappa, color=color)
+        ax_kappa.plot(x_with_imt.imt_float, y_kappa, color=color, label=tmp)
     ax_kappa.margins(x=0)
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
@@ -571,13 +564,13 @@ def plot_edr_with_period(residuals, filename):
     # Plot MDE w.r.t. period
     MDE_with_imt = {}
     fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
-    ax_MDE.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         MDE_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_MDE = MDE_with_imt["MDE Norm"]
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
-        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp)
+        ax_MDE.scatter(x_with_imt.imt_float, y_MDE, color=color)
+        ax_MDE.plot(x_with_imt.imt_float, y_MDE, color=color, label=tmp)
     ax_MDE.margins(x=0)
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
@@ -603,19 +596,16 @@ def plot_sto_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
     
-    # Define colours for plots
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-    
     # Plot stochastic area w.r.t. period
     sto_with_imt = {}
     fig_sto, ax_sto = plt.subplots(figsize=(10, 8))
-    ax_sto.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         sto_with_imt = pd.Series(residuals.stoch_areas_wrt_imt[gmpe])
         y_sto = sto_with_imt.values
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_sto.scatter(x_with_imt.imt_float, y_sto)
-        ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp)
+        ax_sto.scatter(x_with_imt.imt_float, y_sto, color=color)
+        ax_sto.plot(x_with_imt.imt_float, y_sto, color=color, label=tmp)
     ax_sto.margins(x=0)
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
@@ -810,11 +800,6 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
     
-    # Define colour per GMM
-    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
-    colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
-    colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
-
     # Set axes limits and axes labels
     means = np.concatenate([res_dists[0].loc['Mean'],
                             res_dists[1].loc['Mean'],
@@ -832,8 +817,6 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
         ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
-        ax[ax_index, 0].set_prop_cycle(colour_cycler)
-        ax[ax_index, 1].set_prop_cycle(colour_cycler)
     for ax_index in range(0, 2):
         ax[2, ax_index].set_ylabel('Within-Event', fontsize=12)
         ax[1, ax_index].set_ylabel('Between-Event', fontsize=12)
@@ -926,19 +909,15 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
     fig, ax = _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot)
 
     # Define colours for GMPEs
-    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
-    colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
-    colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
+    gmpe_colors = {gmpe: COLORS[i % len(COLORS)] for i, gmpe in enumerate(residuals.gmpe_list)}
 
     # Plot data
     for gmpe in residuals.gmpe_list.keys():
 
         # Assign colour and marker to each gmpe
-        input_df = pd.DataFrame(
-            colour_cycler_df.loc[colour_cycler_df['gmpe']==gmpe]).reset_index()
-        color_inp = input_df['color'].iloc[0]
-        marker_inp = input_df['marker'].iloc[0]
-        
+        color_inp = gmpe_colors[gmpe]
+        marker_inp = 'x'
+                
         # Plot means
         ax = plot_residual_means_and_stds(
             ax, res_dists, "Mean", gmpe, imts_to_plot, marker_inp, color_inp)

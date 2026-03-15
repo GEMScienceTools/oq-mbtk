@@ -321,8 +321,8 @@ def _get_residual_means_and_stds(residuals):
     res_statistics = {}
     for gmpe in residuals.gmpe_list:
         for imt in residuals.imts:
-            res_statistics[gmpe, imt] = residuals.get_residual_statistics_for(
-                gmpe, imt)
+            res_statistics[gmpe, imt] =\
+                  residuals.get_residual_statistics_for(gmpe, imt)
     
     # Now get into dataframes
     mean_sigma_intra, mean_sigma_inter, mean_sigma_total = {}, {}, {}
@@ -332,11 +332,10 @@ def _get_residual_means_and_stds(residuals):
             mean_sigma_total[gmpe, imt] = res_statistics[gmpe, imt]['Total']
             if ('Inter event' in residuals.residuals[gmpe][imt]
                 and
-                'Intra event' in residuals.residuals[gmpe][imt]):
-                mean_sigma_inter[
-                    gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
-                mean_sigma_intra[
-                    gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
+                'Intra event' in residuals.residuals[gmpe][imt]
+                ):
+                mean_sigma_inter[gmpe, imt] = res_statistics[gmpe, imt]['Inter event']
+                mean_sigma_intra[gmpe, imt] = res_statistics[gmpe, imt]['Intra event']
             else:
                 mean_sigma_inter[gmpe, imt] = dummy_values
                 mean_sigma_intra[gmpe, imt] = dummy_values
