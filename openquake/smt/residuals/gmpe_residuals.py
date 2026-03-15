@@ -447,7 +447,7 @@ class Residuals(object):
         Calculates the random effects residuals (i.e. decomposition of the
         total residuals into inter-event and intra-event) using equation 10
         of Abrahamson & Youngs (1992).
-        
+
         :param obs: array of observed ground-shaking values for a single ctx
                     (i.e. event) for a given imt, in natural log
         :param mean: array of ground-shaking values for the same ctx 
@@ -460,17 +460,17 @@ class Residuals(object):
                           the corresponding GMPE sigma components
         """
         # Get number of values
-        nvals = float(len(mean))
+        nvals = len(mean)
 
-        # To handle heterscedastic GMMs tau and phi can vary per record
-        # so use averages to ensure inter-event per record is the same
+        # Use mean tau/phi (the Abrahamson and Youngs 1992 only 
+        # considers homoskedastic sigma not heteroskedastic)
         tau = np.mean(inter)
         phi = np.mean(intra)
 
         # Total variance for all observations combining GMPE tau and phi
         v = nvals * (tau ** 2.) + (phi ** 2.)
 
-        # Compute the inter-event (numpy ones is for index management)
+        # Compute the inter-event
         inter_res = ((tau ** 2.) * np.sum(obs - mean) / v) * np.ones(len(mean))
 
         # Compute the intra-event
