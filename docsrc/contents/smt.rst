@@ -169,6 +169,9 @@ We can specify the inputs to perform a residual analysis with as follows:
        >
        > # We can export the residuals to a text file
        > resid.export_residuals(txt_fname)
+       >
+       > # And we can pickle the residuals too
+       > resid.pickle_residuals(pkl_fname)
 
 Plotting of Residuals
 *********************
