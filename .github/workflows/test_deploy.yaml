@@ -1,4 +1,4 @@
-name: test and make pages
+name: Linux test and make pages
 
 on:
   push:
