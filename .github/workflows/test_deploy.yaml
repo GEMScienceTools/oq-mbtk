@@ -30,7 +30,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: ["3.11", "3.12", "3.13"]
     - name: Install dependencies
       run: |
         sudo apt update
@@ -48,7 +48,8 @@ jobs:
         fi
         source ~/openquake/bin/activate
         cd ..
-        pip install -r requirements-py311-linux.txt
+        PY_VER=`echo py${{ matrix.python-version }} | tr -d .`
+        pip install -r requirements-$PY_VER-linux.txt
         pip install -e .
         pip install pytest
     - name: Run test with pytest
@@ -65,13 +66,12 @@ jobs:
     needs: test
     env:
       MPLBACKEND: 'Agg'
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Install OpenQuake dependencies
       run: |
         sudo apt-get install pandoc
