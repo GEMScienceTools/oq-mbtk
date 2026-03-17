@@ -1,8 +1,6 @@
-name: Linux test and make pages
+name: test and make pages
 
 on:
-  push:
-    branches: [ test ]
   pull_request:
     branches: [ master ]
   schedule:
