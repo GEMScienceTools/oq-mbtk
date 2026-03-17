@@ -13,8 +13,8 @@ on:
         required: true
 jobs:
   test:
-    name: hazard test
-    runs-on: ${{ matrix.os }} ${{ matrix.python-version}}
+    name: hazard test ${{ matrix.python-version}}
+    runs-on: ${{ matrix.os }} 
     strategy:
       fail-fast: false
       matrix:
