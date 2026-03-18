@@ -373,23 +373,11 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
             
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
-                       marker='x', color='b', zorder=4)
-            
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (res_data['sigma_res']),
-                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
-            
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
-                       marker='x', color='b', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'], res_data['mean_res'] + (res_data['sigma_res']),
-                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
 
         ax.axhline(0, color='k', linestyle='--', linewidth=1.25, zorder=100)
 
