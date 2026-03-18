@@ -32,6 +32,7 @@ import time
 import toml
 import shapely
 import datetime
+import logging
 import multiprocessing
 import numpy as np
 import geopandas as gpd
@@ -45,6 +46,12 @@ from openquake.hazardlib.geo.geodetic import npoints_towards
 from openquake.hazardlib.geo.geodetic import (
     geodetic_distance, npoints_between
 )
+
+# Set the log format
+logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s | %(asctime)s | %(message)s"
+    )
 
 
 def _get_buffer_from_poly(lons, lats, dist_km, num_points=16, res_dist=10):
@@ -200,11 +207,13 @@ def process_model(indata):
         for mpoly in gpd.GeoSeries(tpoly).explode():
 
             # Filter multipolygon
-            if np.any(poly_filter['model'].str.contains(row[key_column])):
-                tgeo = poly_filter[poly_filter.model == row[key_column]].geometry
-                flag = poly.within(tgeo)
-                if not np.any(flag):
-                    continue
+            if poly_filter is not None:
+                if np.any(poly_filter['model'].str.contains(row[key_column])):
+                    tgeo = poly_filter[poly_filter.model ==
+                                       row[key_column]].geometry
+                    flag = poly.within(tgeo)
+                    if not np.any(flag):
+                        continue
 
             tmps = "Number of polygons processed: "
             print(f"{tmps} {i_poly+1:06d}/{len(tmp):06d}", end="\r")
@@ -253,10 +262,10 @@ def _remove_holes(buffer):
 
     if isinstance(buffer, shapely.GeometryCollection):
         # TODO
-        # This is for filtering out LineStrings found while processing `oat` 
+        # This is for filtering out LineStrings found while processing `oat`
         # with a buffering distance of 100 km. I was not able to understand
-        # only in this case the code was generating LineStrings (and therefore
-        # a GeometryCollection
+        # why only in this case the code was generating LineStrings (and
+        # therefore a GeometryCollection)
         first = True
         for geo in buffer.geoms:
             if isinstance (geo, shapely.MultiPolygon):
@@ -369,10 +378,7 @@ def main(fname_config):
     indata = []
     for _, row in gdf.iterrows():
 
-        # For debugging purposes
-        # if row[key_column] not in ['cea', 'mie']:
-        # if row[key_column] not in ['oat']:
-        #     continue
+        logging.info(f"Working on {row[key_column]}\n")
 
         if len(keys) > 0 and row[key_column] not in keys:
             continue
@@ -383,7 +389,9 @@ def main(fname_config):
         else:
             indata.append([row, poly_filter, key_column, dist_km])
 
-        # For debugging purposes: sequential execution
+        # NOTE: This is for debugging purposes: sequential execution.
+        #       Uncomment the following two lines and comment out the one
+        #       row below running parallel calculation
         # out = process_model([row, poly_filter, key_column, dist_km])
         # data.append(out)
 

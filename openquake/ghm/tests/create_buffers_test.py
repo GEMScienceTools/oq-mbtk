@@ -28,10 +28,12 @@
 Module create_buffer_test
 """
 
+import toml
 import pathlib
+import tempfile
 import unittest
 
-from openquake.ghm.create_buffers import _main
+from openquake.ghm.create_buffers import main
 
 HERE = pathlib.Path(__file__).parent.resolve()
 
@@ -40,5 +42,25 @@ class BufferCreateTestCase(unittest.TestCase):
     """ Check the construction of buffers """
 
     def test_simple_test(self):
+
+        # Reading original config and fix paths etc.
         fname_conf = HERE / 'data' / 'buffer' / 'config.toml'
-        _main(fname_conf)
+        config = toml.load(fname_conf)
+        config['output_dir'] = tempfile.mkdtemp()
+        fname_path = pathlib.Path(fname_conf)
+        ROOT = fname_path.resolve().parent
+        config['zonation_fname'] = str(ROOT / config['zonation_fname'])
+        _, new_config = tempfile.mkstemp(suffix='.toml')
+
+        # Writing the new config
+        with open(new_config, 'w') as f:
+            _ = toml.dump(config, f)
+        print(f'New config: {new_config}')
+        main(new_config)
+
+        # Testing
+        computed = pathlib.Path(config['output_dir']) / 'buffer_100km.geojson'
+        expected = ROOT / 'out' / 'buffer_100km.geojson'
+        self.assertListEqual(list(open(computed)), list(open(expected)))
+
+
