@@ -373,23 +373,11 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
             
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
-                       marker='x', color='b', zorder=4)
-            
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (res_data['sigma_res']),
-                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
-            
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (-1*res_data['sigma_res']),
-                       marker='x', color='b', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'], res_data['mean_res'] + (res_data['sigma_res']),
-                       marker='x', color='b', label='+/- 1 Std.', zorder=4)
 
         ax.axhline(0, color='k', linestyle='--', linewidth=1.25, zorder=100)
 
@@ -836,7 +824,8 @@ def plot_residual_means_and_stds(
         marker_inp,
         color_inp):
     """
-    Plot means or sigmas for given GMPE.
+    Plot means and standard deviation of residual distributions
+    for given GMPE.
     """
     # Get axes index
     if mean_or_std == 'Mean':
@@ -892,8 +881,8 @@ def plot_residual_means_and_stds(
 
 def plot_residual_means_and_stds_with_period(residuals, filename):
     """
-    Create a simple plot of residual mean and residual sigma
-    for each GMPE  (y-axis) versus period (x-axis).
+    Create a simple plot of means and standard deviations of each
+    GMPE (y-axis) versus period (x-axis).
     """
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
@@ -978,8 +967,8 @@ def residual_means_and_stds_table(residuals, filename):
 ### Plotting of single station residual analysis results
 class ResidualWithSite(ResidualPlot):
     """
-    Plot total, inter-event and intra-event single-station the residuals
-    for the site selection, GMPE and intensity measure considered.
+    Plot total, inter-event and intra-event single-station residuals
+    for the selected sites, GMPE and intensity measure.
     """
     def _assertion_check(self, residuals):
         """
