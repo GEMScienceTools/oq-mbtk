@@ -178,7 +178,7 @@ Plotting of Residuals
 
 1. Now we have computed the residuals, we can generate various basic plots describing the residual distribution.
 
-   We can generate plots of the probability density function plots for total, inter- and intra-event residuals to compare the residual distributions to standard normal distributions.
+   We can generate plots of the probability density function plots for total, inter-event and intra-event residuals to compare the residual distributions to standard normal distributions.
 
    Probability density function plots can be generated as follows:
 
@@ -203,7 +203,7 @@ Residual distribution plot for Boore et al. 2020 and PGA:
 Plot of residual distributions versus spectral acceleration: 
     .. image:: /contents/smt_images/means_and_stds_vs_period.png
 
-3. Plots for residual trends (again for total, inter- and intra-event components) with respect explanatory variables (magnitude, focal depth, distance and vs30) can also be generated in a similar manner. Here we will demonstrate for magnitude:
+3. Plots for residual trends (again for total, inter-event and intra-event components) with respect explanatory variables (magnitude, focal depth, distance and vs30) can also be generated in a similar manner. Here we will demonstrate for magnitude:
    
     .. code-block:: ini
        
