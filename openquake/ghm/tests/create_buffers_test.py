@@ -43,7 +43,7 @@ class BufferCreateTestCase(unittest.TestCase):
 
     def test_simple_test(self):
 
-        regenerate = True
+        regenerate = False
 
         # Reading original config and fix paths etc.
         fname_conf = HERE / 'data' / 'buffer' / 'config.toml'
@@ -66,9 +66,9 @@ class BufferCreateTestCase(unittest.TestCase):
             with open(new_config, 'w') as f:
                 _ = toml.dump(config, f)
             print(f'New config: {new_config}')
-            # main(new_config)
+            main(new_config)
 
             # Testing
             computed = pathlib.Path(config['output_dir']) / 'buffer_100km.geojson'
             expected = ROOT / 'out' / 'buffer_100km.geojson'
-            # self.assertListEqual(list(open(computed)), list(open(expected)))
+            self.assertListEqual(list(open(computed)), list(open(expected)))
