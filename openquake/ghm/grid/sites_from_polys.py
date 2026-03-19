@@ -134,3 +134,69 @@ def make_sites_for_polys_splitting(poly_df, out_folder, h3_fixed = False, h3_lev
         out = os.path.join(out_folder, out_file)
         print(out)
         sites_df.to_csv(out, index = False)
+
+def modify_sites(model, original_sites_file, modification_polys_file, out_folder):
+    '''
+    Modify existing sites file by adding/removing events in polygons as
+    specified in the modification_polys_file
+    This file should contain:
+    id | mod | operation | resolution
+
+    mod specifies the model name and should match the input paramater 
+    model
+    operation should be 1 to add sites in the polygon and 0 to remove
+    resolution specifies h3 resolution for new sites
+
+    :param model:
+        string specifiying model name. Should match 'mod' column in 
+        modification_polys_file
+    :param original_sites_file:
+        location of csv file containing lon/lats for existing model sites 
+        (output from make_sites_for_polys_splitting)
+    :param modification_polys_file
+        location of geojson file with polygons to modify sites
+        id | mod | operation | resolution 
+    :param out_folder:
+        location to save output
+    :return:
+        saves a new csv file of lon/lats for sites
+    
+    '''
+
+    existing_sites = pd.read_csv(original_sites_file)
+    sites_mod = gpd.read_file(modification_polys_file)
+    
+    # find all modifications to be included
+    mods = sites_mod.loc[sites_mod['mod'] == 'PAC'] 
+
+    # to add:
+    additions = mods[mods.operation == 1]
+    print('found ', len(additions), 'polygons to add sites from in ', model)
+    for idx, add in additions.iterrows(): 
+        new_sites = fill_poly(add.geometry, add.resolution)
+        existing_sites.extend(new_sites)
+
+    # to remove:
+    remove = mods[mods.operation == 0]
+    print('found ', len(remove), 'polygons to remove sites from in ', model)
+    for idx, rem in remove.iterrows():
+        poly = gpd.GeoDataFrame(geometry = gpd.GeoSeries(rem.geometry))
+        # find and remove the points inside
+        mesh = gpd.GeoDataFrame(existing_sites, geometry=gpd.points_from_xy(existing_sites.lon, existing_sites.lat), crs="EPSG:4326")
+        # handle multipolygons
+        eee = poly.explode(index_parts=True)
+        feature_coll = eee.__geo_interface__
+        print('found ', len(feature_coll), 'polygons')
+    
+        for i in range(len(feature_coll['features'])):
+            tmp = feature_coll['features'][i]['geometry']
+            idx_within = poly.sindex.query(mesh.geometry, predicate="intersects")[0]
+            existing_sites = existing_sites.drop(index=idx_within)
+
+    # remove any sneaky duplicates
+    sites_df = existing_sites.drop_duplicates()
+
+    out_file = 'sites_mosaic_2026_{}_modified.csv'.format(model)
+    out = os.path.join(out_folder, out_file)
+    print('saving new sites to ', out)
+    sites_df.to_csv(out, index = False)
