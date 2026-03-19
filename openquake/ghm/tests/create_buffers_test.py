@@ -32,6 +32,8 @@ import toml
 import pathlib
 import tempfile
 import unittest
+import geopandas.testing
+import geopandas as gpd
 
 from openquake.ghm.create_buffers import main
 
@@ -71,4 +73,10 @@ class BufferCreateTestCase(unittest.TestCase):
             # Testing
             computed = pathlib.Path(config['output_dir']) / 'buffer_100km.geojson'
             expected = ROOT / 'out' / 'buffer_100km.geojson'
-            self.assertListEqual(list(open(computed)), list(open(expected)))
+
+            exp = gpd.read_file(expected)
+            com = gpd.read_file(computed)
+
+            gpd.testing.assert_geodataframe_equal(exp, com)
+
+            # self.assertListEqual(list(open(computed)), list(open(expected)))
