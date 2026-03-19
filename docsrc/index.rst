@@ -56,6 +56,7 @@ Currently the oq-mbt includes eight sub-modules:
    contents/smt
    contents/sep
    contents/wkf
+   contents/fnm
 
 
 Indices and tables
