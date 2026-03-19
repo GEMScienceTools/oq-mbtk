@@ -1,5 +1,5 @@
 # Example of configuration file
-zonation_fname = "./mosaic.gpkg"
+zonation_fname = "./mosaic.geojson"
 num_points_in_circle = 16
 buffer_distance = 100.0
 output_dir = './out'
