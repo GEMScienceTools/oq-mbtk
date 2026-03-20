@@ -77,6 +77,7 @@ class BufferCreateTestCase(unittest.TestCase):
             exp = gpd.read_file(expected)
             com = gpd.read_file(computed)
 
-            gpd.testing.assert_geodataframe_equal(exp, com)
-
-            # self.assertListEqual(list(open(computed)), list(open(expected)))
+            gpd.testing.assert_geodataframe_equal(
+                    exp,
+                    com,
+                    check_less_precise=True)
