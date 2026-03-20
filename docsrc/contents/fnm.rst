@@ -6,5 +6,6 @@ to multifault ruptures from a set of faults, treating the faults as a network.
 
 .. toctree::
    :caption: Tutorials:
+   :maxdepth: 1
 
    fnm_docs/tutorials/atf_fermi_tutorial
