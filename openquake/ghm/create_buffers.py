@@ -326,7 +326,7 @@ def main(fname_config):
 
     packet_size = 1000
 
-    print(f"\nStart time: {datetime.datetime.now()} [s]")
+    logging.info(f"Start time: {datetime.datetime.now()} [s]")
 
     # Read configuration file
     config = toml.load(fname_config)
@@ -342,7 +342,10 @@ def main(fname_config):
     keys = []
     if 'models_keys' in config.keys():
         keys = config['models_keys']
-    key_column = getattr(config, 'key_column', 'code')
+    key_column = 'code'
+    if 'key_column' in config.keys():
+        key_column = config['key_column']
+    logging.info(f"Key column: {key_column}")
 
     # Name of the file with polygons to filter input shapefile
     fname_model_filter = None
@@ -356,8 +359,13 @@ def main(fname_config):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Output file
-    out_fname = f'buffer_{dist_km:.0f}km.geojson'
-    out_fname = output_dir / out_fname
+    if 'out_fname' in config:
+        out_fname = pathlib.Path(config['out_fname'])
+        output_dir = out_fname.parent
+        output_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        out_fname = f'buffer_{dist_km:.0f}km.geojson'
+        out_fname = output_dir / out_fname
 
     # Fixing the path to the file with the zonation
     if not fname_zonation.is_absolute():
@@ -378,12 +386,13 @@ def main(fname_config):
     indata = []
     for _, row in gdf.iterrows():
 
-        logging.info(f"Working on {row[key_column]}\n")
+        logging.info(f"Working on {row[key_column]}")
 
         if len(keys) > 0 and row[key_column] not in keys:
             continue
 
-        if len(row.geometry.geoms) > packet_size:
+        if isinstance(row.geometry, shapely.MultiPolygon) and (
+                len(row.geometry.geoms) > packet_size):
             for trow in split_geoseries(row, packet_size):
                 indata.append([trow, poly_filter, key_column, dist_km])
         else:
