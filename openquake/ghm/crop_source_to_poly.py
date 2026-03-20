@@ -70,7 +70,7 @@ def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, keep_out, src_conv
         idx_within = poly_df.sindex.query(mesh.geometry, predicate="intersects")[0]
         idx_out = [i for i in range(len(mesh.geometry)) if not i in idx_within]  
         
-        keep_outside = bool(keep_out)
+        keep_outside = bool(int(keep_out))
         if keep_outside:
             idx_keep = idx_out
         else:
