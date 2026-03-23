@@ -383,53 +383,85 @@ def build_mgmpe(gmpe):
     # Get the mgmpe params
     idx_params = []
     for idx, par in enumerate(params):
-        if idx > 1:
-            par = str(par)
-            if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
-                idx_params.append(idx)
-            elif 'fix_total_sigma' in par:
-                idx_params.append(idx)
-                fixed_sigma_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
-            elif 'with_betw_ratio' in par:
-                idx_params.append(idx)
-                with_betw_ratio = float(par.split('=')[1])
-            elif 'set_between_epsilon' in par:
-                idx_params.append(idx)
-                between_epsilon = float(par.split('=')[1])
-            elif 'add_delta_sigma_to_total_sigma' in par:
-                idx_params.append(idx)
-                delta_std = float(par.split('=')[1])
-            elif 'add_delta_sigma_to_tau' in par:
-                idx_params.append(idx)
-                delta_tau = float(par.split('=')[1])
-            elif 'add_delta_sigma_to_phi' in par:
-                idx_params.append(idx)
-                delta_phi = float(par.split('=')[1])
-            elif 'set_total_sigma_as_tau_plus_delta' in par:
-                idx_params.append(idx)
-                total_set_to_tau_and_delta = float(par.split('=')[1])
-            elif 'scaling' in par:
-                idx_params.append(idx)
-                if 'median_scaling_scalar' in par:
-                    median_scalar = float(par.split('=')[1])
-                if 'median_scaling_vector' in par:
-                    median_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
-                if 'sigma_scaling_scalar' in par:
-                    sigma_scalar = float(par.split('=')[1])
-                if 'sigma_scaling_vector' in par:
-                    sigma_vector = ast.literal_eval(par.split('=')[1].replace('"', ''))
-            elif "conditional_gmpe" in par:
-                idx_params.append(idx)
-                # If this code is failing for the user please ensure you are carefully
-                # following the syntax provided in the docs for using conditional GMPEs
-                # or check oq-mbtk\openquake\smt\tests\comparison\data\cgmpe_test.toml.
-                re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
-                cgmpe_dict = ast.literal_eval(re_match.group(1))
-                cgmpes = {imt: construct_gsim_dict(
-                    gmpe_str) for imt, gmpe_str in cgmpe_dict.items()}
-            elif "GmpeIndirectAvgSA" in par or "GenericGmpeAvgSA" in par:
-                idx_params.append(idx)
-                avgsa = ast.literal_eval(par.split('=')[1].replace('"', ''))
+        if idx <= 1:
+            continue
+
+        par = str(par).strip()
+
+        # Split key and value
+        if '=' in par:
+            key, val = par.split('=', 1)
+            key = key.strip()
+            val = val.strip().replace('"', '')
+        else:
+            key, val = par, None
+
+        if any(k in key for k in ['sigma_model', 'site_term', 'basin_term']):
+            idx_params.append(idx)
+
+        elif key == 'fix_total_sigma':
+            idx_params.append(idx)
+            fixed_sigma_vector = ast.literal_eval(val)
+
+        elif key == 'with_betw_ratio':
+            idx_params.append(idx)
+            with_betw_ratio = float(val)
+
+        elif key == 'set_between_epsilon':
+            idx_params.append(idx)
+            between_epsilon = float(val)
+
+        elif key == 'add_delta_to_total_scalar':
+            idx_params.append(idx)
+            delta_std_scalar = float(val)
+
+        elif key == 'add_delta_to_tau_scalar':
+            idx_params.append(idx)
+            delta_tau_scalar = float(val)
+
+        elif key == 'add_delta_to_phi_scalar':
+            idx_params.append(idx)
+            delta_phi_scalar = float(val)
+
+        elif key == 'add_delta_to_total_vector':
+            idx_params.append(idx)
+            delta_std_vector = ast.literal_eval(val)
+
+        elif key == 'add_delta_to_tau_vector':
+            idx_params.append(idx)
+            delta_tau_vector = ast.literal_eval(val)
+
+        elif key == 'add_delta_to_phi_vector':
+            idx_params.append(idx)
+            delta_phi_vector = ast.literal_eval(val)
+
+        elif key == 'set_total_sigma_as_tau_plus_delta':
+            idx_params.append(idx)
+            total_set_to_tau_and_delta = float(val)
+
+        elif 'scaling' in key:
+            idx_params.append(idx)
+            if key == 'median_scaling_scalar':
+                median_scalar = float(val)
+            elif key == 'median_scaling_vector':
+                median_vector = ast.literal_eval(val)
+            elif key == 'sigma_scaling_scalar':
+                sigma_scalar = float(val)
+            elif key == 'sigma_scaling_vector':
+                sigma_vector = ast.literal_eval(val)
+
+        elif key == "conditional_gmpe":
+            idx_params.append(idx)
+            re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
+            cgmpe_dict = ast.literal_eval(re_match.group(1))
+            cgmpes = {
+                imt: construct_gsim_dict(gmpe_str)
+                for imt, gmpe_str in cgmpe_dict.items()
+            }
+
+        elif key in ["GmpeIndirectAvgSA", "GenericGmpeAvgSA"]:
+            idx_params.append(idx)
+            avgsa = ast.literal_eval(val)
 
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
@@ -455,17 +487,29 @@ def build_mgmpe(gmpe):
     if 'set_between_epsilon' in gmpe:
         kw_mgmpe['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
         
-    # Add delta to total sigma
-    if 'add_delta_sigma_to_total_sigma' in gmpe:
-        kw_mgmpe['add_delta_std_to_total_std'] = {'delta': delta_std}
+    # Add IMT-constant delta to total sigma
+    if 'add_delta_to_total_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_total_std_scalar'] = {'delta': delta_std_scalar}
 
-    # Add delta to tau
-    if 'add_delta_sigma_to_tau' in gmpe:
-        kw_mgmpe['add_delta_std_to_tau_std'] = {'delta': delta_tau}
+    # Add IMT-constant delta to tau
+    if 'add_delta_to_tau_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_tau_std_scalar'] = {'delta': delta_tau_scalar}
 
-    # Add delta to phi
-    if 'add_delta_sigma_to_phi' in gmpe:
-        kw_mgmpe['add_delta_std_to_phi_std'] = {'delta': delta_phi}
+    # Add IMT-constant delta to phi
+    if 'add_delta_to_phi_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_phi_std_scalar'] = {'delta': delta_phi_scalar}
+
+    # Add IMT-dependent delta to total sigma
+    if 'add_delta_to_total_vector' in gmpe:
+        kw_mgmpe['add_delta_to_total_std_vector'] = {'delta': delta_std_vector}
+
+    # Add IMT-dependent delta to tau
+    if 'add_delta_to_tau_vector' in gmpe:
+        kw_mgmpe['add_delta_to_tau_std_vector'] = {'delta': delta_tau_vector}
+
+    # Add IMT-constant delta to phi
+    if 'add_delta_to_phi_vector' in gmpe:
+        kw_mgmpe['add_delta_to_phi_std_vector'] = {'delta': delta_phi_vector}
 
     # Set total sigma to sqrt(tau**2 + delta**2)
     if 'set_total_sigma_as_tau_plus_delta' in gmpe:
