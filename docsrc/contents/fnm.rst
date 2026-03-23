@@ -1,7 +1,7 @@
-Fermi (fnm)
+Fault Network Modeling(fnm) a.k.a. Fermi
 ###########
 
-The :index:`fnm` module contains a tool called Fermi (??) that creates subfault
+The :index:`fnm` module contains a tool called Fermi that creates subfault
 to multifault ruptures from a set of faults, treating the faults as a network.
 
 .. toctree::
