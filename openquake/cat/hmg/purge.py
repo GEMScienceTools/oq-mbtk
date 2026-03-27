@@ -61,6 +61,10 @@ def purge(fname_cat, fname_cat_out, fname_csv):
     # Read catalogue
     cat = pd.read_hdf(fname_cat)
     print('The catalogue contains {:d} earthquakes'.format(len(cat)))
+    
+    # check for and remove any duplicated ids
+    cat = cat.drop_duplicates(['eventID'])
+    print('The catalogue contains {:d} earthquakes'.format(len(cat)))
 
     #
     # Read file with the list of IDs
