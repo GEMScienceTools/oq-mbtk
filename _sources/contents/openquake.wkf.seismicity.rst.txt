@@ -1,0 +1,61 @@
+openquake.wkf.seismicity package
+================================
+
+Submodules
+----------
+
+openquake.wkf.seismicity.baseline module
+----------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.baseline
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.seismicity.distribute module
+------------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.distribute
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.seismicity.hypocentral\_depth module
+--------------------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.hypocentral_depth
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.seismicity.mmax\_epri module
+------------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.mmax_epri
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.seismicity.nodal\_plane module
+--------------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.nodal_plane
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.seismicity.smoothing module
+-----------------------------------------
+
+.. automodule:: openquake.wkf.seismicity.smoothing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf.seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,21 @@
+openquake.smt.tests.demos package
+=================================
+
+Submodules
+----------
+
+openquake.smt.tests.demos.demos\_test module
+--------------------------------------------
+
+.. automodule:: openquake.smt.tests.demos.demos_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.demos
+   :members:
+   :show-inheritance:
+   :undoc-members:

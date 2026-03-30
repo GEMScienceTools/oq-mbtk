@@ -1,0 +1,37 @@
+openquake.plt package
+=====================
+
+Submodules
+----------
+
+openquake.plt.faults module
+---------------------------
+
+.. automodule:: openquake.plt.faults
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.plt.mapping module
+----------------------------
+
+.. automodule:: openquake.plt.mapping
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.plt.sections module
+-----------------------------
+
+.. automodule:: openquake.plt.sections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.plt
+   :members:
+   :show-inheritance:
+   :undoc-members:
