@@ -284,6 +284,7 @@ def get_rupture_regions(
 
 
 def _nearest(val, vals):
+    vals = np.asarray(vals)
     return vals[np.argmin(np.abs(vals - val))]
 
 
@@ -295,6 +296,7 @@ def make_fault_mfd(
     min_mag=5.0,
     max_mag=8.0,
     bin_width=0.1,
+    corner_mag=7.5,
     moment_rate=None,
 ):
     if moment_rate is None:
@@ -317,12 +319,29 @@ def make_fault_mfd(
             )
         except ValueError:
             mfd = TruncatedGRMFD.from_moment(
-                min_mag=min_mag - 0.5,
+                min_mag=min_mag - bin_width,
                 max_mag=max_mag,
                 bin_width=bin_width,
                 b_val=b_val,
                 moment_rate=moment_rate,
             )
+    elif mfd_type == 'TaperedGRMFD':
+        if (max_mag - corner_mag) < 0.5:
+            corner_mag = max_mag - 0.5
+        if corner_mag < (min_mag + bin_width):
+            corner_mag = min_mag + bin_width + 0.01
+        if (max_mag - min_mag) < bin_width:
+            min_mag = max_mag - bin_width
+
+        mfd = TaperedGRMFD.from_moment(
+            min_mag=min_mag,
+            max_mag=max_mag,
+            corner_mag=corner_mag,
+            bin_width=bin_width,
+            b_val=b_val,
+            moment_rate=moment_rate,
+        )
+
     elif mfd_type == 'YoungsCoppersmith1985MFD':
         if min_mag >= (max_mag - 0.5):
             raise ValueError(
@@ -337,7 +356,7 @@ def make_fault_mfd(
         )
     else:
         raise NotImplementedError(
-            "only truncated and youngscoppersmith for now"
+            "only truncated, tapered, and youngscoppersmith for now"
         )
 
     return mfd
@@ -357,23 +376,35 @@ def get_mag_counts(rups, key="M", cumulative=False):
     return mag_counts
 
 
-def get_mfd_occurrence_rates(mfd, mag_decimals=1, cumulative=False):
+def get_mfd_occurrence_rates(mfd, mag_decimals=None, cumulative=False):
     if hasattr(mfd, "get_annual_occurrence_rates"):
-        mfd_occ_rates = {
-            np.round(r[0], mag_decimals): r[1]
-            for r in mfd.get_annual_occurrence_rates()
-        }
+        mfd_occ_rates = {r[0]: r[1] for r in mfd.get_annual_occurrence_rates()}
     elif isinstance(mfd, dict):
-        mfd_occ_rates = {
-            np.round(M, mag_decimals): rate for M, rate in mfd.items()
-        }
+        mfd_occ_rates = {M: rate for M, rate in mfd.items()}
     else:
         raise ValueError("mfd must be a dictionary or an MFD object")
+
+    if mag_decimals is not None:
+        mfd_occ_rates = {
+            round(m, mag_decimals): r for m, r in mfd_occ_rates.items()
+        }
 
     if cumulative is True:
         mfd_occ_rates = make_cumulative(mfd_occ_rates)
 
     return mfd_occ_rates
+
+
+def get_mfd_moment(mfd, mag_decimals=None):
+    mfd_moment = sum(
+        [
+            mag_to_mo(k) * v
+            for k, v in get_mfd_occurrence_rates(
+                mfd, mag_decimals=mag_decimals
+            ).items()
+        ]
+    )
+    return mfd_moment
 
 
 def get_mfd_uncertainties(mfd, unc_type='pctile'):
@@ -462,6 +493,7 @@ def set_single_fault_rup_rates(
     rup_fault_lookup,
     mfd=None,
     b_val=1.0,
+    corner_mag=7.5,
     seismic_fraction=1.0,
     rup_df='rupture_df',
     mfd_type='TruncatedGRMFD',
@@ -495,6 +527,7 @@ def set_single_fault_rup_rates(
             fault,
             max_mag=fault_rup_df.mag.max(),
             min_mag=4.0,
+            corner_mag=corner_mag,
             seismic_fraction=seismic_fraction,
             mfd_type=mfd_type,
             b_val=b_val,
@@ -507,12 +540,6 @@ def set_single_fault_rup_rates(
         moment_rate=moment_rate,
         faults_or_subfaults=faults_or_subfaults,
     )
-
-    ## check moment rate
-    # mag_moment = sum(
-    #    mag_to_mo(rup['M']) * rup_rates[rup['idx']] for rup in rups
-    # )
-    # np.testing.assert_almost_equal(mag_moment, moment_rate)
 
     return rup_rates
 
@@ -565,8 +592,18 @@ def get_ruptures_on_fault(fault_id, rupture_df, rup_fault_lookup):
     return rup_df
 
 
-def make_rup_fault_lookup(rupture_df, key='faults'):
-    rup_fault_dict = rupture_df[key].to_dict()
+def make_rup_fault_lookup(ruptures, key='subfaults'):
+    """
+    Makes a dictionary with fault_ids as keys and values the lists
+    of the rupture idxs (not rupture count ids) of ruptures on that fault.
+
+    Pass `key='subfaults'` to get subfaults (defauklty).
+    """
+    if isinstance(ruptures, pd.DataFrame):
+        rup_fault_dict = ruptures[key].to_dict()
+    else:
+        # always 'faults'
+        rup_fault_dict = {rup['idx']: rup['faults'] for rup in ruptures}
 
     fault_rup_dict = {}
     for rup, faults in rup_fault_dict.items():
@@ -577,15 +614,62 @@ def make_rup_fault_lookup(rupture_df, key='faults'):
 
     return fault_rup_dict
 
+
+def get_fault_mfd_from_rup_rates(
+    fault_idx, rup_df, rup_rates, rup_fault_lookup=None, fault_key='faults'
+):
+    """
+    Calculates the MFD of a fault or subfault given all the ruptures that occur
+    on it and their rupture rates from the inversion solution (or other
+    solution).
+
+    Parameters
+    ----------
+    fault_idx: str or int
+        Index of fault or subfault
+    rup_df: pd.DataFrame
+        Dataframe of ruptures
+    rup_rates: pd.Series
+        Annual occurrence rates of ruptures with index shared with rup_df
+    rup_fault_lookup: dict, optional
+        Lookup table with keys of fault indices and values of lists of
+        ruptures on each.
+    fault_key: str
+        `faults` or `subfaults` depending on interest
+
+    Returns
+    -------
+    mfd_sort: dict
+        Incremental MFD in dictionary form, with magnitudes as keys and
+        rates as values
+    """
+    rup_df_use = rup_df.loc[rup_rates.index]
+    if rup_fault_lookup is None:
+        rup_fault_lookup = make_rup_fault_lookup(rup_df_use, key=fault_key)
+
+    rups_on_fault = rup_fault_lookup[fault_idx]
+
+    mfd = AccumDict()
+    for rup_idx in rups_on_fault:
+        rup = rup_df.loc[rup_idx]
+        mfd += {rup['mag']: rup_rates[rup_idx]}
+
+    mfd_sort = {k: mfd[k] for k in sorted(mfd.keys())}
+
+    return mfd_sort
+
+
 def get_rup_rates_from_fault_slip_rates(
     fault_network,
     b_val=1.0,
+    corner_mag=7.5,
     mfd_type='TruncatedGRMFD',
     plot_fault_moment_rates=False,
     seismic_fraction=1.0,
     rupture_set_for_rates_from_slip_rates='all',
-    fix_moment_rates=True,
     faults_or_subfaults='subfaults',
+    export_fault_mfds=False,
+    exit_after_mfd_export=False,
     **kwargs,
 ):
     """
@@ -662,15 +746,21 @@ def get_rup_rates_from_fault_slip_rates(
         id: make_fault_mfd(
             fault,
             max_mag=get_ruptures_on_fault(
-                id, fault_network[rup_df_key], rup_fault_lookup).mag.max(),
+                id, fault_network[rup_df_key], rup_fault_lookup
+            ).mag.max(),
             mfd_type=mfd_type,
             b_val=b_val,
+            corner_mag=corner_mag,
             seismic_fraction=fault.get("seismic_fraction", seismic_fraction),
             moment_rate=fault_moment_rates[id],
             **kwargs,
         )
         for id, fault in fault_iterator.items()
     }
+    if export_fault_mfds:
+        fault_network['fault_mfds'] = fault_mfds
+        if exit_after_mfd_export:
+            return
 
     logging.debug("setting single-fault rup rates")
     all_rup_rates = {
@@ -972,3 +1062,7 @@ def calculate_tri_mesh_distances(points, triangles, verbose=True):
     return distances, closest_triangles
 
 
+def rescale_mfd(mfd, frac):
+    return {
+        mag: rate * frac for mag, rate in mfd.get_annual_occurrence_rates()
+    }

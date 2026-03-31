@@ -18,11 +18,12 @@
 """
 Utils for intensity measures:
     1) Peak measures
-    1) Response spectra
-    2) Fourier amplitude spectra (FAS)
-    3) Horizontal-Vertical Spectral Ratio (HVSR)
+    2) Response spectra
+    3) Fourier amplitude spectra (FAS)
+    4) Horizontal-Vertical Spectral Ratio (HVSR)
     5) Duration-based ground-motion intensity measures (e.g. Arias intensity, CAV)
-    6) Obtaining rotation-based (and rotation-independent) definitions of the horizontal component of ground-motion
+    6) Obtaining rotation-based (and rotation-independent) definitions of
+       the horizontal component of ground-motion
 """
 import numpy as np
 from math import pi
@@ -32,8 +33,7 @@ import matplotlib.pyplot as plt
 
 import openquake.smt.response_spectrum as rsp
 from openquake.smt import response_spectrum_smoothing as rsps
-from openquake.smt.utils import (
-    equalise_series, get_time_vector, nextpow2, _save_image,)
+from openquake.smt.utils import equalise_series, get_time_vector, nextpow2
 
 
 RESP_METHOD = {
@@ -286,23 +286,27 @@ def get_fourier_spectrum(time_series, time_step):
     return freq, time_step * np.absolute(fspec[:int(n_val / 2.0)])
 
 
-def plot_fourier_spectrum(time_series, time_step, figure_size=(7, 5),
-                          filename=None, filetype="png", dpi=300):
+def plot_fourier_spectrum(time_series, time_step, filename):
     """
     Plots the Fourier spectrum of a time series 
     """
     freq, amplitude = get_fourier_spectrum(time_series, time_step)
-    plt.figure(figsize=figure_size)
+    plt.figure()
     plt.loglog(freq, amplitude, 'b-')
     plt.xlabel("Frequency (Hz)", fontsize=14)
     plt.ylabel("Fourier Amplitude", fontsize=14)
-    _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
 
 
 ### HVRS Functions
-def get_hvsr(x_component, x_time_step, y_component, y_time_step, vertical,
-             vertical_time_step, smoothing_params):
+def get_hvsr(x_component,
+             x_time_step,
+             y_component,
+             y_time_step,
+             vertical,
+             vertical_time_step,
+             smoothing_params):
     """
     :param x_component:
         Time series of the x-component of the data
@@ -374,31 +378,30 @@ def get_arias_intensity(acceleration, time_step, start_level=0., end_level=1.):
     arias_factor = pi / (2.0 * (g * 100.))
     husid, time_vector = get_husid(acceleration, time_step)
     husid_norm = husid / husid[-1]
-    idx = np.where(np.logical_and(husid_norm >= start_level,
-                                  husid_norm <= end_level))[0]
+    idx = np.where(np.logical_and(
+        husid_norm >= start_level, husid_norm <= end_level))[0]
     if len(idx) < len(acceleration):
         husid, time_vector = get_husid(acceleration[idx], time_step)
     return arias_factor * husid[-1]
 
 
-def plot_husid(acceleration, time_step, start_level=0., end_level=1.0,
-               figure_size=(7, 5), filename=None, filetype="png", dpi=300):
+def plot_husid(acceleration,
+               time_step,
+               filename,
+               start_level=0.,
+               end_level=1.0):
     """
-    Creates a Husid plot for the record
-    :param tuple figure_size:
-        Size of the output figure (Width, Height)
-    :param str filename:
-        Name of the file to export
-    :param str filetype:
-        Type of file for export
-    :param int dpi:
-        FIgure resolution in dots per inch.
+    Creates a Husid plot of Arias intensity for the record
+    :param float start_level:
+        Fraction of the total Arias intensity used as the start time
+    :param float end_level:
+        Fraction of the total Arias intensity used as the end time
     """
-    plt.figure(figsize=figure_size)
+    plt.figure()
     husid, time_vector = get_husid(acceleration, time_step)
     husid_norm = husid / husid[-1]
-    idx = np.where(np.logical_and(husid_norm >= start_level,
-                                  husid_norm <= end_level))[0]
+    idx = np.where(np.logical_and(
+        husid_norm >= start_level, husid_norm <= end_level))[0]
     plt.plot(time_vector, husid_norm, "b-", linewidth=2.0,
              label="Original Record")
     plt.plot(time_vector[idx], husid_norm[idx], "r-", linewidth=2.0,
@@ -407,8 +410,8 @@ def plot_husid(acceleration, time_step, start_level=0., end_level=1.0,
     plt.ylabel("Fraction of Arias Intensity", fontsize=14)
     plt.title("Husid Plot")
     plt.legend(loc=4, fontsize=14)
-    _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
 
 
 def get_bracketed_duration(acceleration, time_step, threshold):
@@ -435,15 +438,17 @@ def get_uniform_duration(acceleration, time_step, threshold):
     return time_step * float(len(idx))
 
 
-def get_significant_duration(acceleration, time_step, start_level=0.,
+def get_significant_duration(acceleration,
+                             time_step,
+                             start_level=0.,
                              end_level=1.0):
     """
     Returns the significant duration of the record
     """
     assert end_level >= start_level
     husid, time_vector = get_husid(acceleration, time_step)
-    idx = np.where(np.logical_and(husid >= (start_level * husid[-1]),
-                                  husid <= (end_level * husid[-1])))[0]
+    idx = np.where(np.logical_and(
+        husid >= (start_level * husid[-1]), husid <= (end_level * husid[-1])))[0]
     return time_vector[idx[-1]] - time_vector[idx[0]] + time_step
 
 
@@ -486,8 +491,15 @@ def rotate_horizontal(series_x, series_y, angle):
     return rot_hist_x, rot_hist_y
 
 
-def gmrotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
-             percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
+def gmrotdpp(acceleration_x,
+             time_step_x,
+             acceleration_y,
+             time_step_y,
+             periods,
+             percentile,
+             damping=0.05,
+             units="cm/s/s",
+             method="Nigam-Jennings"):
     """
     Returns the rotationally-dependent geometric mean
 
@@ -538,8 +550,14 @@ def gmrotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
         "GeoMeanPerAngle": max_a_theta}
 
 
-def gmrotdpp_slow(acceleration_x, time_step_x, acceleration_y, time_step_y,
-                  periods, percentile, damping=0.05, units="cm/s/s",
+def gmrotdpp_slow(acceleration_x, # No QA
+                  time_step_x,
+                  acceleration_y,
+                  time_step_y,
+                  periods,
+                  percentile,
+                  damping=0.05,
+                  units="cm/s/s",
                   method="Nigam-Jennings"):
     """
     Returns the rotationally-dependent geometric mean. This "slow" version
@@ -614,8 +632,15 @@ def _get_gmrotd_penalty(gmrotd, gmtheta):
     return locn, penalty
 
 
-def gmrotipp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
-             percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
+def gmrotipp(acceleration_x,
+             time_step_x,
+             acceleration_y,
+             time_step_y,
+             periods,
+             percentile,
+             damping=0.05,
+             units="cm/s/s",
+             method="Nigam-Jennings"):
     """
     Returns the rotationally-independent geometric mean (GMRotIpp)
 
@@ -643,8 +668,15 @@ def gmrotipp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
     return gmroti
 
 
-def rotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
-           percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
+def rotdpp(acceleration_x,
+           time_step_x,
+           acceleration_y,
+           time_step_y,
+           periods,
+           percentile,
+           damping=0.05,
+           units="cm/s/s",
+           method="Nigam-Jennings"):
     """
     Returns the rotationally dependent spectrum RotDpp as defined by Boore
     (2010)
@@ -683,8 +715,14 @@ def rotdpp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
     return output, max_a_theta, max_v_theta, max_d_theta, theta_set
 
 
-def rotipp(acceleration_x, time_step_x, acceleration_y, time_step_y, periods,
-           percentile, damping=0.05, units="cm/s/s", method="Nigam-Jennings"):
+def rotipp(acceleration_x,
+           time_step_x,
+           acceleration_y,
+           time_step_y,
+           periods,
+           percentile,
+           damping=0.05,
+           units="cm/s/s", method="Nigam-Jennings"):
     """
     Returns the rotationally independent spectrum RotIpp as defined by
     Boore (2010)

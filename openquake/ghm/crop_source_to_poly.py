@@ -60,7 +60,7 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv,
     mesh = gpd.GeoDataFrame(tmp, geometry=gpd.points_from_xy(tmp.lon, tmp.lat), crs="EPSG:4326")
 
     for i in range(0, len(poly_proj.id)):
-        poly_id = poly_proj.id[i]
+        poly_id =  poly_proj.id.iloc[i]
         print('making source ', poly_id)
     
         # Find index of the sources within the polygon

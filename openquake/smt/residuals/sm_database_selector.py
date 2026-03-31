@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Strong motion record selection tools
+Strong motion record selection tools.
 """
 import numpy as np
 from datetime import datetime
@@ -30,7 +30,7 @@ from openquake.smt.residuals.sm_database import GroundMotionDatabase
 class SMRecordSelector(object):
     """
     General class to hold methods for selecting and querying a strong
-    motion database
+    motion database.
     """
     def __init__(self, database):
         self.database = database
@@ -41,13 +41,13 @@ class SMRecordSelector(object):
 
     def _get_record_ids(self):
         """
-        Returns a list of record IDs
+        Returns a list of record IDs.
         """
         return [record.id for record in self.database.records]
-    
+   
     def select_records(self, idx, as_db=False):
         """
-        Selects records from a list of pointers:
+        Selects records from a list of pointers.
         :param list idx:
             List of pointers to selected records
         :param bool as_db:
@@ -70,7 +70,7 @@ class SMRecordSelector(object):
 
     def select_from_record_id(self, record_id):
         """
-        Selects a record according to its waveform id
+        Selects a record according to its waveform id.
         """
         if record_id in self.record_ids:
             return self.database.records[self.record_ids.index(record_id)]
@@ -80,7 +80,7 @@ class SMRecordSelector(object):
 
     def select_from_record_ids(self, record_ids, as_db=False):
         """
-        Selects records from a list of IDs
+        Selects records from a list of IDs.
         """
         idx = []
         for record_id in record_ids:
@@ -91,9 +91,10 @@ class SMRecordSelector(object):
                 idx.append(iloc)
         return self.select_records(idx, as_db)
 
+    # Station based selections 
     def select_from_site_id(self, site_id, as_db=False):
         """
-        Select records corresponding to a particular site ID
+        Select records corresponding to a particular site ID.
         """
         idx = []
         for iloc, record in enumerate(self.database.records):
@@ -103,7 +104,7 @@ class SMRecordSelector(object):
 
     def select_from_site_ids(self, site_ids, as_db=False):
         """
-        Selects records corresponding to a set of site IDs
+        Selects records corresponding to a set of site IDs.
         """
         for site_id in site_ids:
             if not site_id in self.site_ids:
@@ -114,108 +115,9 @@ class SMRecordSelector(object):
                 idx.append(iloc)
         return self.select_records(idx, as_db)
 
-    def select_from_event_id(self, event_id, as_db=False):
-        """
-        Returns a set of records from a common event
-        """
-        if not event_id in self.event_ids:
-            raise ValueError("Event %s not found in database" % event_id)
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if record.event.id == event_id:
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_from_event_ids(self, event_ids, as_db=False):
-        """
-        Returns records from events whose IDs are found in the list
-        """
-        for event_id in event_ids:
-            if not event_id in self.event_ids:
-                print("Event {:s} not found in database".format(event_id))
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if record.event.id in event_ids:
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_within_time(self, start_time=None, end_time=None, as_db=False):
-        """
-        Selects records within a specific time
-        :param start_time:
-            Earliest time as instance of :class: datetime.datetime
-        :param end_time:
-            Latest time as instance of :class: datetime.datetime
-        """
-        if start_time:
-            assert isinstance(start_time, datetime)
-        else:
-            start_time = datetime.min
-
-        if end_time:
-            assert isinstance(end_time, datetime)
-        else:
-            end_time = datetime.now()
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if (record.event.datetime >= start_time) and\
-                (record.event.datetime <= end_time):
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_within_depths(self, upper_depth=None, lower_depth=None,
-            as_db=False):
-        """
-        Selects records corresponding to events within a specific depth range
-        :param float upper_depth:
-            Upper event depth (km)    
-        :param float lower_depth:
-            Lower event depth (km)
-        """
-        if upper_depth is None:
-            upper_depth = 0.0
-        if lower_depth is None:
-            lower_depth = np.inf
-        assert (lower_depth >= upper_depth)
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if (record.event.depth >= upper_depth) and\
-                (record.event.depth <= lower_depth):
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_within_magnitude(self, lower=None, upper=None, as_db=False):
-        """
-        Select records corresponding to events within a magnitude range
-        :param float lower:
-            Lower bound magnitude
-        :param float upper:
-            Upper bound magnitude
-        """
-        if lower is None:
-            lower = -np.inf
-        if upper is None:
-            upper = np.inf
-        assert (upper >= lower)
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if (record.event.magnitude.value >= lower) and\
-                (record.event.magnitude.value <= upper):
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    # Site based selections
-    def select_by_station_country(self, country, as_db=False):
-        """
-        Returns the records within a specific country
-        :param str country:
-            Country name
-        """
-        return self.select_by_site_attribute("country", country, as_db)
-
     def select_by_site_attribute(self, attribute, value, as_db=False):
         """
-        Select records corresponding to a particular site attribute
+        Select records corresponding to a particular site attribute.
         :param str attribute:
             Attribute name
         :param value:
@@ -230,7 +132,7 @@ class SMRecordSelector(object):
     def exclude_site_attribute(self, attribute, value, as_db=False):
         """
         Remove records that do not correspond to a particular site attribute.
-        An example would be excluding a certain instrument type
+        An example would be excluding sites with non-measured Vs30.
         :param str attribute:
             Attribute name
         :param value:
@@ -244,7 +146,7 @@ class SMRecordSelector(object):
 
     def select_within_vs30_range(self, lower_vs30=None, upper_vs30=None, as_db=False):
         """
-        Select records within a given Vs30 range
+        Select records within a given Vs30 range.
         :param float lower_vs30:
             Lowest Vs30 (m/s)
         :param float uper_vs30:
@@ -265,7 +167,7 @@ class SMRecordSelector(object):
 
     def select_stations_within_distance(self, location, distance, as_db=False):
         """
-        Selects stations within a distance of a specified location
+        Selects stations within a distance of a specified location.
         :param location:
             Location as instance of :class: openquake.hazardlib.geo.point.Point
         :param float distance:
@@ -285,8 +187,8 @@ class SMRecordSelector(object):
 
     def exclude_stations_within_distance(self, location, distance, as_db=False):
         """
-        Excludes stations within a distance of a specified location. For example
-        stations in a basin that may be subject to site effects
+        Excludes stations within a distance of a specified location. For
+        example stations in a basin that may be subject to site effects.
         :param location:
             Location as instance of :class: openquake.hazardlib.geo.point.Point
         :param float distance:
@@ -306,7 +208,7 @@ class SMRecordSelector(object):
 
     def select_stations_within_region(self, region, as_db=False):
         """
-        Selects station inside of a specified region
+        Selects station inside of a specified region.
         :param region:
              Region as instance of :class:
              openquake.hazardlib.geo.polygon.Polygon
@@ -322,11 +224,24 @@ class SMRecordSelector(object):
                 idx.append(iloc)
         return self.select_records(idx, as_db)
 
-    # Distance based selection
-    def select_within_distance_range(self, distance_type, shortest=None, furthest=None,
-            alternative=False, as_db=False):
+    def select_longest_usable_period(self, lup, as_db=False):
         """
-        Select records based on a distance range
+        Selects records with a longest usable period > lup.
+        """
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if record.average_lup and (record.average_lup >= lup):
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
+    def select_within_distance_range(self,
+                                     distance_type,
+                                     shortest=None,
+                                     furthest=None,
+                                     alternative=False,
+                                     as_db=False):
+        """
+        Select records based on a distance range.
         :param str distance_type:
             Distance type
         :param float shortest:
@@ -362,9 +277,98 @@ class SMRecordSelector(object):
         return self.select_records(idx, as_db)
 
     # Event-based selection
+    def select_from_event_id(self, event_id, as_db=False):
+        """
+        Returns a set of records from a common event.
+        """
+        if not event_id in self.event_ids:
+            raise ValueError("Event %s not found in database" % event_id)
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if record.event.id == event_id:
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
+    def select_from_event_ids(self, event_ids, as_db=False):
+        """
+        Returns records from events whose IDs are found in the list.
+        """
+        for event_id in event_ids:
+            if not event_id in self.event_ids:
+                print("Event {:s} not found in database".format(event_id))
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if record.event.id in event_ids:
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
+    def select_within_time(self, start_time=None, end_time=None, as_db=False):
+        """
+        Selects records within a specific time.
+        :param start_time:
+            Earliest time as instance of :class: datetime.datetime
+        :param end_time:
+            Latest time as instance of :class: datetime.datetime
+        """
+        if start_time:
+            assert isinstance(start_time, datetime)
+        else:
+            start_time = datetime.min
+
+        if end_time:
+            assert isinstance(end_time, datetime)
+        else:
+            end_time = datetime.now()
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if (record.event.datetime >= start_time) and\
+                (record.event.datetime <= end_time):
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
+    def select_within_depths(self, upper_depth=None, lower_depth=None, as_db=False):
+        """
+        Selects records corresponding to events within a specific depth range.
+        :param float upper_depth:
+            Upper event depth (km)    
+        :param float lower_depth:
+            Lower event depth (km)
+        """
+        if upper_depth is None:
+            upper_depth = 0.0
+        if lower_depth is None:
+            lower_depth = np.inf
+        assert (lower_depth >= upper_depth)
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if (record.event.depth >= upper_depth) and\
+                (record.event.depth <= lower_depth):
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
+    def select_within_magnitude(self, lower=None, upper=None, as_db=False):
+        """
+        Select records corresponding to events within a magnitude range.
+        :param float lower:
+            Lower bound magnitude
+        :param float upper:
+            Upper bound magnitude
+        """
+        if lower is None:
+            lower = -np.inf
+        if upper is None:
+            upper = np.inf
+        assert (upper >= lower)
+        idx = []
+        for iloc, record in enumerate(self.database.records):
+            if (record.event.magnitude.value >= lower) and\
+                (record.event.magnitude.value <= upper):
+                idx.append(iloc)
+        return self.select_records(idx, as_db)
+
     def select_mechanism_type(self, mechanism_type, as_db=False):
         """
-        Select records based on event mechanism type
+        Select records based on event mechanism type.
         :param str mechanism_type:
             Mechanism type
         """
@@ -376,7 +380,7 @@ class SMRecordSelector(object):
 
     def select_trt_type(self, trt_type, as_db=False):
         """
-        Select records based on tectonic region type
+        Select records based on tectonic region type.
         :param str trt_type:
             Tectonic Region
         """
@@ -385,23 +389,14 @@ class SMRecordSelector(object):
             if record.event.tectonic_region == trt_type:
                 idx.append(iloc)
         return self.select_records(idx, as_db)
+    
+    def select_epicentre_within_distance_from_point(self, location, distance, as_db=False):
+        """
+        Selects the records whose epicentres are a given distance from
+        a point location.
 
-    def select_event_country(self, country, as_db=False):
-        """
-        Select records corresponding to events within a specific country
-        :param str country
-        """
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if record.event.mechanism.country == country:
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_epicentre_within_distance_from_point(
-            self, location, distance,as_db=False):
-        """
-        Selects the records whose epicentres are a given distance from a
-        point location
+        :param location:
+            Location as instance of :class: openquake.hazardlib.geo.point.Point
         """
         assert isinstance(location, Point)
         idx = []
@@ -417,49 +412,22 @@ class SMRecordSelector(object):
 
     def select_epicentre_within_region(self, region, as_db=False):
         """
-        Selects records from event inside the specified region
+        Selects records from event inside the specified region.
         """
         assert isinstance(region, Polygon)
         idx = []
         
         for iloc, record in enumerate(self.database.records):
             epi_loc = Mesh(np.array([record.event.longitude]),
-                            np.array([record.event.latitude]),
-                            None)
+                           np.array([record.event.latitude]),
+                           None)
             if region.intersects(epi_loc)[0]:
                 idx.append(iloc)
         return self.select_records(idx, as_db)
-
-    def select_epicentre_within_bounding_box(self, llon, llat, ulon, ulat,
-                                             as_db=False):
-        """
-        Selects earthquakes whose epicentres are within a longitude
-        and latitude bounding box
-        """
-        assert ulon >= llon and ulat >= llat
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            bbox_check = record.event.longitude >= llon and\
-                record.event.longitude <= ulon and\
-                record.event.latitude >= llat and\
-                record.event.latitude <= ulat
-            if bbox_check:
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
-    def select_longest_usable_period(self, lup, as_db=False):
-        """
-        Selects records with a longest usable period > lup
-        """
-        idx = []
-        for iloc, record in enumerate(self.database.records):
-            if record.average_lup and (record.average_lup >= lup):
-                idx.append(iloc)
-        return self.select_records(idx, as_db)
-
+    
     def select_backarc_forearc(self, forearc=True, as_db=False):
         """
-        Select sites depending on whether they are backarc or forearc
+        Select sites depending on whether they are backarc or forearc.
         """
         idx = []
         for iloc, record in enumerate(self.database.records):
@@ -481,7 +449,7 @@ class SMRecordSelector(object):
     def select_event_within_fault_distance(self, faults, distance, as_db=True):
         """
         Selects records whose hypocentes lie within a given distance of a
-        fault or set of faults
+        fault or set of faults.
 
         :param list faults:
             Faults as a list of instances of 
@@ -502,8 +470,7 @@ class SMRecordSelector(object):
         for fault in faults:
             rrup = fault.get_min_distance(db_mesh)
             within_dist = rrup < distance
-            # If within fault distance add 1 - no record of which fault is
-            # kept
+            # If within fault distance add 1 - no record of which fault is kept
             idx[within_dist] += 1
         # Find the events within the selected distance of any fault
         idx = idx > 0
@@ -546,8 +513,7 @@ class SMRecordSelector(object):
         db_mesh = Mesh(np.array(lons), np.array(lats), np.array(depths))
         idx = np.zeros(len(self.database), dtype=int)
         for surface in surfaces:
-            # Get events falling within a distance of the surface projection
-            # But below the crust
+            # Get events within a distance of the surf proj but below crust
             rjb = surface.get_joyner_boore_distance(db_mesh)
             surf_idx = np.logical_and(rjb <= sp_distance,
                                       db_mesh.depths >= crustal_thickness)

@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with OpenQuake. If not, see <http://www.gnu.org/licenses/>.
 """
-Tool for creating visualisation of database information
+Tool for creating visualisation of database information.
 """
 import numpy as np
 import matplotlib.pyplot as plt
 
 from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.utils_intensity_measures import _save_image
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
 
 
@@ -60,8 +59,8 @@ EC8_BOUNDS = {
 
 def get_eq_and_st_coordinates(db1):
     """
-    From the strong motion database, returns lists of latitudes and longitudes
-    of the events and stations
+    From the strong motion database, returns lists of latitudes and
+    longitudes of the events and stations.
     """
     eq_coos, st_coos = [], []
     for record in db1.records:
@@ -85,8 +84,8 @@ def get_eq_and_st_coordinates(db1):
 
 def get_magnitude_distances(db1, dist_type):
     """
-    From the strong motion database, returns lists of magnitude and distance
-    pairs
+    From the strong motion database, returns lists of magnitude
+    and distance pairs.
     """
     mags = []
     dists = []
@@ -106,40 +105,30 @@ def get_magnitude_distances(db1, dist_type):
                 dists.append(DISTANCES["rhypo"](record))
         else:
             dists.append(DISTANCES[dist_type](record))
-    return mags, dists
+    return np.array(mags), np.array(dists)
 
 
-def db_magnitude_distance(db1,
-                          dist_type,
-                          figure_size=(7, 5),
-                          figure_title=None,
-                          filename=None,
-                          filetype="png",
-                          dpi=300):
+def db_magnitude_distance(db1, dist_type, filename):
     """
-    Creates a plot of magnitude verses distance for a strong motion database
+    Creates a plot of magnitude verses distance for a strong
+    motion database.
     """
-    plt.figure(figsize=figure_size)
+    plt.figure()
     mags, dists = get_magnitude_distances(db1, dist_type)
-    plt.semilogx(np.array(dists), np.array(mags), "o", mec='k', mew=0.5)
+    plt.semilogx(dists, mags, "o", mec='k', mew=0.5)
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
     plt.grid()
-    if figure_title:
-        plt.title(figure_title, fontsize=18)
-    _save_image(filename, plt.gcf(), filetype, dpi)
+    plt.savefig(filename)
+    plt.close()
 
 
-def db_geographical_coverage(db1,
-                             figure_size=(7, 5),
-                             filename=None,
-                             filetype='png',
-                             dpi=300):
+def db_geographical_coverage(db1, filename):
     """
-    Creates a plot of the locations of event hypocenters and station locations
-    for a strong motion database
+    Creates a plot of the locations of event hypocenters and station
+    locations for a strong motion database.
     """
-    fig = plt.figure(figsize=figure_size)
+    fig = plt.figure()
     ax = fig.add_subplot(111)
     eq_lons, eq_lats, st_lons, st_lats = get_eq_and_st_coordinates(db1)
     ax.scatter(st_lons, st_lats, marker='^', color='g',
@@ -154,12 +143,12 @@ def db_geographical_coverage(db1,
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
     ax.legend()
-    _save_image(filename, plt.gcf(), filetype, dpi)
+    plt.savefig(filename)
 
 
 def _site_selection(db1, site_class, classifier):
     """
-    Select records within a particular site class and/or vs30 range
+    Select records within a particular site class and/or vs30 range.
     """
     idx = []
     for iloc, rec in enumerate(db1.records):
@@ -190,13 +179,11 @@ def _site_selection(db1, site_class, classifier):
 
 def db_magnitude_distance_by_site(db1,
                                   dist_type,
-                                  classification="NEHRP",
-                                  figure_size=(7, 5),
-                                  filename=None,
-                                  filetype="png",
-                                  dpi=300):
+                                  filename,
+                                  classification="NEHRP"):
     """
-    Plot magnitude-distance comparison by site NEHRP or Eurocode 8 Site class   
+    Plot magnitude-distance comparison by site NEHRP or Eurocode 8
+    Site class.
     """ 
     if classification == "NEHRP":
         site_bounds = NEHRP_BOUNDS
@@ -205,7 +192,7 @@ def db_magnitude_distance_by_site(db1,
     else:
         raise ValueError("Unrecognised Site Classifier!")
     selector = SMRecordSelector(db1)
-    plt.figure(figsize=figure_size)
+    plt.figure()
     total_idx = []
     for site_class in site_bounds.keys():
         site_idx = _site_selection(db1, site_class, classification)
@@ -224,33 +211,28 @@ def db_magnitude_distance_by_site(db1,
     plt.legend(ncol=2,loc="lower right", numpoints=1)
     plt.title("Magnitude vs Distance (by %s Site Class)" % classification,
               fontsize=18)
-    _save_image(filename, plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
 
 
-def db_magnitude_distance_by_trt(db1,
-                                 dist_type,
-                                 figure_size=(7, 5),
-                                 filename=None,
-                                 filetype="png",
-                                 dpi=300):
+def db_magnitude_distance_by_trt(db1, dist_type, filename):
     """
-    Plot magnitude-distance comparison by tectonic region
+    Plot magnitude-distance comparison by tectonic region.
     """
     trts=[]
     for i in db1.records:
         trts.append(i.event.tectonic_region)
     trt_types=list(set(trts))
     selector = SMRecordSelector(db1)
-    plt.figure(figsize=figure_size)
+    plt.figure()
     for trt in trt_types:
         subdb = selector.select_trt_type(trt, as_db=True)
         mag, dists = get_magnitude_distances(subdb, dist_type)
         plt.semilogx(dists, mag, "o", mec='k', mew=0.5, label=trt)
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
-    plt.title("Magnitude vs Distance by Tectonic Region", fontsize=18)
+    plt.title("Magnitude vs Distance by TRT", fontsize=18)
     plt.legend(loc='lower right', numpoints=1)
     plt.grid()
-    _save_image(filename,  plt.gcf(), filetype, dpi)
-    plt.show()
+    plt.savefig(filename)
+    plt.close()
