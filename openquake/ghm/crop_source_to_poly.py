@@ -10,7 +10,8 @@ from openquake.hazardlib.sourcewriter import write_source_model
 from openquake.wkf.distributed_seismicity import _get_point_sources, from_list_ps_to_multipoint
 
 
-def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id = []):
+def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, 
+                      out_folder, sid, poly_id = []):
     '''
     Function to crop multipoint sources down to specified polygons by extracting all points within the polygon
     and making a new source. 
@@ -29,6 +30,8 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id =
         SourceConverter object. Should be consistent with source.
     :param out_folder:
         Output folder where new sources will be stored
+    :param sid:
+        source_id to give to the output file
     :param poly_id:
         optional: id of polygon to be used.
     
@@ -73,12 +76,12 @@ def crop_mps_to_poly (src_xml_fname, fname_poly, src_conv, out_folder, poly_id =
         # Create the multi-point source
         tmpsrc = from_list_ps_to_multipoint(ip2_idx_list, 'pnts_{}'.format(poly_id))
         # Make out_name from id in input
-        fname_out = os.path.join(out_folder, 'src_{}.xml'.format(poly_id))
+        fname_out = os.path.join(out_folder, f'src_{poly_id}_{sid}.xml')
         print('saving source to ', fname_out)
 
         write_source_model(fname_out, [tmpsrc], 'Distributed seismicity {}'.format(poly_id))
         
-def crop_mps (src_xml_fname, fname_poly, src_conv, out_folder, poly_id = []):
+def crop_mps (src_xml_fname, fname_poly, src_conv, out_folder, sid, poly_id = []):
     """
     crop multipoint source to given polygon
     source will retain original mmax, nodal plane distribution etc
@@ -89,6 +92,7 @@ crop_mps.src_xml = 'Source xml file to be cropped'
 crop_mps.fname_poly = 'file name of source polygon'
 crop_mps.src_conv = 'source converter object'
 crop_mps.out_folder = 'output folder to store new (cropped) mps'
+crop_mps.sid = 'source_id to give output file'
 crop_mps.poly_id = 'optional list of polygon ids to crop'
 
 if __name__=="__main__":

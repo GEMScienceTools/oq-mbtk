@@ -75,7 +75,10 @@ def fill_poly(poly, h3_level):
                     tmp_feature = geom.__geo_interface__
                     tidx_a = h3.polygon_to_cells(h3.geo_to_h3shape(tmp_feature), h3_level)
                     print('adding ', len(tidx_a), ' sites')
+                    if len(tidx_a) < 1:
+                        print(tmp_poly.bounds)
                     new_sites.extend(tidx_a)
+                print('finished dealing with antimeridian')
 
             else:
                 tidx_a = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_level)

@@ -101,8 +101,10 @@ function main()
     # info = ncinfo(ncfile);
     # println(info)
 
-    xs = ncread(ncfile, "x");
-    ys = ncread(ncfile, "y");
+    #xs = ncread(ncfile, "x");
+    xs = ncread(ncfile, "lon");
+    #ys = ncread(ncfile, "y");
+    ys = ncread(ncfile, "lat");
     zs = ncread(ncfile, "z"); 
 
     fname_in = args["fname_sites"]
