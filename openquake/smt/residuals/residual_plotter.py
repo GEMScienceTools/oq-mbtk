@@ -788,7 +788,7 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
     
-    # Compute shared y-axis limits from the largest range across all components
+    # Compute some ylims and set some axis labels
     all_means = np.concatenate([res_dists[0].loc['Mean'].values,
                                 res_dists[1].loc['Mean'].values,
                                 res_dists[2].loc['Mean'].values])
@@ -796,11 +796,10 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
                                  res_dists[1].loc['Std Dev'].values,
                                  res_dists[2].loc['Std Dev'].values])
     mean_bound = np.max([np.abs(np.nanmin(all_means)), np.abs(np.nanmax(all_means))])
-    sig_max = np.nanmax(all_sigmas)
-    sig_bound = np.abs(1 - sig_max) if sig_max > 1 else np.abs(1 - np.nanmin(all_sigmas))
+    sig_dev = np.nanmax(np.abs(all_sigmas - 1))
     for ax_index in range(0, 3):
         ax[ax_index, 0].set_ylim(-mean_bound - 0.5, mean_bound + 0.5)
-        ax[ax_index, 1].set_ylim(1 - sig_bound - 0.1, sig_max + sig_bound + 0.1)
+        ax[ax_index, 1].set_ylim(1 - sig_dev - 0.1, 1 + sig_dev + 0.1)
         ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
     for ax_index in range(0, 2):
