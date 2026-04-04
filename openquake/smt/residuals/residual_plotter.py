@@ -846,30 +846,21 @@ def plot_residual_means_and_stds(
     else:
         gmpe_label = gmpe # If not from toml file
 
-    # Plot mean
-    if (res_dists[2][gmpe].loc[mean_or_std].all()==0 and
-        res_dists[1][gmpe].loc[mean_or_std].all()==0):
-        
+    # Plot intra/inter if data exists (only total sigma for some GMMs)
+    has_inter_intra = not res_dists[1][gmpe].loc[mean_or_std].isna().all()
+    if has_inter_intra:
+        # Plot intra-event
         ax[2, i].scatter(imts_to_plot.imt_float,
                          res_dists[0][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
+                         color=color_inp,
+                         marker=marker_inp)
+        # Plot inter-event
         ax[1, i].scatter(imts_to_plot.imt_float,
                          res_dists[1][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
-    else:
-        ax[2, i].scatter(imts_to_plot.imt_float,
-                         res_dists[0][gmpe].loc[mean_or_std],
                          color=color_inp,
                          marker=marker_inp)
-        ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[mean_or_std],                           
-                         color=color_inp,
-                         marker=marker_inp)
-        
+
+    # Plot total
     ax[0, i].scatter(imts_to_plot.imt_float,
                      res_dists[2][gmpe].loc[mean_or_std],
                      label=gmpe_label,
