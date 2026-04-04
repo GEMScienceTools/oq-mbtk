@@ -788,21 +788,19 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
     
-    # Set axes limits and axes labels
-    means = np.concatenate([res_dists[0].loc['Mean'],
-                            res_dists[1].loc['Mean'],
-                            res_dists[2].loc['Mean']])
-    sigmas = np.concatenate([res_dists[0].loc['Std Dev'],
-                             res_dists[1].loc['Std Dev'],
-                             res_dists[2].loc['Std Dev']])
-    mean_y_bound = np.max([np.abs(np.nanmin(means)), np.abs(np.nanmax(means))])
-    sigma_y_bound_non_centered = np.max(
-        [np.abs(np.nanmax(sigmas)), np.abs(np.nanmin(sigmas))])
-    sigma_y_bound = min(np.abs(1-sigma_y_bound_non_centered),
-                        np.abs(1+sigma_y_bound_non_centered))
+    # Compute shared y-axis limits from the largest range across all components
+    all_means = np.concatenate([res_dists[0].loc['Mean'].values,
+                                res_dists[1].loc['Mean'].values,
+                                res_dists[2].loc['Mean'].values])
+    all_sigmas = np.concatenate([res_dists[0].loc['Std Dev'].values,
+                                 res_dists[1].loc['Std Dev'].values,
+                                 res_dists[2].loc['Std Dev'].values])
+    mean_bound = np.max([np.abs(np.nanmin(all_means)), np.abs(np.nanmax(all_means))])
+    sig_max = np.nanmax(all_sigmas)
+    sig_bound = np.abs(1 - sig_max) if sig_max > 1 else np.abs(1 - np.nanmin(all_sigmas))
     for ax_index in range(0, 3):
-        ax[ax_index, 0].set_ylim(-mean_y_bound-0.5, mean_y_bound+0.5)
-        ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
+        ax[ax_index, 0].set_ylim(-mean_bound - 0.5, mean_bound + 0.5)
+        ax[ax_index, 1].set_ylim(1 - sig_bound - 0.1, sig_max + sig_bound + 0.1)
         ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
     for ax_index in range(0, 2):
