@@ -1,0 +1,21 @@
+openquake.sub.quad package
+==========================
+
+Submodules
+----------
+
+openquake.sub.quad.msh module
+-----------------------------
+
+.. automodule:: openquake.sub.quad.msh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.sub.quad
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,45 @@
+openquake.smt.tests.residuals package
+=====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.smt.tests.residuals.parsers
+
+Submodules
+----------
+
+openquake.smt.tests.residuals.residual\_plotter\_test module
+------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residual_plotter_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.residual\_plotter\_utils module
+-------------------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residual_plotter_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.smt.tests.residuals.residuals\_test module
+----------------------------------------------------
+
+.. automodule:: openquake.smt.tests.residuals.residuals_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.smt.tests.residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:
