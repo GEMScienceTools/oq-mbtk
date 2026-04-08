@@ -788,21 +788,18 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
     
-    # Set axes limits and axes labels
-    means = np.concatenate([res_dists[0].loc['Mean'],
-                            res_dists[1].loc['Mean'],
-                            res_dists[2].loc['Mean']])
-    sigmas = np.concatenate([res_dists[0].loc['Std Dev'],
-                             res_dists[1].loc['Std Dev'],
-                             res_dists[2].loc['Std Dev']])
-    mean_y_bound = np.max([np.abs(np.nanmin(means)), np.abs(np.nanmax(means))])
-    sigma_y_bound_non_centered = np.max(
-        [np.abs(np.nanmax(sigmas)), np.abs(np.nanmin(sigmas))])
-    sigma_y_bound = min(np.abs(1-sigma_y_bound_non_centered),
-                        np.abs(1+sigma_y_bound_non_centered))
+    # Compute some ylims and set some axis labels
+    all_means = np.concatenate([res_dists[0].loc['Mean'].values,
+                                res_dists[1].loc['Mean'].values,
+                                res_dists[2].loc['Mean'].values])
+    all_sigmas = np.concatenate([res_dists[0].loc['Std Dev'].values,
+                                 res_dists[1].loc['Std Dev'].values,
+                                 res_dists[2].loc['Std Dev'].values])
+    mean_bound = np.max([np.abs(np.nanmin(all_means)), np.abs(np.nanmax(all_means))])
+    sig_dev = np.nanmax(np.abs(all_sigmas - 1))
     for ax_index in range(0, 3):
-        ax[ax_index, 0].set_ylim(-mean_y_bound-0.5, mean_y_bound+0.5)
-        ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
+        ax[ax_index, 0].set_ylim(-mean_bound - 0.5, mean_bound + 0.5)
+        ax[ax_index, 1].set_ylim(1 - sig_dev - 0.1, 1 + sig_dev + 0.1)
         ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
     for ax_index in range(0, 2):
@@ -846,30 +843,21 @@ def plot_residual_means_and_stds(
     else:
         gmpe_label = gmpe # If not from toml file
 
-    # Plot mean
-    if (res_dists[2][gmpe].loc[mean_or_std].all()==0 and
-        res_dists[1][gmpe].loc[mean_or_std].all()==0):
-        
+    # Plot intra/inter if data exists (only total sigma for some GMMs)
+    has_inter_intra = not res_dists[1][gmpe].loc[mean_or_std].isna().all()
+    if has_inter_intra:
+        # Plot intra-event
         ax[2, i].scatter(imts_to_plot.imt_float,
                          res_dists[0][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
+                         color=color_inp,
+                         marker=marker_inp)
+        # Plot inter-event
         ax[1, i].scatter(imts_to_plot.imt_float,
                          res_dists[1][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
-    else:
-        ax[2, i].scatter(imts_to_plot.imt_float,
-                         res_dists[0][gmpe].loc[mean_or_std],
                          color=color_inp,
                          marker=marker_inp)
-        ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[mean_or_std],                           
-                         color=color_inp,
-                         marker=marker_inp)
-        
+
+    # Plot total
     ax[0, i].scatter(imts_to_plot.imt_float,
                      res_dists[2][gmpe].loc[mean_or_std],
                      label=gmpe_label,
