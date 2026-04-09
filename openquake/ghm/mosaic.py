@@ -259,6 +259,7 @@ DATA = {'GID_0': {
        'pac': ['ASM', 'FJI', 'KIR', 'NCL', 
                'NIU', 'NRU', 'NZL', 'SLB', 'TKL',
                'TON', 'TUV', 'VUT', 'WLF', 'WSM'],
+       'par': ['SJM', 'RUS'],
        'phl': ['PHL'],
        'png': ['PNG'],
        'sam': ['ABW', 'ARG', 'BOL', 'BRA', 'CHL',
