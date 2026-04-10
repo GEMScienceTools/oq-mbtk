@@ -37,8 +37,7 @@ def fill_poly(poly, h3_level):
         try: 
             tmp = feature_coll['features'][i]['geometry']
             tmp_poly = shape(feature_coll['features'][i])
-            if (tmp_poly.bounds[2]-tmp_poly.bounds[0] > 180) or abs(tmp_poly.bounds[0]) > 180 or abs(tmp_poly.bounds[2]) > 180:
-                
+            if  abs(tmp_poly.bounds[0]) > 180 or abs(tmp_poly.bounds[2]) > 180:
                 print("found poly crossing antimeridian")
                 modified_coords = []
                 for coords in tmp_poly.exterior.coords:
@@ -101,7 +100,7 @@ def fill_poly(poly, h3_level):
 
     return sites_df
 
-def make_sites_for_polys_splitting(poly_df, out_folder, h3_fixed = False, h3_level = 6):
+def make_sites_for_polys_splitting(poly_df, out_folder, h3_fixed = False, h3_level = 6, concat_all = False):
     '''
     Make sites from a polygon dataframe 
     Splits antimeridian polygons at -180, 180 
@@ -115,9 +114,11 @@ def make_sites_for_polys_splitting(poly_df, out_folder, h3_fixed = False, h3_lev
         should a fixed h3 level be used? If not, there should be a column called 'resolution'
     :param h3_level:
         if h3 is fixed, specify the resolution for sites 
+    :param concat_all:
+        if true, combine all sites into single file instead of producing one file per model
     
     '''
-    
+    sites_all = pd.DataFrame({"lat": [], "lon": []})
     for idx, row in poly_df.iterrows():
         
         if h3_fixed == True:
@@ -136,7 +137,14 @@ def make_sites_for_polys_splitting(poly_df, out_folder, h3_fixed = False, h3_lev
         out_file = 'sites_mosaic_2026_{}.csv'.format(row.name)
         out = os.path.join(out_folder, out_file)
         print(out)
+        
         sites_df.to_csv(out, index = False)
+        sites_all = pd.concat([sites_df, sites_all], axis=0)
+   
+    if concat_all == True:   
+        out = os.path.join(out_folder, 'sites_concat.csv')
+        print(out)
+        sites_all.to_csv(out, index = False)
 
 def modify_sites(model, original_sites_file, modification_polys_file, out_folder):
     '''
