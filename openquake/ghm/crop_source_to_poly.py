@@ -34,6 +34,7 @@ def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, keep_out, src_conv
         optional: id of polygon to be used.
     
     '''
+    keep_out = int(keep_out)
     # Load poly 
     gdf_geoms = gpd.read_file(fname_poly)
     poly_proj = gdf_geoms.to_crs('EPSG:4326')
@@ -42,6 +43,7 @@ def crop_mps_to_poly (src_xml_fname, fname_poly,  out_folder, keep_out, src_conv
 
     # Get the point sources used to model distributed seismicity
     if src_conv:
+        breakpoint()
         tssm = to_python(src_xml_fname, src_conv)
     else:
         tssm = to_python(src_xml_fname)
