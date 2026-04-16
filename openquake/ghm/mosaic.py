@@ -263,7 +263,7 @@ DATA = {'GID_0': {
        'phl': ['PHL'],
        'png': ['PNG'],
        'sam': ['ABW', 'ARG', 'BOL', 'BRA', 'CHL',
-               'COL', 'CUW', 'ECU', 'FLK', 'GUF',
+               'COL', 'CUW', 'ECU', 'GUF',
                'GUY', 'PER', 'PRY', 'SUR', 'URY',
                'VEN', 'BES', 'OPA'],
        'sea': ['KHM', 'LAO', 'MMR', 'MYS', 'SGP',
