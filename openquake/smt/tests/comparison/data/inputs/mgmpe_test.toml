@@ -103,20 +103,40 @@ basin_term = "M9BasinTerm" # Apply M9 basin adjustment
 
 [models.16-ModifiableGMPE]
 gmpe = "CampbellBozorgnia2014"
-add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+add_delta_to_total_scalar = -0.2 # Apply an imt-constant delta to the total GMPE sigma
 
 [models.17-ModifiableGMPE]
 gmpe = "CampbellBozorgnia2014"
+add_delta_to_tau_scalar = -0.1 # Apply an imt-constant delta to tau
+
+[models.18-ModifiableGMPE]
+gmpe = "CampbellBozorgnia2014"
+add_delta_to_phi_scalar = -0.15 # Apply an imt-constant delta to phi
+
+[models.19-ModifiableGMPE]
+gmpe = "CampbellBozorgnia2014"
+add_delta_to_total_vector = "{'PGA': -0.1, 'SA(0.1)': -0.2, 'SA(0.5)': 0.2}" # Apply an imt-dependent delta to the total GMPE sigma
+
+[models.20-ModifiableGMPE]
+gmpe = "CampbellBozorgnia2014"
+add_delta_to_tau_vector = "{'PGA': -0.15, 'SA(0.1)': -0.25, 'SA(0.5)': 0.15}" # Apply an imt-dependent delta to tau
+
+[models.21-ModifiableGMPE]
+gmpe = "CampbellBozorgnia2014"
+add_delta_to_phi_vector = "{'PGA': 0.2, 'SA(0.1)': 0.1, 'SA(0.5)': -0.1}" # Apply an imt-dependent delta to phi
+
+[models.22-ModifiableGMPE]
+gmpe = "CampbellBozorgnia2014"
 set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
-[models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
+[models.23-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
 gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
 fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
 
-[models.19-NGAEastGMPE] # Use a gmpe table
+[models.24-NGAEastGMPE] # Use a gmpe table
 gmpe_table = "NGAEast_FRANKEL_J15.hdf5"
     
-[models.20-HassaniAtkinson2018] # GMPE Table GSIM
+[models.25-HassaniAtkinson2018] # GMPE Table GSIM
 d_sigma = 100 
 kappa0 = 0.04
 

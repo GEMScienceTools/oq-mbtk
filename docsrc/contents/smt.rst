@@ -169,13 +169,16 @@ We can specify the inputs to perform a residual analysis with as follows:
        >
        > # We can export the residuals to a text file
        > resid.export_residuals(txt_fname)
+       >
+       > # And we can pickle the residuals too
+       > resid.pickle_residuals(pkl_fname)
 
 Plotting of Residuals
 *********************
 
 1. Now we have computed the residuals, we can generate various basic plots describing the residual distribution.
 
-   We can generate plots of the probability density function plots for total, inter- and intra-event residuals to compare the residual distributions to standard normal distributions.
+   We can generate plots of the probability density function plots for total, inter-event and intra-event residuals to compare the residual distributions to standard normal distributions.
 
    Probability density function plots can be generated as follows:
 
@@ -200,7 +203,7 @@ Residual distribution plot for Boore et al. 2020 and PGA:
 Plot of residual distributions versus spectral acceleration: 
     .. image:: /contents/smt_images/means_and_stds_vs_period.png
 
-3. Plots for residual trends (again for total, inter- and intra-event components) with respect explanatory variables (magnitude, focal depth, distance and vs30) can also be generated in a similar manner. Here we will demonstrate for magnitude:
+3. Plots for residual trends (again for total, inter-event and intra-event components) with respect explanatory variables (magnitude, focal depth, distance and vs30) can also be generated in a similar manner. Here we will demonstrate for magnitude:
    
     .. code-block:: ini
        
@@ -594,7 +597,7 @@ Comparing GMPEs
 
         [models.0-ModifiableGMPE]
         gmpe = "YenierAtkinson2015BSSA"
-        sigma_model = 'al_atik_2015_sigma' # Use Al Atik (2015) sigma model
+        sigma_model = "al_atik_2015_sigma" # Use Al Atik (2015) sigma model
 
         [models.1-ModifiableGMPE]
         gmpe = "CampbellBozorgnia2014"
@@ -607,7 +610,7 @@ Comparing GMPEs
         [models.3-ModifiableGMPE]
         gmpe = "CampbellBozorgnia2014"
         set_between_epsilon = 1.5 # Set between-event epsilon (i.e. tau epsilon)
-                              
+                                 
         [models.4-ModifiableGMPE]
         gmpe = "AbrahamsonEtAl2014"
         median_scaling_scalar = 1.4 # Scale median by factor of 1.4 over all imts
@@ -626,14 +629,14 @@ Comparing GMPEs
 
         [models.8-ModifiableGMPE]
         gmpe = "BooreEtAl2014"
-        site_term = "CY14SiteTerm" # Use CY14 site term
+        site_term = 'CY14SiteTerm' # Use CY14 site term
 
         [models.9-ModifiableGMPE]
         gmpe = "AtkinsonMacias2009"
-        site_term = 'BA08SiteTerm' # Use BA08 site term
+        site_term = "BA08SiteTerm" # Use BA08 site term
 
         [models.10-ModifiableGMPE]
-        gmpe = "EMME24BB_GMM1SGM1"
+        gmpe = "AtkinsonMacias2009"
         site_term = "BSSA14SiteTerm" # Use BSSA14 site term
 
         [models.11-ModifiableGMPE]
@@ -658,15 +661,42 @@ Comparing GMPEs
 
         [models.16-ModifiableGMPE]
         gmpe = "CampbellBozorgnia2014"
-        add_delta_sigma_to_total_sigma = 0.5 # Add a delta to the total GMPE sigma
+        add_delta_to_total_scalar = -0.2 # Apply an imt-constant delta to the total GMPE sigma
 
         [models.17-ModifiableGMPE]
         gmpe = "CampbellBozorgnia2014"
+        add_delta_to_tau_scalar = -0.1 # Apply an imt-constant delta to tau
+
+        [models.18-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_to_phi_scalar = -0.15 # Apply an imt-constant delta to phi
+
+        [models.19-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_to_total_vector = "{'PGA': -0.1, 'SA(0.1)': -0.2, 'SA(0.5)': 0.2}" # Apply an imt-dependent delta to the total GMPE sigma
+
+        [models.20-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_to_tau_vector = "{'PGA': -0.15, 'SA(0.1)': -0.25, 'SA(0.5)': 0.15}" # Apply an imt-dependent delta to tau
+
+        [models.21-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
+        add_delta_to_phi_vector = "{'PGA': 0.2, 'SA(0.1)': 0.1, 'SA(0.5)': -0.1}" # Apply an imt-dependent delta to phi
+
+        [models.22-ModifiableGMPE]
+        gmpe = "CampbellBozorgnia2014"
         set_total_sigma_as_tau_plus_delta = 0.5 # Set total sigma to square root of (tau**2 + delta**2)
 
-        [models.18-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
+        [models.23-ModifiableGMPE] # ModifiableGMPE with an underlying GSIM containing additional input arguments
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True" # Similar to OQ syntax for instantiating gsim from string when using openquake.hazardlib.valid.gsim
         fix_total_sigma = "{'PGA': 0.750, 'SA(0.1)': 0.800, 'SA(0.5)': 0.850}" 
+
+        [models.24-NGAEastGMPE] # Use a gmpe table
+        gmpe_table = "NGAEast_FRANKEL_J15.hdf5"
+            
+        [models.25-HassaniAtkinson2018] # GMPE Table GSIM
+        d_sigma = 100 
+        kappa0 = 0.04
 
         [ratios_baseline_gmm.ModifiableGMPE] # ModifiableGMPE as a Baseline GMM for attenuation curve ratio plots
         gmpe = "[AbrahamsonEtAl2014]\nregion=JPN\nusgs_basin_scaling=True"

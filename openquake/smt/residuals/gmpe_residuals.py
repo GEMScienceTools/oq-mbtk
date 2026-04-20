@@ -20,6 +20,7 @@ Module to get GMPE residuals.
 """
 import sys
 import warnings
+import pickle
 import copy
 import re
 import toml
@@ -176,7 +177,7 @@ class Residuals(object):
             else:
                 assert hasattr(gmpe_i, "gmpe_table")
                 # Tabular GMM specified using an alias
-                pers = gmpe_i.imls["T"]
+                pers = gmpe_i.imtls["T"]
 
             # Store min/max periods for given GMM
             if sa is True:
@@ -432,6 +433,7 @@ class Residuals(object):
                         )
                     residual[gmpe][imtx]["Inter event"] = inter
                     residual[gmpe][imtx]["Intra event"] = intra
+                    
         context["Residual"] = residual
         
         return context
@@ -446,7 +448,7 @@ class Residuals(object):
         Calculates the random effects residuals (i.e. decomposition of the
         total residuals into inter-event and intra-event) using equation 10
         of Abrahamson & Youngs (1992).
-        
+
         :param obs: array of observed ground-shaking values for a single ctx
                     (i.e. event) for a given imt, in natural log
         :param mean: array of ground-shaking values for the same ctx 
@@ -458,21 +460,25 @@ class Residuals(object):
         :param normalise: bool which if True normalises the residuals using
                           the corresponding GMPE sigma components
         """
-        # Get number of values
-        nvals = float(len(mean))
+        # Get number of values (records for given event)
+        nvals = len(mean)
+
+        # Use mean tau/phi of given GMM (AY92 only considers homoskedastic sigma)
+        tau = np.mean(inter)
+        phi = np.mean(intra)
 
         # Total variance for all observations combining GMPE tau and phi
-        v = nvals * (inter ** 2.) + (intra ** 2.)
-                                                  
+        v = nvals * (tau ** 2.) + (phi ** 2.)
+
         # Compute the inter-event
-        inter_res = ((inter ** 2.) * sum(obs - mean)) / v
+        inter_res = ((tau ** 2.) * np.sum(obs - mean) / v) * np.ones(len(mean))
 
         # Compute the intra-event
         intra_res = obs - (mean + inter_res)
 
         # Whether to normalise or not
         if normalise:
-            return inter_res / inter, intra_res / intra
+            return inter_res / tau, intra_res / intra
         else:
             return inter_res, intra_res
 
@@ -510,7 +516,8 @@ class Residuals(object):
         for ctxt in self.contexts:
             magnitudes = np.hstack([
                 magnitudes,
-                ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))])
+                ctxt["Ctx"].mag * np.ones(len(ctxt["Ctx"].repi))]
+                )
             
         return magnitudes
 
@@ -558,10 +565,13 @@ class Residuals(object):
 
                 # Into a dataframe and rename some columns
                 ctx_df = pd.DataFrame(ctx_and_imt)
-                ctx_df = ctx_df.rename(columns={"custom_site_id": "st_code",
-                                                "lons": "st_lon",
-                                                "lats": "st_lat",
-                                                "depths": "st_elevation"})
+                ctx_df = ctx_df.rename(
+                    columns={
+                        "custom_site_id": "st_code",
+                        "lons": "st_lon",
+                        "lats": "st_lat",
+                        "depths": "st_elevation"}
+                        )
 
                 # Store the DataFrame for the event
                 store[f"{ctx['EventID']}_IMT={imt}"] = ctx_df
@@ -574,6 +584,13 @@ class Residuals(object):
                 f.write(f"Event:{ev} IMT: {imt}\n")
                 f.write(ev_imt_df.to_string(index=False))
                 f.write("\n\n")
+
+    def pickle_residuals(self, out_fname):
+        """
+        Pickle the residuals object.
+        """
+        with open(out_fname, 'wb') as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def export_gmc_xml(self, weight_metric, out_fname):
         """
