@@ -202,7 +202,7 @@ DATA = {'GID_0': {
        'mie': ['AFG', 'ARM', 'AZE', 'GEO',
                'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
                'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
-               'SYR'],
+               'SYR' 'TUR'],
        # for placing Turkey, Cyprus, North Cyprus in EUR
        'eur': ['ALB', 'AND', 'AUT', 'BEL', 'BGR',
                'BIH', 'BLR', 'CHE', 'CZE', 'DEU',
@@ -213,7 +213,7 @@ DATA = {'GID_0': {
                'MDA', 'MKD', 'MLT', 'MNE', 'NLD',
                'NOR', 'POL', 'PRT', 'ROU', 'RUS',
                'SRB', 'SVK', 'SVN', 'SWE', 'UKR',
-               'XKO', 'ALA', 'GGY', 'TUR', 'CYP',
+               'XKO', 'ALA', 'GGY', 'CYP',
                'ZNC'],
        'haw': ['USA'],
        'ind': ['BGD', 'BTN', 'IND', 'Z01', 'Z04',
