@@ -32,6 +32,8 @@ from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
+from openquake.hazardlib.gsim.mgmpe.generic_gmpe_avgsa import (
+    GmpeIndirectAvgSA, GenericGmpeAvgSA)
 
 from openquake.smt.utils import make_rup, clean_gmm_label
 
@@ -251,7 +253,7 @@ def att_curves(gmpe,
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
-    ctxs = list(ctxm.get_ctx_iter([rup], sites))
+    ctxs = ctxm.get_ctxs([rup], sites)
     ctxs = ctxs[0]
 
     # Compute ground-motions
@@ -308,6 +310,28 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
     return strike_s, dip_s, aratio_s
 
 
+def build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe):
+    """
+    Build a GMPE which can be used to predict AvgSA using the
+    indirect approach. This function can build either the
+    GmpeIndirectAvgSA class (which requires t_low, t_high, and
+    the number of periods) OR GenericGmpeAvgSA (specify a list
+    of averaging periods).
+    """
+    check = list(kw_mgmpe.keys())
+    if check[0] != "gmpe" or len(check) > 1:
+        raise ValueError(
+            "Specification of an indirect approach AvgSA GMPE in combination "
+            "with additional ModifiableGMPE capabilities is not supported.")
+    gmm_base = list(kw_mgmpe['gmpe'].keys())[0]
+    for par in kw_mgmpe['gmpe'][gmm_base].keys():
+        avgsa[par] = kw_mgmpe['gmpe'][gmm_base][par]
+    if "GmpeIndirectAvgSA" in gmpe:
+        return GmpeIndirectAvgSA(gmpe_name=gmm_base, **avgsa)
+    else:
+        return GenericGmpeAvgSA(gmpe_name=gmm_base, **avgsa)
+
+
 def construct_gsim_dict(inputs):
     """
     Build a dictionary of the arguments for a GMM.
@@ -359,47 +383,85 @@ def build_mgmpe(gmpe):
     # Get the mgmpe params
     idx_params = []
     for idx, par in enumerate(params):
-        if idx > 1:
-            par = str(par)
-            if ('sigma_model' in par or 'site_term' in par or 'basin_term' in par):
-                idx_params.append(idx)
-            elif 'fix_total_sigma' in par:
-                idx_params.append(idx)
-                base_vector = par.split('=')[1].replace('"', '')
-                fixed_sigma_vector = ast.literal_eval(base_vector)
-            elif 'with_betw_ratio' in par:
-                idx_params.append(idx)
-                with_betw_ratio = float(par.split('=')[1])
-            elif 'set_between_epsilon' in par:
-                idx_params.append(idx)
-                between_epsilon = float(par.split('=')[1])
-            elif 'add_delta_sigma_to_total_sigma' in par:
-                idx_params.append(idx)
-                delta_std = float(par.split('=')[1])
-            elif 'set_total_sigma_as_tau_plus_delta' in par:
-                idx_params.append(idx)
-                total_set_to_tau_and_delta = float(par.split('=')[1])
-            elif 'scaling' in par:
-                idx_params.append(idx)
-                if 'median_scaling_scalar' in par:
-                    median_scalar = float(par.split('=')[1])
-                if 'median_scaling_vector' in par:
-                    base_vector = par.split('=')[1].replace('"', '')
-                    median_vector = ast.literal_eval(base_vector)
-                if 'sigma_scaling_scalar' in par:
-                    sigma_scalar = float(par.split('=')[1])
-                if 'sigma_scaling_vector' in par:
-                    base_vector = par.split('=')[1].replace('"', '')
-                    sigma_vector = ast.literal_eval(base_vector)
-            elif "conditional_gmpe" in par:
-                idx_params.append(idx)
-                # If this code is failing for the user please ensure you are carefully
-                # following the syntax provided in the docs for using conditional GMPEs
-                # or check oq-mbtk\openquake\smt\tests\comparison\data\cgmpe_test.toml.
-                re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
-                cgmpe_dict = ast.literal_eval(re_match.group(1))
-                cgmpes = {imt: construct_gsim_dict(
-                    gmpe_str) for imt, gmpe_str in cgmpe_dict.items()}
+        if idx <= 1:
+            continue
+
+        par = str(par).strip()
+
+        # Split key and value
+        if '=' in par:
+            key, val = par.split('=', 1)
+            key = key.strip()
+            val = val.strip().replace('"', '')
+        else:
+            key, val = par, None
+
+        if any(k in key for k in ['sigma_model', 'site_term', 'basin_term']):
+            idx_params.append(idx)
+
+        elif key == 'fix_total_sigma':
+            idx_params.append(idx)
+            fixed_sigma_vector = ast.literal_eval(val)
+
+        elif key == 'with_betw_ratio':
+            idx_params.append(idx)
+            with_betw_ratio = float(val)
+
+        elif key == 'set_between_epsilon':
+            idx_params.append(idx)
+            between_epsilon = float(val)
+
+        elif key == 'add_delta_to_total_scalar':
+            idx_params.append(idx)
+            delta_std_scalar = float(val)
+
+        elif key == 'add_delta_to_tau_scalar':
+            idx_params.append(idx)
+            delta_tau_scalar = float(val)
+
+        elif key == 'add_delta_to_phi_scalar':
+            idx_params.append(idx)
+            delta_phi_scalar = float(val)
+
+        elif key == 'add_delta_to_total_vector':
+            idx_params.append(idx)
+            delta_std_vector = ast.literal_eval(val)
+
+        elif key == 'add_delta_to_tau_vector':
+            idx_params.append(idx)
+            delta_tau_vector = ast.literal_eval(val)
+
+        elif key == 'add_delta_to_phi_vector':
+            idx_params.append(idx)
+            delta_phi_vector = ast.literal_eval(val)
+
+        elif key == 'set_total_sigma_as_tau_plus_delta':
+            idx_params.append(idx)
+            total_set_to_tau_and_delta = float(val)
+
+        elif 'scaling' in key:
+            idx_params.append(idx)
+            if key == 'median_scaling_scalar':
+                median_scalar = float(val)
+            elif key == 'median_scaling_vector':
+                median_vector = ast.literal_eval(val)
+            elif key == 'sigma_scaling_scalar':
+                sigma_scalar = float(val)
+            elif key == 'sigma_scaling_vector':
+                sigma_vector = ast.literal_eval(val)
+
+        elif key == "conditional_gmpe":
+            idx_params.append(idx)
+            re_match = re.search(r'conditional_gmpe\s*=\s*"(.+)"', par, re.DOTALL)
+            cgmpe_dict = ast.literal_eval(re_match.group(1))
+            cgmpes = {
+                imt: construct_gsim_dict(gmpe_str)
+                for imt, gmpe_str in cgmpe_dict.items()
+            }
+
+        elif key in ["GmpeIndirectAvgSA", "GenericGmpeAvgSA"]:
+            idx_params.append(idx)
+            avgsa = ast.literal_eval(val)
 
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
@@ -425,10 +487,30 @@ def build_mgmpe(gmpe):
     if 'set_between_epsilon' in gmpe:
         kw_mgmpe['set_between_epsilon'] = {'epsilon_tau': between_epsilon}
         
-    # Add delta to total sigma
-    if 'add_delta_sigma_to_total_sigma' in gmpe:
-        kw_mgmpe['add_delta_std_to_total_std'] = {'delta': delta_std}
-            
+    # Add IMT-constant delta to total sigma
+    if 'add_delta_to_total_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_total_std_scalar'] = {'delta': delta_std_scalar}
+
+    # Add IMT-constant delta to tau
+    if 'add_delta_to_tau_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_tau_std_scalar'] = {'delta': delta_tau_scalar}
+
+    # Add IMT-constant delta to phi
+    if 'add_delta_to_phi_scalar' in gmpe:
+        kw_mgmpe['add_delta_to_phi_std_scalar'] = {'delta': delta_phi_scalar}
+
+    # Add IMT-dependent delta to total sigma
+    if 'add_delta_to_total_vector' in gmpe:
+        kw_mgmpe['add_delta_to_total_std_vector'] = {'delta': delta_std_vector}
+
+    # Add IMT-dependent delta to tau
+    if 'add_delta_to_tau_vector' in gmpe:
+        kw_mgmpe['add_delta_to_tau_std_vector'] = {'delta': delta_tau_vector}
+
+    # Add IMT-constant delta to phi
+    if 'add_delta_to_phi_vector' in gmpe:
+        kw_mgmpe['add_delta_to_phi_std_vector'] = {'delta': delta_phi_vector}
+
     # Set total sigma to sqrt(tau**2 + delta**2)
     if 'set_total_sigma_as_tau_plus_delta' in gmpe:
         kw_mgmpe['set_total_std_as_tau_plus_delta'] = {'delta': total_set_to_tau_and_delta}
@@ -491,6 +573,10 @@ def build_mgmpe(gmpe):
     if 'conditional_gmpe' in gmpe:
         kw_mgmpe['conditional_gmpe'] = cgmpes
         
+    # Indirect approach AvgSA GMPE
+    if "GmpeIndirectAvgSA" in gmpe or "GenericGmpeAvgSA" in gmpe:
+        return build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe)
+
     return ModifiableGMPE(**kw_mgmpe)
 
 
@@ -498,8 +584,7 @@ def gmpe_check(gmpe):
     """
     This function in effect parses the toml parameters for a GMPE into the
     equivalent parameters required for constructing an OQ GSIM object.
-    :param gmpe:
-        gmpe: GMM and params as parsed from the SMT Comparison module format toml
+    :param gmpe: GMM and params parsed from the Comparison toml.
     """
     # Modifiable GMPE
     if '[ModifiableGMPE]' in gmpe:

@@ -45,6 +45,9 @@ from openquake.fnm.inversion.soe_builder import (
     get_fault_moment,
     get_slip_rate_fraction,
     make_fault_mfd_equation_components,
+    make_fault_rel_mfd_equation_components,
+    make_rup_rate_prior_from_fault_abs_mfds,
+    make_ridge_regularization_eqns_from_fault_abs_mfds,
     make_eqns,
     hz,
 )
@@ -53,6 +56,7 @@ from openquake.fnm.inversion.utils import (
     rup_df_to_rupture_dicts,
     subsection_df_to_fault_dicts,
     get_fault_moment_rate,
+    get_mfd_occurrence_rates,
 )
 
 from openquake.fnm.all_together_now import (
@@ -135,7 +139,10 @@ def test_make_rel_gr_mfd_eqns():
     np.testing.assert_array_almost_equal(
         lhs,
         np.array(
-            [[-1.0, -1.0, 0.0, 3.16227766], [-1.0, -1.0, 10.0, 0.0]],
+            [
+                [-1.0, -1.0, 2.16227766, 2.16227766],
+                [-1.0, -1.0, 9.0, -1.0],
+            ],
         ),
     )
 
@@ -164,7 +171,7 @@ def test_and_solve_slip_rate_and_rel_gr_eqns(inversion_tol=1e-10):
     np.testing.assert_array_almost_equal(
         soln,
         np.array(
-            [3.83612506e-04, 3.83612506e-04, 7.67225013e-05, 2.42617852e-04]
+            [3.52359071e-04, 3.52359071e-04, 1.03058514e-04, 2.22850461e-04]
         ),
     )
 
@@ -244,6 +251,185 @@ def test_and_solve_slip_rate_and_abs_mfd_eqns():
     soln = np.linalg.lstsq(lhs, rhs, rcond=-1)[0]
 
     resids = lhs @ soln - rhs
+
+
+def test_make_abs_mfd_eqns_bins_rupture_magnitudes_for_rhs_lookup():
+    # Regression: rupture magnitudes can carry float noise (e.g., 6.1 stored as
+    # 6.100000000000001), while target MFD keys are discretized/rounded. If the
+    # rupture magnitudes are not rounded similarly, RHS lookup can return 0.0,
+    # producing extreme row weights.
+    rups = [
+        {"M": 6.1 + 1e-12},
+        {"M": 6.1 - 1e-12},
+    ]
+    mfd = {6.1: 1.23e-4}
+
+    lhs, rhs, err, _ = make_abs_mfd_eqns(rups, mfd, mag_decimals=1)
+    lhs = lhs.todense()
+
+    np.testing.assert_array_almost_equal(lhs, np.array([[1.0, 1.0]]))
+    np.testing.assert_array_almost_equal(rhs, np.array([1.23e-4]))
+    assert float(err[0]) < 1e8
+
+
+def test_make_abs_mfd_eqns_applies_min_mfd_error_floor_for_zero_rates():
+    # Regression: if a target MFD rate is zero, errors can go to zero and
+    # weights can explode. `make_abs_mfd_eqns` should apply the default
+    # `min_mfd_error` floor (1e-5), capping weights at 1e5.
+    rups = [{"M": 6.0}]
+    mfd = {6.0: 0.0}
+
+    _, rhs, err, _ = make_abs_mfd_eqns(rups, mfd, mag_decimals=1)
+    np.testing.assert_array_almost_equal(rhs, np.array([0.0]))
+    np.testing.assert_array_almost_equal(err, np.array([1.0e5]))
+
+
+def test_make_rup_rate_prior_from_fault_abs_mfds_simple():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    priors = make_rup_rate_prior_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds, rups=rups
+    )
+    np.testing.assert_allclose(priors["f1"], np.array([2.0e-4, 1.0e-4, 2.0e-4]))
+    np.testing.assert_allclose(priors["f2"], np.array([2.0e-4, 1.0e-4, 2.0e-4]))
+
+
+def test_make_ridge_regularization_eqns_from_fault_abs_mfds():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs, rhs, err, meta = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+    assert meta["type"] == "ridge_fault_mfd_prior"
+    np.testing.assert_allclose(
+        lhs.todense(),
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],  # f1: A
+                [0.0, 0.0, 1.0, 0.0],  # f1: C
+                [0.0, 0.0, 0.0, 1.0],  # f1: D
+                [0.0, 1.0, 0.0, 0.0],  # f2: B
+                [0.0, 0.0, 1.0, 0.0],  # f2: C
+                [0.0, 0.0, 0.0, 1.0],  # f2: D
+            ]
+        ),
+    )
+    np.testing.assert_allclose(
+        rhs, np.array([2.0e-4, 1.0e-4, 2.0e-4, 2.0e-4, 1.0e-4, 2.0e-4])
+    )
+    np.testing.assert_allclose(err, np.full(6, 2.0))
+
+
+def test_make_eqns_fault_abs_mfds_ridge_mode_only():
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs0, rhs0, err0, _ = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+
+    lhs, rhs, err = make_eqns(
+        rups=rups,
+        faults=None,
+        slip_rate_eqns=False,
+        mfd=None,
+        fault_abs_mfds=fault_abs_mfds,
+        fault_abs_mfd_mode="ridge",
+        fault_abs_mfd_ridge=4.0,
+        ridge=0.0,
+        return_sparse=False,
+    )
+
+    np.testing.assert_allclose(lhs, lhs0.todense())
+    np.testing.assert_allclose(rhs, rhs0)
+    np.testing.assert_allclose(err, err0)
+
+
+def test_make_eqns_fault_abs_mfds_ridge_mode_with_global_ridge():
+    import scipy.sparse as ssp
+    from openquake.fnm.inversion.soe_builder import make_ridge_regularization_eqns
+
+    rups = simple_test_rups
+    fault_abs_mfds = {
+        "f1": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [0, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+        "f2": {
+            "mfd": {6.0: 2.0e-4, 6.5: 1.0e-4, 7.0: 5.0e-5},
+            "rups_include": [1, 2, 3],
+            "rup_fractions": [1.0, 0.5, 0.5],
+        },
+    }
+
+    lhs_fault, rhs_fault, err_fault, _ = make_ridge_regularization_eqns_from_fault_abs_mfds(
+        fault_abs_mfds=fault_abs_mfds,
+        rups=rups,
+        ridge=4.0,
+    )
+    lhs_global, rhs_global, err_global, _ = make_ridge_regularization_eqns(
+        rups=rups,
+        ridge=4.0,
+    )
+    lhs_expected = np.vstack([lhs_fault.todense(), lhs_global.todense()])
+    rhs_expected = np.concatenate([rhs_fault, rhs_global])
+    err_expected = np.concatenate([err_fault, err_global])
+
+    lhs, rhs, err = make_eqns(
+        rups=rups,
+        faults=None,
+        slip_rate_eqns=False,
+        mfd=None,
+        fault_abs_mfds=fault_abs_mfds,
+        fault_abs_mfd_mode="ridge",
+        fault_abs_mfd_ridge=4.0,
+        ridge=4.0,
+        return_sparse=False,
+    )
+
+    np.testing.assert_allclose(lhs, lhs_expected)
+    np.testing.assert_allclose(rhs, rhs_expected)
+    np.testing.assert_allclose(err, err_expected)
 
 
 def test_make_abs_mfd_eqns_faults():
@@ -472,6 +658,9 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             "calculate_rates_from_slip_rates": True,
             "filter_by_plausibility": False,
             "export_fault_mfds": True,
+            # Avoid multiprocessing in unit tests; some CI/sandboxed
+            # environments disallow POSIX semaphores used by ProcessPool.
+            "parallel_subfault_build": False,
         }
 
         self.fault_network = build_fault_network(
@@ -527,6 +716,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         fault_abs_mfds_correct = {
@@ -598,9 +788,12 @@ class TestEqnsFromLilFaults(unittest.TestCase):
         for fault_key, mfd_stuff in fault_abs_mfds.items():
             for key, test_value in mfd_stuff.items():
                 if key == 'mfd':
+                    test_mfd = get_mfd_occurrence_rates(
+                        fault_abs_mfds[fault_key][key]
+                    )
                     np.testing.assert_almost_equal(
                         np.array(
-                            sorted(fault_abs_mfds[fault_key][key].keys())
+                            sorted(test_mfd.keys())
                         ),
                         np.array(
                             sorted(
@@ -610,7 +803,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     )
                     np.testing.assert_almost_equal(
                         np.array(
-                            sorted(fault_abs_mfds[fault_key][key].values())
+                            sorted(test_mfd.values())
                         ),
                         np.array(
                             sorted(
@@ -624,6 +817,87 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                         == fault_abs_mfds_correct[fault_key][key]
                     )
 
+    def test_make_fault_mfd_equation_components_full_counting(self):
+        fault_abs_mfds = make_fault_mfd_equation_components(
+            self.fault_network['fault_mfds'],
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            seismic_slip_rate_frac=1.0,
+            full_counting=True,
+        )
+
+        for _, mfd_stuff in fault_abs_mfds.items():
+            assert all(frac == 1.0 for frac in mfd_stuff['rup_fractions'])
+
+    def test_make_fault_rel_mfd_equation_components_no_scale(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            full_counting=False,
+        )
+
+        expected = {
+            0: {
+                'b_value': 1.0,
+                'rups_include': [0, 1, 4],
+                'rup_fractions': [1.0, 0.4997, 0.3569],
+            },
+            1: {
+                'b_value': 1.0,
+                'rups_include': [1, 2, 4],
+                'rup_fractions': [0.5003, 1.0, 0.3573],
+            },
+            2: {
+                'b_value': 1.0,
+                'rups_include': [3, 4],
+                'rup_fractions': [1.0, 0.2858],
+            },
+        }
+        assert fault_rel_mfds == expected
+
+    def test_make_fault_rel_mfd_equation_components_full_counting(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            full_counting=True,
+        )
+
+        for _, mfd_stuff in fault_rel_mfds.items():
+            assert all(frac == 1.0 for frac in mfd_stuff['rup_fractions'])
+
+    def test_make_fault_rel_mfd_equation_components_b_value_scalar(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            b_value=0.9,
+            full_counting=False,
+        )
+
+        for _, mfd_stuff in fault_rel_mfds.items():
+            assert mfd_stuff['b_value'] == 0.9
+
+    def test_make_fault_rel_mfd_equation_components_b_value_sequence(self):
+        fault_rel_mfds = make_fault_rel_mfd_equation_components(
+            self.rups,
+            self.fault_network,
+            fault_key='subfaults',
+            rup_key='rupture_df',
+            b_value=[0.8, 1.0, 1.2],
+            full_counting=False,
+        )
+
+        assert fault_rel_mfds[0]['b_value'] == 0.8
+        assert fault_rel_mfds[1]['b_value'] == 1.0
+        assert fault_rel_mfds[2]['b_value'] == 1.2
+
     def test_make_equations_from_fault_mfds(self):
 
         total_fault_moment = self.fault_network['subfault_df']['moment'].sum()
@@ -635,6 +909,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         lhs, rhs, err = make_eqns(
@@ -693,15 +968,15 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     8.82647205e01,
                     9.90346453e01,
                     1.39890155e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     8.82106779e01,
                     9.89740084e01,
                     1.39804503e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     9.86227943e01,
                     1.10656595e02,
                     1.56306595e02,
-                    1.00000000e10,
+                    1.00000000e05,
                 ]
             ),
             decimal=3,
@@ -724,6 +999,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             fault_key='subfaults',
             rup_key='rupture_df',
             seismic_slip_rate_frac=1.0,
+            full_counting=False,
         )
 
         lhs, rhs, err = make_eqns(
@@ -795,15 +1071,15 @@ class TestEqnsFromLilFaults(unittest.TestCase):
                     8.82647205e01,
                     9.90346453e01,
                     1.39890155e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     8.82106779e01,
                     9.89740084e01,
                     1.39804503e02,
-                    1.00000000e10,
+                    1.00000000e05,
                     9.86227943e01,
                     1.10656595e02,
                     1.56306595e02,
-                    1.00000000e10,
+                    1.00000000e05,
                 ]
             ),
             decimal=3,

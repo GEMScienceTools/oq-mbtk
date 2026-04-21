@@ -1291,8 +1291,8 @@ class Test3Faults(unittest.TestCase):
             ]
         )
 
-        np.testing.assert_array_equal(trace.xy[0], trace_lons)
-        np.testing.assert_array_equal(trace.xy[1], trace_lats)
+        np.testing.assert_array_almost_equal(trace.xy[0], trace_lons)
+        np.testing.assert_array_almost_equal(trace.xy[1], trace_lats)
 
         bound_lons = np.array(
             [

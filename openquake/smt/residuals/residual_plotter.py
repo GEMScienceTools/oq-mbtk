@@ -25,12 +25,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import warnings
 from copy import deepcopy
-from math import floor, ceil
 from scipy.stats import norm
-from cycler import cycler
 
 from openquake.hazardlib.imt import from_string
 from openquake.hazardlib import valid
+from openquake.smt.utils import COLORS
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
@@ -39,10 +38,6 @@ from openquake.smt.residuals.residual_plotter_utils import (
                                                     residuals_with_distance,
                                                     residuals_with_depth,
                                                     _get_residual_means_and_stds)
-
-
-COLORS = ['r', 'g', 'b', 'y', 'lime', 'dodgerblue', 'gold', '0.8', 'm', 'k',
-          'mediumseagreen', 'tab:orange', 'tab:purple', 'tab:brown', '0.5']
 
 
 ### General Utils
@@ -163,6 +158,7 @@ class BaseResidualPlot(object):
         principle not be overridden by sub-classes.
         """
         self.draw(ax, res_data, res_type)
+        ax.grid()
         ax.set_xlim(*self.get_axis_xlim(res_data, res_type))
         ax.set_ylim(*self.get_axis_ylim(res_data, res_type))
         ax.set_xlabel(res_data['xlabel'], **self.xlabel_styling_kwargs)
@@ -276,8 +272,7 @@ class ResidualHistogramPlot(BaseResidualPlot):
     def draw(self, ax, res_data, res_type):
         bin_width = self.bin_width
         x, y = res_data['x'], res_data['y']
-        ax.bar(x, y, width=0.95 * bin_width,
-               color="LightSteelBlue", edgecolor="k")
+        ax.bar(x, y, width=0.95 * bin_width, color="LightSteelBlue", edgecolor="k")
 
 
 class ResidualPlot(ResidualHistogramPlot):
@@ -356,13 +351,11 @@ class ResidualScatterPlot(BaseResidualPlot):
         return nrow, ncol
 
     def get_axis_xlim(self, res_data, res_type):
-        x = res_data['x']
-        return floor(np.min(x)), ceil(np.max(x))
+        return np.floor(np.min(res_data['x'])), np.ceil(np.max(res_data['x']))
 
     def get_axis_ylim(self, res_data, res_type):
-        y = res_data['y']
-        max_lim = ceil(np.nanmax(np.fabs(y)))
-        return -max_lim, max_lim
+        ylim = np.ceil(np.nanmax(np.fabs(res_data['y']))) + 1.0
+        return -ylim, ylim
     
     def get_axis_title(self, res_data, res_type):
         sigma_label = get_sigma_label(res_type)
@@ -371,8 +364,6 @@ class ResidualScatterPlot(BaseResidualPlot):
 
     def draw(self, ax, res_data, res_type):
         x, y = res_data['x'], res_data['y']
-        x_zero = np.arange(np.floor(np.nanmin(x))-20, np.ceil(np.nanmax(x))+20, 0.001)
-        zero_line = np.zeros(len(x_zero))
         pts_styling_kwargs = dict(
             markeredgecolor='Gray', markerfacecolor='LightSteelBlue', label='residual')
         
@@ -382,31 +373,14 @@ class ResidualScatterPlot(BaseResidualPlot):
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
             
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
-            
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker='x', color='b',
-                label='+/- 1 Std.', zorder=4)
-            
-            ax.plot(x_zero, zero_line, color='k', linestyle='--',
-                    linewidth=1.25)
         else:
             ax.plot(x, y, 'o', **pts_styling_kwargs)
             
             ax.scatter(res_data['bin_midpoints'],res_data['mean_res'],
                        marker='s', color='b', label='mean', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                -1*res_data['sigma_res']), marker='x', color='b', zorder=4)
-        
-            ax.scatter(res_data['bin_midpoints'],res_data['mean_res'] + (
-                res_data['sigma_res']), marker='x', color='b',
-                label='+/- 1 Std.', zorder=4)
-            
-            ax.plot(x_zero, zero_line, color='k', linestyle='--',
-                    linewidth=1.25)
-            
+
+        ax.axhline(0, color='k', linestyle='--', linewidth=1.25, zorder=100)
+
         ax.legend(loc='upper right', fontsize='xx-small')
 
 
@@ -448,7 +422,7 @@ class ResidualWithDistance(ResidualScatterPlot):
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         if self.plot_type == "log":
-            return 0.1, 10.0 ** (ceil(np.log10(np.nanmax(x))))
+            return 0.1, 10.0 ** (np.ceil(np.log10(np.nanmax(x))))
         else:
             if self.distance_type == "rcdpp":
                 return np.nanmin(x), np.nanmax(x)
@@ -504,21 +478,20 @@ def plot_llh_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_llh = manage_imts(residuals)
 
-    # Define colours for GMMs
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-        
     # Plot LLH values w.r.t. period
     llh_with_imt = pd.DataFrame(residuals.llh).drop('all')
     fig_llh, ax_llh = plt.subplots(figsize=(10, 8))
-    ax_llh.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         y_llh = np.array(llh_with_imt[gmpe])
-        ax_llh.scatter(x_llh.imt_float, y_llh)
+        ax_llh.scatter(x_llh.imt_float, y_llh, color=color)
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_llh.plot(x_llh.imt_float, y_llh, label=tmp)
+        ax_llh.plot(x_llh.imt_float, y_llh, color=color, label=tmp)
+    ax_llh.margins(x=0)
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('LLH', fontsize='12')
     ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
+    ax_llh.grid()
     plt.savefig(filename)
     plt.close()
     
@@ -539,22 +512,21 @@ def plot_edr_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
 
-    # Define colours for GMMs
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-    
     # Plot EDR w.r.t. period
     EDR_with_imt = {}
     fig_EDR, ax_EDR = plt.subplots(figsize=(10, 8))
-    ax_EDR.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         EDR_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR = EDR_with_imt.EDR
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_EDR.scatter(x_with_imt.imt_float, y_EDR)
-        ax_EDR.plot(x_with_imt.imt_float, y_EDR, label=tmp)
+        ax_EDR.scatter(x_with_imt.imt_float, y_EDR, color=color)
+        ax_EDR.plot(x_with_imt.imt_float, y_EDR, color=color, label=tmp)
+    ax_EDR.margins(x=0)
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
     ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_EDR.grid()
     parts = filename.split(".")
     plt.savefig(parts[0] + "_value." + parts[1])
     plt.close()
@@ -562,32 +534,36 @@ def plot_edr_with_period(residuals, filename):
     # Plot median pred. correction factor w.r.t. period
     kappa_with_imt = {}
     fig_kappa, ax_kappa = plt.subplots(figsize=(10, 8))
-    ax_kappa.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         kappa_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_kappa = kappa_with_imt["sqrt Kappa"]
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_kappa.scatter(x_with_imt.imt_float, y_kappa)
-        ax_kappa.plot(x_with_imt.imt_float, y_kappa, label=tmp)
+        ax_kappa.scatter(x_with_imt.imt_float, y_kappa, color=color)
+        ax_kappa.plot(x_with_imt.imt_float, y_kappa, color=color, label=tmp)
+    ax_kappa.margins(x=0)
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
     ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_kappa.grid()
     plt.savefig(parts[0] + "_kappa." + parts[1])
     plt.close()
 
     # Plot MDE w.r.t. period
     MDE_with_imt = {}
     fig_MDE, ax_MDE = plt.subplots(figsize=(10, 8))
-    ax_MDE.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         MDE_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_MDE = MDE_with_imt["MDE Norm"]
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_MDE.scatter(x_with_imt.imt_float, y_MDE)
-        ax_MDE.plot(x_with_imt.imt_float, y_MDE, label=tmp)
+        ax_MDE.scatter(x_with_imt.imt_float, y_MDE, color=color)
+        ax_MDE.plot(x_with_imt.imt_float, y_MDE, color=color, label=tmp)
+    ax_MDE.margins(x=0)
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
     ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_MDE.grid()
     plt.savefig(parts[0] + "_MDE." + parts[1])
     plt.close()
 
@@ -608,22 +584,21 @@ def plot_sto_with_period(residuals, filename):
     # Manage IMTs
     residuals, x_with_imt = manage_imts(residuals)
     
-    # Define colours for plots
-    colour_cycler = (cycler(color=COLORS)*cycler(linestyle=['-']))
-    
     # Plot stochastic area w.r.t. period
     sto_with_imt = {}
     fig_sto, ax_sto = plt.subplots(figsize=(10, 8))
-    ax_sto.set_prop_cycle(colour_cycler)
-    for gmpe in residuals.gmpe_list:
+    for i, gmpe in enumerate(residuals.gmpe_list):
+        color = COLORS[i]
         sto_with_imt = pd.Series(residuals.stoch_areas_wrt_imt[gmpe])
         y_sto = sto_with_imt.values
         tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
-        ax_sto.scatter(x_with_imt.imt_float, y_sto)
-        ax_sto.plot(x_with_imt.imt_float, y_sto, label=tmp)
+        ax_sto.scatter(x_with_imt.imt_float, y_sto, color=color)
+        ax_sto.plot(x_with_imt.imt_float, y_sto, color=color, label=tmp)
+    ax_sto.margins(x=0)
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
     ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
+    ax_sto.grid()
     plt.savefig(os.path.join(filename))
     plt.close()
 
@@ -813,30 +788,20 @@ def _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot):
         ax[ax_idx, 1].plot(imts_to_plot.imt_float, np.ones(len(imts_to_plot)),
                           color = 'k', linestyle = '--')
     
-    # Define colour per GMM
-    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
-    colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
-    colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
-
-    # Set axes limits and axes labels
-    means = np.concatenate([res_dists[0].loc['Mean'],
-                            res_dists[1].loc['Mean'],
-                            res_dists[2].loc['Mean']])
-    sigmas = np.concatenate([res_dists[0].loc['Std Dev'],
-                             res_dists[1].loc['Std Dev'],
-                             res_dists[2].loc['Std Dev']])
-    mean_y_bound = np.max([np.abs(np.min(means)), np.abs(np.max(means))])
-    sigma_y_bound_non_centered = np.max(
-        [np.abs(np.max(sigmas)), np.abs(np.max(sigmas))])
-    sigma_y_bound = min(np.abs(1-sigma_y_bound_non_centered),
-                        np.abs(1+sigma_y_bound_non_centered))
+    # Compute some ylims and set some axis labels
+    all_means = np.concatenate([res_dists[0].loc['Mean'].values,
+                                res_dists[1].loc['Mean'].values,
+                                res_dists[2].loc['Mean'].values])
+    all_sigmas = np.concatenate([res_dists[0].loc['Std Dev'].values,
+                                 res_dists[1].loc['Std Dev'].values,
+                                 res_dists[2].loc['Std Dev'].values])
+    mean_bound = np.max([np.abs(np.nanmin(all_means)), np.abs(np.nanmax(all_means))])
+    sig_dev = np.nanmax(np.abs(all_sigmas - 1))
     for ax_index in range(0, 3):
-        ax[ax_index, 0].set_ylim(-mean_y_bound-0.5, mean_y_bound+0.5)
-        ax[ax_index, 1].set_ylim(0.9-sigma_y_bound, 1.1+sigma_y_bound)
+        ax[ax_index, 0].set_ylim(-mean_bound - 0.5, mean_bound + 0.5)
+        ax[ax_index, 1].set_ylim(1 - sig_dev - 0.1, 1 + sig_dev + 0.1)
         ax[ax_index, 0].set_xlabel('Period (s)', fontsize=12)
         ax[ax_index, 1].set_xlabel('Period (s)', fontsize=12)
-        ax[ax_index, 0].set_prop_cycle(colour_cycler)
-        ax[ax_index, 1].set_prop_cycle(colour_cycler)
     for ax_index in range(0, 2):
         ax[2, ax_index].set_ylabel('Within-Event', fontsize=12)
         ax[1, ax_index].set_ylabel('Between-Event', fontsize=12)
@@ -856,7 +821,8 @@ def plot_residual_means_and_stds(
         marker_inp,
         color_inp):
     """
-    Plot means or sigmas for given GMPE.
+    Plot means and standard deviation of residual distributions
+    for given GMPE.
     """
     # Get axes index
     if mean_or_std == 'Mean':
@@ -877,30 +843,21 @@ def plot_residual_means_and_stds(
     else:
         gmpe_label = gmpe # If not from toml file
 
-    # Plot mean
-    if (res_dists[2][gmpe].loc[mean_or_std].all()==0 and
-        res_dists[1][gmpe].loc[mean_or_std].all()==0):
-        
+    # Plot intra/inter if data exists (only total sigma for some GMMs)
+    has_inter_intra = not res_dists[1][gmpe].loc[mean_or_std].isna().all()
+    if has_inter_intra:
+        # Plot intra-event
         ax[2, i].scatter(imts_to_plot.imt_float,
                          res_dists[0][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
+                         color=color_inp,
+                         marker=marker_inp)
+        # Plot inter-event
         ax[1, i].scatter(imts_to_plot.imt_float,
                          res_dists[1][gmpe].loc[mean_or_std],
-                         color='w',
-                         marker=marker_inp,
-                         zorder=0)
-    else:
-        ax[2, i].scatter(imts_to_plot.imt_float,
-                         res_dists[0][gmpe].loc[mean_or_std],
                          color=color_inp,
                          marker=marker_inp)
-        ax[1, i].scatter(imts_to_plot.imt_float,
-                         res_dists[1][gmpe].loc[mean_or_std],                           
-                         color=color_inp,
-                         marker=marker_inp)
-        
+
+    # Plot total
     ax[0, i].scatter(imts_to_plot.imt_float,
                      res_dists[2][gmpe].loc[mean_or_std],
                      label=gmpe_label,
@@ -912,8 +869,8 @@ def plot_residual_means_and_stds(
 
 def plot_residual_means_and_stds_with_period(residuals, filename):
     """
-    Create a simple plot of residual mean and residual sigma
-    for each GMPE  (y-axis) versus period (x-axis).
+    Create a simple plot of means and standard deviations of each
+    GMPE (y-axis) versus period (x-axis).
     """
     # Check enough IMTs to plot w.r.t. period
     if len(residuals.imts) == 1:
@@ -929,19 +886,15 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
     fig, ax = _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot)
 
     # Define colours for GMPEs
-    colour_cycler = (cycler(color=COLORS)*cycler(marker=['x']))
-    colour_cycler_df = pd.DataFrame(colour_cycler)[:len(residuals.gmpe_list)]
-    colour_cycler_df['gmpe'] = residuals.gmpe_list.keys()
+    gmpe_colors = {gmpe: COLORS[i % len(COLORS)] for i, gmpe in enumerate(residuals.gmpe_list)}
 
     # Plot data
     for gmpe in residuals.gmpe_list.keys():
 
         # Assign colour and marker to each gmpe
-        input_df = pd.DataFrame(
-            colour_cycler_df.loc[colour_cycler_df['gmpe']==gmpe]).reset_index()
-        color_inp = input_df['color'].iloc[0]
-        marker_inp = input_df['marker'].iloc[0]
-        
+        color_inp = gmpe_colors[gmpe]
+        marker_inp = 'x'
+                
         # Plot means
         ax = plot_residual_means_and_stds(
             ax, res_dists, "Mean", gmpe, imts_to_plot, marker_inp, color_inp)
@@ -1002,8 +955,8 @@ def residual_means_and_stds_table(residuals, filename):
 ### Plotting of single station residual analysis results
 class ResidualWithSite(ResidualPlot):
     """
-    Plot total, inter-event and intra-event single-station the residuals
-    for the site selection, GMPE and intensity measure considered.
+    Plot total, inter-event and intra-event single-station residuals
+    for the selected sites, GMPE and intensity measure.
     """
     def _assertion_check(self, residuals):
         """
@@ -1062,8 +1015,8 @@ class ResidualWithSite(ResidualPlot):
         title_string = "%s - %s - %s" % (gmm_label, self.imt, sigma_label)
         ax.set_title(title_string, fontsize=11)
 
-        max_lim = ceil(np.max(np.fabs(yvals)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(yvals))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.set_ylabel("%s" % sigma_label, fontsize=12)
         ax.grid()
 
@@ -1073,20 +1026,27 @@ class ResidualWithSite(ResidualPlot):
         """
         data = {site_id: {} for site_id in self.residuals.site_ids}
         for iloc, site_resid in enumerate(self.residuals.site_residuals):
+
             resid = deepcopy(site_resid)
             site_id = list(self.residuals.site_ids)[iloc]
             n_events = resid.site_analysis[self.gmpe][self.imt]["events"]
+            
             total_res = resid.site_analysis[self.gmpe][self.imt]["Total"]
             total_exp = resid.site_analysis[self.gmpe][self.imt]["Expected total"]
+            
             data[site_id]["Total"] = np.array(total_res) / np.array(total_exp)
+            
             if "Intra event" in resid.site_analysis[self.gmpe][self.imt].keys():
+                
                 inter_res = resid.site_analysis[self.gmpe][self.imt]["Inter event"] 
                 intra_res = resid.site_analysis[self.gmpe][self.imt]["Intra event"] 
                 inter_exp = resid.site_analysis[self.gmpe][self.imt]["Expected inter"]
                 intra_exp = resid.site_analysis[self.gmpe][self.imt]["Expected intra"]
+
                 keep = pd.notnull(inter_res) # Dropping NaN idxs will realign with exp
                 data[site_id]["Inter event"] = np.array(inter_res)[keep] / np.array(inter_exp)
                 data[site_id]["Intra event"] = np.array(intra_res) / np.array(intra_exp)
+            
             data[site_id]["ID"] = list(self.residuals.site_ids)[iloc]
             data[site_id]["N"] = n_events
             data[site_id]["x-val"] = (float(iloc) + 0.5) * np.ones_like(data[site_id]["Total"])
@@ -1179,8 +1139,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         xtick_label = self.residuals.site_ids
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaW_es)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaW_es))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta W_{es}$ (%s)' % self.imt, fontsize=12)
 
@@ -1221,8 +1181,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaS2S_s)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaS2S_s))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta S2S_S$ (%s)' % self.imt, fontsize=12)
         
@@ -1244,8 +1204,8 @@ class IntraEventResidualWithSite(ResidualPlot):
         ax.set_xticks(xmean)
         ax.set_xticklabels(xtick_label, rotation="vertical")
         
-        max_lim = ceil(np.max(np.fabs(deltaWS_es)))
-        ax.set_ylim(-max_lim, max_lim)
+        ylim = np.ceil(np.max(np.fabs(deltaWS_es))) + 1.0
+        ax.set_ylim(-ylim, ylim)
         ax.grid()
         ax.set_ylabel(r'$\delta WS_{es} = \delta W_{es} - \delta S2S_S$', fontsize=12)
         
