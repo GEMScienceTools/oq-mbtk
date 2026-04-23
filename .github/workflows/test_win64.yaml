@@ -47,6 +47,7 @@ jobs:
       - name: Run scripts to install on windows
         env:
           BRANCH: ${{ github.event.inputs.git-ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host ${env:PATH}
           $Env:PATH += ";C:\programs\gmt6\bin"

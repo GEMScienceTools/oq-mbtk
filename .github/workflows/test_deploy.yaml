@@ -14,7 +14,7 @@ on:
 jobs:
   test:
     name: hazard test ${{ matrix.python-version}}
-    runs-on: ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -28,6 +28,7 @@ jobs:
       GITHUB_HD_REF:  ${{ github.head_ref }}
       GITHUB_BS_REF:  ${{ github.base_ref }}
       GITHUB_INPUT_REF: ${{ github.event.inputs.git-ref }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
@@ -76,6 +77,8 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install OpenQuake dependencies
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sudo apt-get install pandoc
         python -m pip install --upgrade pip
