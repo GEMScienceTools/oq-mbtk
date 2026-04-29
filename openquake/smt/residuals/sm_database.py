@@ -766,7 +766,8 @@ class GroundMotionDatabase(ContextDB):
                 periods = fle["IMS/H/Spectra/Response/Periods"][:]
                 target_period = imt.from_string(imtx).period
                 values.append(
-                    utils_imts.get_interpolated_period(target_period, periods, spectrum))
+                    utils_imts.get_interpolated_period(
+                        target_period, periods, spectrum))
             else:
                 raise ValueError("IMT %s is unsupported!" % imtx)
             fle.close()
@@ -775,7 +776,7 @@ class GroundMotionDatabase(ContextDB):
 
     def get_rup(self, ctx):
         """
-        Make a finite rupture for the given event inforamation.
+        Make a finite rupture for the given event information.
         """ 
         # Get msr and aratio based on TRT if possible
         if hasattr(ctx, 'tectonic_region_type'):
@@ -879,7 +880,7 @@ class GroundMotionDatabase(ContextDB):
         oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
-        ctxs = list(ctxm.get_ctx_iter([rup], site))
+        ctxs = ctxm.get_ctxs([rup], site)
 
         return ctxs[0]
 

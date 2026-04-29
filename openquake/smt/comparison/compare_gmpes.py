@@ -106,6 +106,10 @@ class Configurations(object):
             # Get lt weights
             self.get_lt_weights(self.gmpes_list)
 
+        # Raise an error if no GMMs specified
+        if len(self.gmpes_list) < 1:
+            raise ValueError("User has not specified any GMPEs in the config file.")
+
         # Get params for Euclidean analysis if required
         if "euclidean_analysis" in config_file:
             self.get_eucl_params(config_file)
@@ -255,7 +259,6 @@ class Configurations(object):
         else:
             value = f"[{key}] "
         if len(models[key]):
-            models[key].pop('style', None)
             value += '\n' + str(toml.dumps(models[key]))
         return value.strip()
 
@@ -352,6 +355,11 @@ class Configurations(object):
             # Store GMC's weights
             lt_weight[idx_trt] = lt_gmc
 
+        # Add any other GMMs specified in the xml dict
+        if "other_gmpes" in xml_dic:
+            for gmm in xml_dic["other_gmpes"]: # NOTE: GMMs must use OQ GSIM from string syntax - please
+                gmpe_list.append(gmm)          # see example in 'test_xml_gmc' unit test which is within
+                                               # oq-mbtk.openquake.smt.test.comparison.comparison_test.py
         # Add GMMs
         setattr(self, 'gmpes_list', gmpe_list)
         
@@ -393,30 +401,50 @@ class Configurations(object):
         # Add GMM labels
         self.gmpe_labels = config_file['euclidean_analysis']['gmpe_labels']
 
-def plot_trellis(filename, output_directory):
+def plot_trellis(filename, output_directory, obs_data_fname=None):
     """
     Plot trellis for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods
+    :param  obs_data_fname:
+        GEM-flatfile format CSV file - the (appropriate) data from this
+        flatfile will be plotted on the attenuation curves. The data is
+        selected if it falls within the following HARDCODED boundaries:
+        --> Within Mw +/- 0.25 of given magnitude
+        --> Within +/- 15 km of given focal depth
+        --> Within +/- 150 m/s of specified Vs30
+        --> NOTE: The user must provide a geographically and tectonic
+            region filtered flatfile (this filtering is not done here).
     """ 
     config = Configurations(filename)
     
-    store_gmm_curves = plot_trellis_util(config, output_directory) 
+    store_gmm_curves = plot_trellis_util(config, output_directory, obs_data_fname)
     
     return store_gmm_curves
                 
-def plot_spectra(filename, output_directory, obs_spectra_fname=None):
+def plot_spectra(filename, output_directory, obs_spectra_fname=None, obs_data_fname=None):
     """
     Plot response spectra and GMPE predictions for given run configuration.
     :param  filename:
         toml file providing configuration for use within comparative
         plotting methods
-    :param obs_spectra:
+    :param  obs_spectra:
         CSV of an observed spectra to plot (contains intensity value per
         period, EQ ID and station ID). An example of this file can be
-        found in oq-mbtk.openquake.smt.tests.comparison.data for the
+        found in oq-mbtk.openquake.smt.tests.comparison.data.inputs for the
         1993 Chamoli earthquake.
+    :param  obs_data_fname:
+        GEM-flatfile format CSV file - the (appropriate) data from this
+        flatfile will be plotted on the spectra plots. The data is selected
+        if it falls within the following HARDCODED boundaries:
+        --> Within Mw +/- 0.25 of given magnitude
+        --> Within +/- 15 km of given focal depth
+        --> Within +/- 150 m/s of specified Vs30
+        --> Within +/- a distance-dependent threshold (km) of the given
+            distance type specified in the toml file.
+        --> NOTE: The user must provide a geographically and tectonic
+            region filtered flatfile (this filtering is not done here).
     """
     config = Configurations(filename)
 
@@ -428,7 +456,8 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None):
                              "specify 1 magnitude and depth combination for " \
                              "response spectra plotting in the toml file.")
 
-    store_gmc_lts = plot_spectra_util(config, output_directory, obs_spectra_fname)
+    store_gmc_lts = plot_spectra_util(
+        config, output_directory, obs_spectra_fname, obs_data_fname)
 
     return store_gmc_lts
 

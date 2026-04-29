@@ -42,6 +42,7 @@ Currently the oq-mbt includes eight sub-modules:
   perils such as liquefaction and coseismic landslides
 * *SSC WorKFlow (wkf)* contains functions for building automated workflows for
   building seismic source characterisation
+* *Fermi (fnm)*  contains tools for fault network modeling
 
 .. toctree::
    :maxdepth: 2
@@ -56,6 +57,7 @@ Currently the oq-mbt includes eight sub-modules:
    contents/smt
    contents/sep
    contents/wkf
+   contents/fnm
 
 
 Indices and tables

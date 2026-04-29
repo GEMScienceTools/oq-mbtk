@@ -46,7 +46,7 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
     'recommonmark',
-    'nbsphinx'
+    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -66,7 +66,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -95,7 +95,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []#['_static']
+html_static_path = []  # ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -120,15 +120,12 @@ latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
-
     # The font size ('10pt', '11pt' or '12pt').
     #
     # 'pointsize': '10pt',
-
     # Additional stuff for the LaTeX preamble.
     #
     # 'preamble': '',
-
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
@@ -138,8 +135,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'mbt.tex', 'mbt Documentation',
-     'GEM Hazard', 'manual'),
+    (master_doc, 'mbt.tex', 'mbt Documentation', 'GEM Hazard', 'manual'),
 ]
 
 
@@ -147,10 +143,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'mbt', 'mbt Documentation',
-     [author], 1)
-]
+man_pages = [(master_doc, 'mbt', 'mbt Documentation', [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -159,9 +152,15 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'mbt', 'mbt Documentation',
-     author, 'mbt', 'One line description of project.',
-     'Miscellaneous'),
+    (
+        master_doc,
+        'mbt',
+        'mbt Documentation',
+        author,
+        'mbt',
+        'One line description of project.',
+        'Miscellaneous',
+    ),
 ]
 
 
