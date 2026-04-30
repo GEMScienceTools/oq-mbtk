@@ -78,8 +78,6 @@ pygments_style = 'default'
 
 # Preserve defaults in autodoc
 autodoc_preserve_defaults = True
-
-autodoc_mock_imports = ['pandas', 'rtree', 'geojson', 'pyproj', 'shapely', 'scipy','obspy', 'toml', 'h5py', 'geopandas', 'openquake.hazardlib', 'openquake.hmtk', 'openquake.baselib']
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
