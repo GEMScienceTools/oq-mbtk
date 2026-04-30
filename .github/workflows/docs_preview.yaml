@@ -19,6 +19,8 @@ jobs:
       with:
         python-version: "3.11"
     - name: Install dependencies
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sudo apt-get install -y pandoc
         python -m pip install --upgrade pip
