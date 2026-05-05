@@ -1,0 +1,96 @@
+openquake.cat package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.cat.completeness
+   openquake.cat.hmg
+   openquake.cat.parsers
+   openquake.cat.tests
+
+Submodules
+----------
+
+openquake.cat.catalogue\_query\_tools module
+--------------------------------------------
+
+.. automodule:: openquake.cat.catalogue_query_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.converter module
+------------------------------
+
+.. automodule:: openquake.cat.converter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.gcmt\_catalogue module
+------------------------------------
+
+.. automodule:: openquake.cat.gcmt_catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.gcmt\_utils module
+--------------------------------
+
+.. automodule:: openquake.cat.gcmt_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.isc\_downloader module
+------------------------------------
+
+.. automodule:: openquake.cat.isc_downloader
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.isc\_homogenisor module
+-------------------------------------
+
+.. automodule:: openquake.cat.isc_homogenisor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.isf\_catalogue module
+-----------------------------------
+
+.. automodule:: openquake.cat.isf_catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.regression\_models module
+---------------------------------------
+
+.. automodule:: openquake.cat.regression_models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.cat.utils module
+--------------------------
+
+.. automodule:: openquake.cat.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.cat
+   :members:
+   :show-inheritance:
+   :undoc-members:

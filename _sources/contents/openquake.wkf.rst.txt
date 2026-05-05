@@ -1,0 +1,112 @@
+openquake.wkf package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   openquake.wkf.h3
+   openquake.wkf.plot
+   openquake.wkf.seismicity
+   openquake.wkf.tests
+
+Submodules
+----------
+
+openquake.wkf.catalogue module
+------------------------------
+
+.. automodule:: openquake.wkf.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.completeness module
+---------------------------------
+
+.. automodule:: openquake.wkf.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.compute\_gr\_params module
+----------------------------------------
+
+.. automodule:: openquake.wkf.compute_gr_params
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.compute\_mmax\_from\_catalogues module
+----------------------------------------------------
+
+.. automodule:: openquake.wkf.compute_mmax_from_catalogues
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.distributed\_seismicity module
+--------------------------------------------
+
+.. automodule:: openquake.wkf.distributed_seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.mfd module
+------------------------
+
+.. automodule:: openquake.wkf.mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.plot\_incremental\_mfd module
+-------------------------------------------
+
+.. automodule:: openquake.wkf.plot_incremental_mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.ses module
+------------------------
+
+.. automodule:: openquake.wkf.ses
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.utils module
+--------------------------
+
+.. automodule:: openquake.wkf.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.wkf\_h3\_zones\_cat module
+----------------------------------------
+
+.. automodule:: openquake.wkf.wkf_h3_zones_cat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+openquake.wkf.wkf\_info\_gain module
+------------------------------------
+
+.. automodule:: openquake.wkf.wkf_info_gain
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: openquake.wkf
+   :members:
+   :show-inheritance:
+   :undoc-members:
