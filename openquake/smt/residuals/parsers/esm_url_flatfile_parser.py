@@ -611,9 +611,9 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         esm = pd.read_csv(flatfile_location)
 
         # Clean up the nodal plane solutions and take the first one if multiple
-        esm['es_rake'] = esm['es_rake'].apply(convert_bracketed_value)
-        esm['es_strike'] = esm['es_strike'].apply(convert_bracketed_value)
-        esm['es_dip'] = esm['es_dip'].apply(convert_bracketed_value)
+        for col in [
+            "es_strike", "es_dip", "es_rake", "es_length", "es_width", "es_z_top"]:
+            esm[col] = esm[col].apply(convert_bracketed_value)
 
         # Handle empty fm type values
         esm['fm_type_code'] = [fm if pd.notnull(fm) else "U" for fm in esm.fm_type_code]
