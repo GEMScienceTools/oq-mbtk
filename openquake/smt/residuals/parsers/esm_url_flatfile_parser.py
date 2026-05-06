@@ -193,7 +193,7 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
             "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
 
     if not mechanism.nodal_planes.nodal_plane_1:
-        # No information - base on style-of-faulting
+        # No information - base on style-of-faulting code
         mechanism.nodal_planes.nodal_plane_1 = {
             "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
             }
