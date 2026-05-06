@@ -59,6 +59,19 @@ def prepare_geometry(geojson_path: str, output_xy: str = "polygon.xy"):
 def split_catalogue_dynamic(df: pd.DataFrame, bins: list):
     """
     Splits the catalogue into dynamic magnitude bins provided by the user.
+
+    Inputs:
+    - df (pd.DataFrame): Dataframe containing 'longitude', 'latitude', and 'magnitude'.
+    - bins (list): A list of dictionaries defining the magnitude bins and their styles.
+    
+    Example:
+        bins = [
+            {"min_mag": 3.5, "max_mag": 4.5, "color": "blue", "size": "0.08c"},
+            {"min_mag": 6.5, "max_mag": None, "color": "red", "size": "0.25c"}
+        ]
+    
+    Returns:
+    - temp_files (list): List of temporary XYZ filenames created during the split.
     """
     temp_files = []
     for i, bin_info in enumerate(bins):
@@ -87,9 +100,23 @@ def visualize_catalogue(catalogue: str,
         catalogue (str): Path to the HMTK-formatted CSV catalogue.
         polygon (str): Path to the GeoJSON file for the study area boundary.
         region (list): Map extent [West, East, South, North].
-        output_png (str): Name of the output image file.
-        bins (list): List of dictionaries containing magnitude bin parameters.
+        output_png (str): Path to output image.
+        bins (list): List of dictionaries containing magnitude bins and 
+            their formatting styles. Defaults to 3.5-4.5-5.5-6.5 binning scheme.
+            
+    Formatting details in the dictionary:
+        - min_mag (float): Minimum magnitude.
+        - max_mag (float/None): Maximum magnitude. Set to None for the open upper limit.
+        - color (str): Color name for the points and legend symbol (e.g., "red", "blue").
+        - size (str): Symbol diameter in GMT units (e.g., "0.08c" for centimeters).
+        
+    Example:
+        bins = [
+            {"min_mag": 3.5, "max_mag": 4.5, "color": "blue", "size": "0.08c"},
+            {"min_mag": 6.5, "max_mag": None, "color": "red", "size": "0.25c"}
+        ]
     """
+    
     # Default magnitude bins and formats
     if bins is None:
         bins = [
@@ -131,7 +158,6 @@ gmt begin {map_name} png
     
     # Boundary fill
     gmt plot {xy_boundary} -W0.5p,gray40 -Ggray80@60
-    
 """
     
     for i, b in enumerate(bins):
