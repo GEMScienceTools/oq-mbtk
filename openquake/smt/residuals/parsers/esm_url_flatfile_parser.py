@@ -240,7 +240,7 @@ def parse_esm_url(esm):
     "es_dip":esm.es_dip,
     "es_rake":esm.es_rake,
     "es_strike_dip_rake_ref":None, 
-    "es_z_top":esm.z_top,
+    "es_z_top":esm.es_z_top,
     "es_z_top_ref":esm.es_z_top_ref,
     "es_length":esm.es_length,   
     "es_width":esm.es_width,
