@@ -612,7 +612,7 @@ class ESMFlatfileParserURL(SMDatabaseReader):
 
         # Clean up the nodal plane solutions and take the first one if multiple
         for col in [
-            "es_strike", "es_dip", "es_rake", "es_length", "es_width", "es_z_top"]:
+            "es_strike", "es_dip", "es_rake", "es_length", "es_width", "z_top"]:
             esm[col] = esm[col].apply(convert_bracketed_value)
 
         # Handle empty fm type values
