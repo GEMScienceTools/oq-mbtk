@@ -204,6 +204,12 @@ def parse_esm_url(esm):
     """
     Convert from esm URL format flatfile to esm18 format flatfile.
     """
+    # Arias intensity columns are diff in older versions so handle
+    ai_cols = {}
+    suffix = "_ai" if 'u_ai' in esm.columns else "_ia"
+    for col in ["u", 'v', 'w', 'rotd50', 'rotd100', 'rotd00']:
+        ai_cols[col] = f"{col}{suffix}"
+
     # Construct dataframe with original esm format 
     esm_original_headers = pd.DataFrame(
     {
@@ -321,12 +327,12 @@ def parse_esm_url(esm):
     "rotD50_CAV":esm.rotd50_cav,
     "rotD100_CAV":esm.rotd100_cav,
     "rotD00_CAV":esm.rotd00_cav,
-    "U_ia":esm.u_ai,
-    "V_ia":esm.v_ai,
-    "W_ia":esm.w_ai,
-    "rotD50_ia":esm.rotd50_ai,
-    "rotD100_ia":esm.rotd100_ai,
-    "rotD00_ia":esm.rotd00_ai,
+    "U_ia":esm[ai_cols['u']],
+    "V_ia":esm[ai_cols['v']],
+    "W_ia":esm[ai_cols['w']],
+    "rotD50_ia":esm[ai_cols['rotd50']],
+    "rotD100_ia":esm[ai_cols['rotd100']],
+    "rotD00_ia":esm[ai_cols['rotd00']],
     
     "U_T0_010":esm.u_t0_010,
     "U_T0_025":esm.u_t0_025,
