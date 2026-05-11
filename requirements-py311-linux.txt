@@ -33,7 +33,8 @@ https://wheelhouse.openquake.org/v3/py/pygmt-0.17.0-py3-none-any.whl
 # Version specific
 ipykernel >= 4.8.0
 ipython >= 6.2.0
-jupyter_client >= 5.0.0
+jupyter_client >= 8.8.0
+jupyter-server >=2.18.0
 nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
