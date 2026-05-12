@@ -45,7 +45,7 @@ Origin conversion
 
 from __future__ import print_function
 import numpy as np
-from scipy.misc import derivative
+from scipy.differentiate import derivative
 from datetime import date
 from math import sqrt
 from openquake.cat.utils import _prepare_coords
@@ -202,7 +202,8 @@ class MagnitudeConversionRule(object):
         err_final = sqrt(sigma_model ** 2. + (d(model)/d(mag)) ** 2
         '''
         if self.sigma_model:
-            deriv = derivative(self.model, magnitude)
+            res = derivative(self.model, float(magnitude), preserve_shape=True)
+            deriv = res.df
             return sqrt((self.sigma_model(magnitude) ** 2.) + (deriv ** 2.) *
                         (sigma ** 2.))
         else:
