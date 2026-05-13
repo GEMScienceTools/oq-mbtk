@@ -28,6 +28,10 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+"""
+Testing methods and functions in the catalogue.py
+"""
+
 import os
 import unittest
 import pandas as pd
@@ -37,9 +41,6 @@ import shutil
 
 from catalogue import prepare_geometry, split_catalogue_dynamic
 
-"""
-Testing methods and functions in the catalogue.py
-"""
 
 class TestquakeTGMTMapping(unittest.TestCase):
 
