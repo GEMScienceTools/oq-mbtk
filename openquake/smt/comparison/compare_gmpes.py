@@ -190,7 +190,8 @@ class Configurations(object):
         ftype = rup_data['fname'].split('.')[-1]
         if ftype == "xml":
             # Load XML
-            oqp = OqParam(calculation_mode='scenario')
+            oqp = OqParam(calculation_mode='scenario',
+                          inputs={'job_ini': '<in-memory>'})
             oqp.inputs['rupture_model'] = rup_data['fname']
             rup = get_rupture(oqp)
         else:
