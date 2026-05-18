@@ -182,9 +182,9 @@ def _get_cell_area(rlo, rla, coo, nnidx):
     :return:
 
     """
-    alo = [coo[idx][0] for idx in nnidx]
-    ala = [coo[idx][1] for idx in nnidx]
-    
+    alo = np.array([coo[idx][0] for idx in nnidx])
+    ala = np.array([coo[idx][1] for idx in nnidx])
+
     # Computing azimuths and distances
     azis = azimuth(rlo, rla, alo, ala)
     dsts = geodetic_distance(rlo, rla, alo, ala)
