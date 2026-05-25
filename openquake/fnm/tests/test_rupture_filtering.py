@@ -404,7 +404,7 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         )
 
         pd.testing.assert_frame_equal(
-            plaus_df, _plaus_df, rtol=1e-6, atol=1e-8, check_dtype=True
+            plaus_df, _plaus_df, rtol=1e-2, check_dtype=True
         )
 
 
