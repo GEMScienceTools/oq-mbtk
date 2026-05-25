@@ -31,6 +31,11 @@
 """
 module :mod:`openquake.plt.interevent` provides functions for a statistical 
 evaluation and plotting for inter-event times of catalogue.
+
+Note: A simplified calculation for decimal years is used within function.
+This is sufficient enough for long-term catalogues but minor variations in month 
+lengths and leap years could cause micro-scale precision discrepancies 
+for short-term catalogues.
 """
 
 import os
@@ -56,7 +61,7 @@ def get_aic(dist, params, data):
 
     Returns:
     - aic_score (float): The calculated Akaike Information Criterion value. 
-                         Lower scores indicate a mathematically superior model fit.
+                         Lower scores indicate a mathematically superior model fit. 
     """
     log_lik = np.sum(dist.logpdf(data, *params))
     return 2 * len(params) - 2 * log_lik
