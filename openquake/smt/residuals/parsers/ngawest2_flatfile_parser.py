@@ -35,6 +35,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Magnitude,
                                                  Rupture,
                                                  FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE, 
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite,
@@ -605,7 +607,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         if not mechanism.nodal_planes.nodal_plane_1:
             # Absolutely no information - base on stye-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
-                "strike": 0.0, "dip": utils.DIP_TYPE[sof], "rake": utils.MECHANISM_TYPE[sof]
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
                 }
             
         return rupture, mechanism
