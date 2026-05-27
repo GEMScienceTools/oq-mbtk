@@ -35,6 +35,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Magnitude,
                                                  Rupture,
                                                  FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE, 
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite,
@@ -605,7 +607,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         if not mechanism.nodal_planes.nodal_plane_1:
             # Absolutely no information - base on stye-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
-                "strike": 0.0, "dip": utils.DIP_TYPE[sof], "rake": utils.MECHANISM_TYPE[sof]
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
                 }
             
         return rupture, mechanism
@@ -648,9 +650,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Vs30
         vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         if pd.isnull(vs30):
-            # Need a station vs30 value for residuals (not really, given
-            # some GMMs lack site terms, but good way to prevent confusing
-            # nans in the expected values which appear when computing stats)
+            # Also prevents nans appearing in residual outputs
             raise ValueError(f"A vs30 value is missing for {site_id}")
         vs30_measured_flag = metadata["vs30_meas_type"]
         if vs30_measured_flag == "measured":
@@ -672,7 +672,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add basin params
         site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = utils.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
-        print(site.z2pt5)
 
         return site
 
@@ -680,26 +679,22 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data.
         """
-        # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
+        # U channel
         xazimuth = utils.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": utils.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": utils.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
-        # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
+        # V channel
         vazimuth = utils.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": utils.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": utils.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
-        zorientation = metadata["W_channel_code"].strip()
-        if zorientation:
-            zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter, units="cm/s/s")
-        else:
-            zcomp = None
+
+        # W (vertical) channel
+        zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
+                   "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
+        zcomp = Component(wfid, None, waveform_filter=zfilter, units="cm/s/s")
         
         return xcomp, vcomp, zcomp
 
