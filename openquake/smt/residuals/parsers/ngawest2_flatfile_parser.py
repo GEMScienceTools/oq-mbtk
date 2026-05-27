@@ -672,7 +672,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add basin params
         site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = utils.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
-        print(site.z2pt5)
 
         return site
 
