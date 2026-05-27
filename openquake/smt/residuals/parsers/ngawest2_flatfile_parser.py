@@ -714,7 +714,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
-        fle = h5py.File(filename, "w")
+        fle = h5py.File(filename, "w-")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)
