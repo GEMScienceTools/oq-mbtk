@@ -691,7 +691,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         # W (vertical) channel
         zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
-                    "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
+                   "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
         zcomp = Component(wfid, None, waveform_filter=zfilter, units="cm/s/s")
         
         return xcomp, vcomp, zcomp
