@@ -648,9 +648,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Vs30
         vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         if pd.isnull(vs30):
-            # Need a station vs30 value for residuals (not really, given
-            # some GMMs lack site terms, but good way to prevent confusing
-            # nans in the expected values which appear when computing stats)
+            # Also prevents nans appearing in residual outputs
             raise ValueError(f"A vs30 value is missing for {site_id}")
         vs30_measured_flag = metadata["vs30_meas_type"]
         if vs30_measured_flag == "measured":
