@@ -447,13 +447,20 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                      'Mo (dyne.cm)',
                      'Station Name',
                      'Strike (deg)', 'Dip (deg)', 'Rake Angle (deg)',
-                     'EpiD (km)']
+                     'EpiD (km)',
+                     'Station Latitude', 'Station Longitude']
         for col in drop_cols:
             idx_m = ngawest2.loc[ngawest2[col] == -999].index
-            ngawest2.drop(idx_m, inplace=True)
-            ngawest2_vert.drop(idx_m, inplace=True)
-            ngawest2.reset_index(drop=True, inplace=True)
-            ngawest2_vert.reset_index(drop=True, inplace=True)
+            ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+            ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
+
+        # Drop records with non-valid rake
+        idx_rake = ngawest2.loc[
+            (ngawest2['Rake Angle (deg)'] < -180.0) |
+            (ngawest2['Rake Angle (deg)'] > 180.0)
+            ].index
+        ngawest2 = ngawest2.drop(idx_rake).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_rake).reset_index(drop=True)
 
         # Replace missing year/month/day/hour/minute, cast to string first
         ngawest2['YEAR'] = ngawest2['YEAR'].astype(str)
@@ -707,7 +714,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
 
         # Build the hdf5 files
         filename = os.path.join(location, "{:s}.hdf5".format(record.id))
-        fle = h5py.File(filename, "w-")
+        fle = h5py.File(filename, "w")
         ims_grp = fle.create_group("IMS")
         for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:
             comp_grp = ims_grp.create_group(comp)

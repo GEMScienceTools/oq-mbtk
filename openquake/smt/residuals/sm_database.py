@@ -29,6 +29,7 @@ from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.calc.filters import magdepdist
 from openquake.hazardlib.const import TRT
 
 from openquake.smt import utils
@@ -877,7 +878,11 @@ class GroundMotionDatabase(ContextDB):
         
         # Make the ctx for given station which contains all distances
         mag_str = [f'{rup.mag:.2f}']
-        oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
+        oqp = {'imtls': {"PGA": []}, 'mags': mag_str,
+               # Use large max dist to avoid filtering out very
+               # far away sites within genctx (in the ctx maker)
+               'maximum_distance': magdepdist(
+                   [(2.5, 20000.), (10.2, 20000.)])}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
         ctxs = ctxm.get_ctxs([rup], site)
