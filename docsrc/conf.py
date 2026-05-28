@@ -15,7 +15,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../'))
 
 from openquake import cat, wkf, mbt, mbi, aft, fnm, ghm, man
 
@@ -51,6 +51,21 @@ extensions = [
     'nbsphinx',
 ]
 
+autodoc_mock_imports = ['scipy',
+			'matplotlib',
+			'pandas',
+			'rtree',
+			'geopandas', 
+			'toml',
+			'h5py', 
+			'obspy',
+			'geojson',
+			'shapely',
+			'openquake.baselib',
+			'openquake.hazardlib',
+			'openquake.hmtk', 
+			'h3', 
+			'pyproj']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
