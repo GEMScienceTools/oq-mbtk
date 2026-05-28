@@ -39,7 +39,7 @@ def main(h3_level: str, fname_catalogue : str, fname_out: str):
     gojpol['coordinates'] = [coo]
 
     # Generate h3 hexagons over the area, save in dataframe
-    hexagons = list(h3.polyfill(gojpol, h3_level))
+    hexagons = list(h3.polygon_to_cells(gojpol, h3_level))
 
     fout = open(fname_out, 'w')
     for hxg in hexagons:

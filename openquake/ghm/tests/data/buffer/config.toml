@@ -1,0 +1,7 @@
+# Example of configuration file
+zonation_fname = "./mosaic.geojson"
+num_points_in_circle = 16
+buffer_distance = 100.0
+output_dir = './out'
+key_column = 'code'
+models_keys = ["twn"]

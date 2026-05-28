@@ -43,7 +43,7 @@ def plot_mfd_accumdict(mfd, **kwargs):
     mags = sorted(mfd.keys())
     vals = np.cumsum(np.array([mfd[k] for k in mags])[::-1])[::-1]
 
-    plt.semilogy(mags, vals, **kwargs)
+    plt.semilogy(mags, vals, '.-', **kwargs)
     plt.xlabel("M")
     plt.ylabel("Annual Rate of Exceedance")
 
@@ -69,7 +69,7 @@ def plot_mfd(mfd, errs=False, label=None, **kwargs):
     # cum_std_low = cum_rates - cum_stds
     # cum_std_low[cum_std_low < 0] = 0
 
-    plt.plot(mags, cum_rates, label=label, **kwargs)
+    plt.plot(mags, cum_rates, '.-', label=label, **kwargs)
 
     if errs:
         plt.fill_between(

@@ -170,13 +170,13 @@ def plot_sources(folder_name,
 		fig_a.plot(x=data[:,0], 
 			y=data[:,1], 
 			style="h0.2", 
-			color=data[:, 2],
+			fill=data[:, 2],
 			cmap=cpt_rate)
  
 		fig_b.plot(x=data[:,0], 
 			y=data[:,1], 
 			style="h0.2", 
-			color=data[:, 4],
+			fill=data[:, 4],
 			cmap=cpt_mmax)
         
 		if plot_poly == True:
@@ -278,13 +278,13 @@ def plot_all_sources(folder_name,
 	fig_a.plot(x=dataset[:,0], 
 		y=dataset[:,1], 
 		style="h0.2", 
-		color=dataset[:, 2],
+		fill=dataset[:, 2],
 		cmap=cpt_rate)
  
 	fig_b.plot(x=dataset[:,0], 
 		y=dataset[:,1], 
 		style="h0.2", 
-		color=dataset[:, 4],
+		fill=dataset[:, 4],
 		cmap=cpt_mmax)
         
 	if plot_poly == True:
@@ -514,7 +514,7 @@ def compare_sources_plot(src1_fname,
 	fig.plot(x=data1[:,0], 
 		y=data1[:,1], 
 		style="h0.75", 
-		color=rate_diff,
+		fill=rate_diff,
 		cmap=cpt_rate)
 
 	fig.colorbar(frame=f'af+l"Difference in log((N(m)>{mmin}))"', cmap=cpt_rate)    

@@ -29,22 +29,6 @@ import abc
 import os
 
 
-def with_metaclass(meta, *bases):
-    """
-    Returns an instance of meta inheriting from the given bases.
-    To be used to replace the __metaclass__ syntax.
-    """
-    class metaclass(meta):
-        __call__ = type.__call__
-        __init__ = type.__init__
-
-        def __new__(mcl, name, this_bases, d):
-            if this_bases is None:
-                return type.__new__(mcl, name, (), d)
-            return meta(name, bases, d)
-    return metaclass('temporary_class', None, {})
-
-
 def _to_int(string):
     """
     Converts a string to an integer, returning none if empty
@@ -74,7 +58,7 @@ def _to_str(string):
     return string.strip(' ')
 
 
-class BaseCatalogueDatabaseReader(with_metaclass(abc.ABCMeta)):
+class BaseCatalogueDatabaseReader(metaclass=abc.ABCMeta):
     """
     Abstract base class for reading an earthquake database file
     """

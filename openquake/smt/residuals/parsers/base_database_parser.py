@@ -22,12 +22,9 @@ Abstract base class for a strong motion database reader.
 """
 import os
 import abc
-import pandas as pd
-
-from openquake.baselib.python3compat import with_metaclass
 
 
-class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
+class SMDatabaseReader(metaclass=abc.ABCMeta):
     """
     Abstract base class for strong motion database parser.
     """
@@ -51,7 +48,7 @@ class SMDatabaseReader(with_metaclass(abc.ABCMeta)):
         """
 
 
-class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
+class SMTimeSeriesReader(metaclass=abc.ABCMeta):
     """
     Abstract base class for a reader of a ground motion time series. Returns
     a dictionary containing basic time-history information for each component.
@@ -76,7 +73,7 @@ class SMTimeSeriesReader(with_metaclass(abc.ABCMeta)):
         """
 
 
-class SMSpectraReader(with_metaclass(abc.ABCMeta)):
+class SMSpectraReader(metaclass=abc.ABCMeta):
     """
     Abstract Base Class for a reader of a ground motion spectra record
     """

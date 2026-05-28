@@ -21,11 +21,15 @@ Parser for a flatfile downloaded from the esm custom url database.
 
 This parser assumes you have selected all available headers in your URL search
 when downloading the flatfile.
+
+Last updated 6th May 2026 (some changes were needed for column reformatting
+and how they now report the nodal plane solutions).
 """
 import os
 import tempfile
 import csv
 import pickle
+import numpy as np
 import pandas as pd
 from linecache import getline
 
@@ -121,6 +125,35 @@ HEADERS = ["event_id",
            "W_lp"]
 
 
+def convert_bracketed_value(val):
+    """
+    Clean up the nodal plane solutions and if multiple are
+    provided take the first one.
+    """
+    # Might be empty
+    if pd.isna(val):
+        return np.nan
+    
+    # Get a string
+    val_str = str(val).strip()
+    
+    # If null or list of null...
+    if 'NULL' in val_str:
+        return np.nan
+    
+    # Remove brackets
+    val_str = val_str.strip('[]')
+    
+    # If comma separated, take first
+    if ',' in val_str:
+        val_str = val_str.split(',')[0].strip()
+    
+    # Remove quotes if any
+    val_str = val_str.strip("'\"")
+    
+    return float(val_str)
+
+
 def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     """
     Parse rupture mechanism. 
@@ -148,31 +181,34 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     # See if focal mechanism exists and get it if so
     fm_set = []
     for key in ["es_strike", "es_dip", "es_rake"]:
+        # Nodal plane values already cleaned using convert_bracketed_value
         if key in metadata:
             fm_param = vfloat(metadata[key], key)
             if fm_param is not None:
                 fm_set.append(fm_param)
 
     if len(fm_set) == 3:
-        # Has a valid focal mechanism (esm URL format flatfile only
-        # provides one nodal plane
+        # Has a valid focal mechanism
         mechanism.nodal_planes.nodal_plane_1 = {
             "strike": fm_set[0], "dip": fm_set[1], "rake": fm_set[2]}
 
     if not mechanism.nodal_planes.nodal_plane_1:
-        # Absolutely no information - base on style-of-faulting
+        # No information - base on style-of-faulting code
         mechanism.nodal_planes.nodal_plane_1 = {
             "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
             }
         
     return rupture, mechanism
 
-def _parse_esm_url(esm):
+def parse_esm_url(esm):
     """
     Convert from esm URL format flatfile to esm18 format flatfile.
     """
-    # Handle empty fm type values
-    esm['fm_type_code'] = [fm if pd.notnull(fm) else "U" for fm in esm.fm_type_code]
+    # Arias intensity columns are diff in older versions so handle
+    ai_cols = {}
+    suffix = "_ai" if 'u_ai' in esm.columns else "_ia"
+    for col in ["u", 'v', 'w', 'rotd50', 'rotd100', 'rotd00']:
+        ai_cols[col] = f"{col}{suffix}"
 
     # Construct dataframe with original esm format 
     esm_original_headers = pd.DataFrame(
@@ -204,7 +240,7 @@ def _parse_esm_url(esm):
     "es_dip":esm.es_dip,
     "es_rake":esm.es_rake,
     "es_strike_dip_rake_ref":None, 
-    "es_z_top":esm.z_top,
+    "es_z_top":esm.es_z_top,
     "es_z_top_ref":esm.es_z_top_ref,
     "es_length":esm.es_length,   
     "es_width":esm.es_width,
@@ -291,12 +327,12 @@ def _parse_esm_url(esm):
     "rotD50_CAV":esm.rotd50_cav,
     "rotD100_CAV":esm.rotd100_cav,
     "rotD00_CAV":esm.rotd00_cav,
-    "U_ia":esm.u_ia,
-    "V_ia":esm.v_ia,
-    "W_ia":esm.w_ia,
-    "rotD50_ia":esm.rotd50_ia,
-    "rotD100_ia":esm.rotd100_ia,
-    "rotD00_ia":esm.rotd00_ia,
+    "U_ia":esm[ai_cols['u']],
+    "V_ia":esm[ai_cols['v']],
+    "W_ia":esm[ai_cols['w']],
+    "rotD50_ia":esm[ai_cols['rotd50']],
+    "rotD100_ia":esm[ai_cols['rotd100']],
+    "rotD00_ia":esm[ai_cols['rotd00']],
     
     "U_T0_010":esm.u_t0_010,
     "U_T0_025":esm.u_t0_025,
@@ -574,8 +610,16 @@ class ESMFlatfileParserURL(SMDatabaseReader):
         # Import esm url format strong-motion flatfile
         esm = pd.read_csv(flatfile_location)
 
+        # Clean up the nodal plane solutions and take the first one if multiple
+        for col in [
+            "es_strike", "es_dip", "es_rake", "es_length", "es_width", "es_z_top"]:
+            esm[col] = esm[col].apply(convert_bracketed_value)
+
+        # Handle empty fm type values
+        esm['fm_type_code'] = [fm if pd.notnull(fm) else "U" for fm in esm.fm_type_code]
+
         # Get path to tmp csv containing reformatted dataframe
-        tmp = _parse_esm_url(esm)
+        tmp = parse_esm_url(esm)
         
         if os.path.exists(output_location):
             raise IOError("Target database directory %s already exists!"

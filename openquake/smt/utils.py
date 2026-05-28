@@ -35,10 +35,105 @@ from openquake.hazardlib import valid
 AVAILABLE_GSIMS = get_available_gsims()
 
 # Regular expression to get a GMPETable from string:
-_gmpetable_regex = re.compile(r'^GMPETable\(([^)]+?)\)$')
+_GMPETABLE_REGEX = re.compile(r'^GMPETable\(([^)]+?)\)$')
+
+# GEM Global Flatfile Mappings
+CMS2_TO_G = 1/980.665
+CMS_TO_GSEC = 1/980.665
+GEM_FF_MAPPINGS = {
+    # Dist types: dist cols
+    "repi": "epi_dist",
+    "rjb": "JB_dist",
+    "rrup": "rup_dist",
+    "rhypo": "rhypo_dist",
+    # IMT strings: {col, units in flatfile, conversion to OQ gsim units --> found in oq-engine.openquake.hazardlib.imt}
+    "CAV": {"col": "rotD50_CAV", "unit": "cm/s", "conv_factor": CMS_TO_GSEC},
+    "IA": {"col": "rotD50_IA", "unit": "m/s", "conv_factor": 1},
+    "PGD": {"col": "rotD50_pgd", "unit": "cm", "conv_factor": 1},
+    "PGV": {"col": "rotD50_pgv", "unit": "cm/s", "conv_factor": 1},
+    "PGA": {"col": "rotD50_pga", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.01)": {"col": "rotD50_T0_010", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.025)": {"col": "rotD50_T0_025", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.04)": {"col": "rotD50_T0_040", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.05)": {"col": "rotD50_T0_050", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.07)": {"col": "rotD50_T0_070", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.1)": {"col": "rotD50_T0_100", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.15)": {"col": "rotD50_T0_150", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.2)": {"col": "rotD50_T0_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.25)": {"col": "rotD50_T0_250", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.3)": {"col": "rotD50_T0_300", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.35)": {"col": "rotD50_T0_350", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.4)": {"col": "rotD50_T0_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.45)": {"col": "rotD50_T0_450", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.5)": {"col": "rotD50_T0_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.6)": {"col": "rotD50_T0_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.7)": {"col": "rotD50_T0_700", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.75)": {"col": "rotD50_T0_750", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.8)": {"col": "rotD50_T0_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(0.9)": {"col": "rotD50_T0_900", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.0)": {"col": "rotD50_T1_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.2)": {"col": "rotD50_T1_200", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.4)": {"col": "rotD50_T1_400", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.6)": {"col": "rotD50_T1_600", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(1.8)": {"col": "rotD50_T1_800", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.0)": {"col": "rotD50_T2_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(2.5)": {"col": "rotD50_T2_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.0)": {"col": "rotD50_T3_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(3.5)": {"col": "rotD50_T3_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.0)": {"col": "rotD50_T4_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(4.5)": {"col": "rotD50_T4_500", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(5.0)": {"col": "rotD50_T5_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(6.0)": {"col": "rotD50_T6_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(7.0)": {"col": "rotD50_T7_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(8.0)": {"col": "rotD50_T8_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(9.0)": {"col": "rotD50_T9_000", "unit": "g", "conv_factor": CMS2_TO_G},
+    "SA(10.0)": {"col": "rotD50_T10_000", "unit": "g", "conv_factor": CMS2_TO_G}
+    }
 
 
-### General utils for value validation
+COLORS = [
+        '#0000FF',  # blue
+        '#008000',  # green
+        '#FF0000',  # red
+        '#00FFFF',  # cyan
+        '#FF00FF',  # magenta
+        '#FFFF00',  # yellow
+        '#DAA520',  # goldenrod
+        '#708090',  # slategray
+        '#A0522D',  # sienna
+        '#FF4500',  # orange red
+        '#32CD32',  # lime green
+        '#FF8C00',  # dark orange
+        '#9400D3',  # dark violet
+        '#20B2AA',  # light sea green
+        '#F0E68C',  # khaki
+        '#FF69B4',  # hot pink
+        '#BA55D3',  # medium orchid
+        '#7CFC00',  # lawn green
+        '#CD853F',  # peru
+        '#9ACD32',  # yellow green
+        '#3CB371',  # medium sea green
+        '#4B0082',  # indigo
+        '#FFFF00',  # yellow
+        '#1E90FF',  # dodger blue
+        '#FFB6C1',  # light pink
+        '#4682B4',  # steel blue
+        '#8FBC8F',  # dark sea green
+        '#B22222',  # firebrick
+        '#00CED1',  # dark turquoise
+        '#FFD700',  # gold
+        '#6A5ACD',  # slate blue
+        '#D2691E',  # chocolate
+        '#00BFFF',  # deep sky blue
+        '#FF6347',  # tomato
+        '#40E0D0',  # turquoise
+        '#C71585',  # medium violet red
+        '#E9967A',  # dark salmon
+        '#A9A9A9',  # dark gray
+        ]
+
+
+### Utils for value validation ###
 def get_float(xval):
     """
     Returns a float value, or none
@@ -233,7 +328,7 @@ def full_dtype_gmm():
     return gmpe
 
 
-### General utils for time series
+### General utils for time series ###
 def convert_accel_units(acceleration, from_, to_='cm/s/s'):  # noqa
     """
     Converts acceleration from/to different units
@@ -330,7 +425,7 @@ def nextpow2(nval):
     return int(2.0 ** m_i)
 
 
-### Utils for managing GMMs in the Residuals Module
+### Utils for managing GMMs in the Residuals Module ###
 def check_gsim_list(gsim_list):
     """
     Check the GSIM models or strings in `gsim_list`, and return a dict of
@@ -351,7 +446,7 @@ def check_gsim_list(gsim_list):
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
         else:
-            match = _gmpetable_regex.match(gs) # GMPETable ?
+            match = _GMPETABLE_REGEX.match(gs) # GMPETable ?
             if match:
                 filepath = match.group(1).split("=")[1] # Get table filename
                 output_gsims[gs] = GMPETable(gmpe_table=filepath)
@@ -365,7 +460,7 @@ def _get_gmpe_name(gsim):
     """
     Returns the name of the GMPE given an instance of the class
     """
-    match = _gmpetable_regex.match(str(gsim)) # GMPETable ?
+    match = _GMPETABLE_REGEX.match(str(gsim)) # GMPETable ?
     if match:
         filepath = match.group(1).split("=")[1][1:-1]
         return 'GMPETable(gmpe_table=%s)' % filepath
@@ -417,7 +512,7 @@ def clean_gmm_label(gmpe, drop_weight_info=False):
     return gmm_label
 
 
-### Vs30 to z1pt0 and z2pt5 relationships from GMMs
+### Vs30 to z1pt0 and z2pt5 relationships from GMMs ###
 def vs30_to_z1pt0_as08(vs30):
     """
     Extracts a depth to 1.0 km/s velocity layer using the relationship

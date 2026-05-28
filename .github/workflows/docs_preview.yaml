@@ -1,0 +1,49 @@
+name: docs preview
+
+on:
+  push:
+    branches:
+      - docs
+
+jobs:
+  docs:
+    name: build and deploy docs preview
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: 'Agg'
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        sudo apt-get install -y pandoc
+        python -m pip install --upgrade pip
+        git clone --depth=1 https://github.com/gem/oq-engine.git
+        cd oq-engine
+        python3 install.py devel
+        sleep 3
+        source ~/openquake/bin/activate
+        pip install sphinx recommonmark sphinx_rtd_theme nbsphinx
+        cd ..
+        pip install -e .
+    - name: Build docs
+      run: |
+        source ~/openquake/bin/activate
+        cd docsrc
+        sphinx-apidoc -o contents/ ../openquake
+        make html
+        touch _build/html/.nojekyll
+    - name: Deploy preview to gh-pages/preview/docs
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: docsrc/_build/html/
+        destination_dir: preview/docs
+        commit_message: "docs preview for branch docs"

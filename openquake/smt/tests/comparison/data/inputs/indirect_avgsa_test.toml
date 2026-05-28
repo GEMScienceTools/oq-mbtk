@@ -1,0 +1,59 @@
+# Test input file for checking execution and values of indirect AvgSA GMPEs requiring build_mgmpe function found in openquake.smt.comparison.utils_gmpes.py
+
+[general]
+imt_list = ["SA(0.2)", "SA(1.0)", "AvgSA(0.2)", 'AvgSA(1.0)'] # IMTs to compute attenuation curves for
+max_period = 0.5 # Max period for response spectra (can't exceed maximum period in a specified GMPE)
+minR = 0 # Min dist. used in trellis, Sammon's, clusters and matrix plots
+maxR = 300 # Max dist. used in trellis, Sammon's, clusters and matrix plots
+dist_type = 'rrup' # Specify distance metric for trellis/spectra
+dist_list = [] # Distances for use in response spectra
+Nstd = 2 # Truncation for GMM sigma distribution
+
+[site_properties] # Specify site properties (vs30 must be specified - the others are proxied if key is missing)
+vs30 = 800
+z1pt0 = 30.0  # (m) - if -999 compute from each GMM's own vs30 to z1pt0 relationship
+z2pt5 = 0.57  # (km) - if -999 compute from each GMM's own vs30 to z2pt5 relationship
+up_or_down_dip = 1 # 1 = up-dip, 0 = down-dip
+volc_back_arc = false # true or false
+eshm20_region = 0 # Residual attenuation cluster to use for KothaEtAl2020ESHM20
+
+[source_properties] # Characterise EQ as finite rupture
+lon = 0
+lat = 0
+strike = 0
+dip = 45
+rake = 60 # Must be provided. Strike and dip can be approximated if set to -999
+mags = [5, 6, 7] # mags used only for trellis and response spectra
+depths = [20, 25, 30] # depth per magnitude for trellis and response spectra
+ztor = [1.0, 2.5, 3.0] # Set to -999 to NOT consider
+aratio = 3 # If set to -999 the user-provided trt string will be used to assign a trt-dependent aratio
+trt = -999 # Either -999 to use provided aratio OR specify a trt string to assign a trt-dependent proxy
+
+[euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
+mag_spacing = 0.1
+mags_depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+gmpe_labels = ['NA', 'NA']
+
+# Specify GMMs
+[models]
+
+[models.0-ModifiableGMPE] # Indirect approach 1 - t_low and t_high with n_per
+gmpe = "[KothaEtAl2020ESHM20]\nsigma_mu_epsilon=-2.85697000"
+GmpeIndirectAvgSA = "{'corr_func': 'eshm20', 't_low': 0.2, 't_high': 1.5, 'n_per': 10}"
+
+[models.1-ModifiableGMPE] # Indirect approach 2 - list of averaging periods
+gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
+[ratios_baseline_gmm.ModifiableGMPE] # Use as baseline for computing ratios against the predictions of
+                                     # the other GMPEs specified here (the ratios for AvgSA will be computed
+                                     # from indirect approach, and the non-AvgSA IMTs (here PGA) will be the
+                                     # ratios of the underlying GMPEs predictions (NB inherently the predictions
+                                     # against indirect approach 2 configuration will all equal 1.0 because the 
+                                     # baseline GMPE specified here is identical)
+gmpe = "[BooreEtAl2014]\nsigma_mu_epsilon=-2.85697000"
+GenericGmpeAvgSA = "{'corr_func': 'eshm20', 'avg_periods': [0.2, 0.85, 1.5]}"
+
+[custom_plotting]
+custom_colors_flag = false # Set to true for custom colours
+custom_colors_list = ['lime','dodgerblue','gold','0.8']

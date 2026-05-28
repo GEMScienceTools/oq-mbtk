@@ -127,17 +127,21 @@ def main(model, folder_out, fname_conf, example=False):
     np.savetxt(out_file, sites, delimiter=",")
 
 
-def _get_sites(model, folder_out, conf, root_path=''):
+def _get_sites(model, folder_out, conf, root_path='', crs= 'epsg:3857',):
     """
     Tool for creating an equally spaced set of points covering a model in the
     global hazard mosaic.
+
+    param crs: 
+        optional crs, useful at high/low latitude where 3857 breaks down
+        select an alternative from epsg.io
+
 
     :param root_path:
         The path to the file with the confifuration i.e. the file used as a
         reference for specifying the relative paths in the configuration
         dictionary
     """
-
     if not os.path.isabs(conf['main']['borders_fname']):
         in_file = os.path.join(root_path, conf['main']['borders_fname'])
     else:
@@ -145,12 +149,6 @@ def _get_sites(model, folder_out, conf, root_path=''):
 
     buffer_dist = conf['main']['buffer']
     h3_resolution = conf['main']['h3_resolution']
-
-    # Set the name of the shapefile
-    # if model == 'ucerf':
-    #    fname = 'cb_2017_us_state_500k.shp'
-    #    print('ucerf')
-    # in_file = os.path.join(inpath, fname)
 
     country_column = conf['main']['country_column']
     SUBSETS = mosaic.SUBSETS[country_column]
@@ -161,19 +159,15 @@ def _get_sites(model, folder_out, conf, root_path=''):
     tmpdf = create_query(tmpdf, country_column, DATA[model])
 
     # Explode the geodataframe and set MODEL attribute
-    # inpt = explode(tmpdf)
     inpt = tmpdf.explode(index_parts=True)
     inpt['MODEL'] = model
 
     # Select polygons the countries composing the given model
-    # selection = create_query(inpt, country_column, mosaic.DATA[model])
-    # selection = selection.set_crs('epsg:4326')
     selection = inpt
 
     # Merge the polygons into a single one
     one_polygon = selection.dissolve(by='MODEL')
 
-    # Process the polygons included in the selection. One polygon per row
     old_key = ''
     sites_indices = []
     for nrow, row in selection.iterrows():
@@ -190,7 +184,7 @@ def _get_sites(model, folder_out, conf, root_path=''):
             # Create geodataframe and add a buffer
             gds = gpd.GeoSeries([poly])
             gds = gds.set_crs('epsg:4326')
-            projected = gds.to_crs('epsg:3857')
+            projected = gds.to_crs(crs)
             projected = projected.buffer(buffer_dist)
             # This returns a geodataseries that we convert to geodataframe
             gds = projected.to_crs('epsg:4326')
@@ -200,10 +194,7 @@ def _get_sites(model, folder_out, conf, root_path=''):
             eee = gds.explode(index_parts=True)
             feature_coll = eee.__geo_interface__
             tmp = feature_coll['features'][0]['geometry']
-            try:
-                tidx_a = h3.polyfill_geojson(tmp, h3_resolution)
-            except:
-                breakpoint()
+            tidx_a = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
 
             # In this case we need to further refine the selection
             if model in SUBSETS and key in SUBSETS[model]:
@@ -219,7 +210,7 @@ def _get_sites(model, folder_out, conf, root_path=''):
                     # Select points
                     feature_coll = gpd.GeoSeries([tpoly]).__geo_interface__
                     tmp = feature_coll['features'][0]['geometry']
-                    tidx_b = h3.polyfill_geojson(tmp, h3_resolution)
+                    tidx_b = h3.polygon_to_cells(h3.geo_to_h3shape(tmp), h3_resolution)
                     tidx_c = list(set(tidx_a) & set(tidx_b))
                     sites_indices.extend(tidx_c)
             else:
@@ -227,7 +218,7 @@ def _get_sites(model, folder_out, conf, root_path=''):
 
     sites_indices = list(set(sites_indices))
     sidxs = sorted(sites_indices)
-    tmp = np.array([h3.h3_to_geo(h) for h in sidxs])
+    tmp = np.array([h3.cell_to_latlng(h) for h in sidxs])
     sites = np.fliplr(tmp)
 
     return sites, sites_indices, one_polygon, selection

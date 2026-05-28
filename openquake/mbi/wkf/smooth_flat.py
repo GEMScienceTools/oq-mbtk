@@ -21,7 +21,7 @@ def main(h3_mapping: str, h3_level: int, folder_out: str):
     lons = []
     lats = []
     for i, row in df.iterrows():
-        la, lo = h3.h3_to_geo(row.key)
+        la, lo = h3.cell_to_latlng(row.key)
         lons.append(lo)
         lats.append(la)
     df['lon'] = lons
