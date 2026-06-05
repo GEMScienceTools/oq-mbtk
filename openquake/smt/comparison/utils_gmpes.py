@@ -253,7 +253,7 @@ def att_curves(gmpe,
     mag_str = [f'{mag:.2f}']
     oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
     ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
-    ctxs = ctxm.get_ctxs([rup], sites)
+    ctxs = list(ctxm.get_ctxs([rup], sites))
     ctxs = ctxs[0]
 
     # Compute ground-motions
