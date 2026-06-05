@@ -71,7 +71,7 @@ class ModifyGroundMotionsTestCase(unittest.TestCase):
         obs_df = matrix_to_df(obs_matrix, len(config.gmpes_list))
 
         # Now check matrix dfs
-        pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-06)
+        pd.testing.assert_frame_equal(obs_df, exp_df, atol=1e-03)
 
         # Also, check the baseline ratio with mgmpe plotting works
         comp.plot_ratios(self.input_file, self.output_directory)

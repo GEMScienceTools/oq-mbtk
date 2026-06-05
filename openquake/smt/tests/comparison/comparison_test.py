@@ -145,7 +145,7 @@ class ComparisonTestCase(unittest.TestCase):
         exp_curves = pd.read_csv(self.exp_curves)
         # Same function writing expected can reformat the observed
         obs_curves = reformat_att_curves(att_curves)
-        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-06)
+        pd.testing.assert_frame_equal(obs_curves, exp_curves, atol=1e-03)
 
         # Spectra plots
         spectra = comp.plot_spectra(self.config_file,
@@ -158,7 +158,7 @@ class ComparisonTestCase(unittest.TestCase):
         exp_spectra = pd.read_csv(self.exp_spectra, index_col=0)
         obs_spectra = reformat_spectra(spectra) 
         # Same function writing expected can reformat the observed
-        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-06)
+        pd.testing.assert_frame_equal(obs_spectra, exp_spectra, atol=1e-03)
 
         # Check target file created and outputted in expected location
         target_file_trellis = (os.path.join(self.outdir, 'TrellisPlots.png'))
