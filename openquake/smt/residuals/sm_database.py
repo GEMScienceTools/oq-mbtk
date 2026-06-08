@@ -885,7 +885,7 @@ class GroundMotionDatabase(ContextDB):
                    [(2.5, 20000.), (10.2, 20000.)])}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
-        ctxs = ctxm.get_ctxs([rup], site)
+        ctxs = list(ctxm.get_ctxs([rup], site))
 
         return ctxs[0]
 
