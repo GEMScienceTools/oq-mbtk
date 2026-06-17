@@ -334,12 +334,12 @@ class SetSubductionEarthquakes:
         self.treg = treg
 
         # Store log data
+        str_dt = h5py.string_dtype(encoding='utf-8')
         tl = np.zeros(len(idxa),
-                      dtype={'names': ('eid', 'lon', 'lat', 'dep', 'subd',
-                                       'srfd', 'idx'),
-                             'formats': ('U64', 'f8', 'f8', 'f8', 'f8', 'f8',
-                                         'i4')})
-        tl['eid'] = cat.data['eventID']
+                      dtype=[('eid', str_dt), ('lon', 'f8'), ('lat', 'f8'),
+                             ('dep', 'f8'), ('subd', 'f8'), ('srfd', 'f8'),
+                             ('idx', 'i4')])
+        tl['eid'] = [str(s) for s in cat.data['eventID']]
         tl['lon'] = cat.data['longitude']
         tl['lat'] = cat.data['latitude']
         tl['dep'] = cat.data['depth']
