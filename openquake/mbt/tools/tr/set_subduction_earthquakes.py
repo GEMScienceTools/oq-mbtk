@@ -337,7 +337,7 @@ class SetSubductionEarthquakes:
         tl = np.zeros(len(idxa),
                       dtype={'names': ('eid', 'lon', 'lat', 'dep', 'subd',
                                        'srfd', 'idx'),
-                             'formats': ('S15', 'f8', 'f8', 'f8', 'f8', 'f8',
+                             'formats': ('U64', 'f8', 'f8', 'f8', 'f8', 'f8',
                                          'i4')})
         tl['eid'] = cat.data['eventID']
         tl['lon'] = cat.data['longitude']
