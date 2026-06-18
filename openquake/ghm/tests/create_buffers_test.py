@@ -27,13 +27,6 @@
 """
 Module create_buffer_test
 """
-import os
-
-# Force pyogrio's GDAL to use its bundled proj.db (the OQ venv's PROJ_LIB
-# points at a schema-incompatible version on teh Linux CI)
-os.environ.pop("PROJ_LIB", None)
-os.environ.pop("PROJ_DATA", None)
-
 import toml
 import pathlib
 import tempfile

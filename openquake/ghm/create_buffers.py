@@ -420,7 +420,7 @@ def main(fname_config):
     # Save buffer to folder
     print(f"Saving file")
     tmpgdf = tmpgdf.set_crs("EPSG:4326")
-    tmpgdf.to_file(out_fname, driver='GeoJSON')
+    tmpgdf.to_file(out_fname, driver='GeoJSON', engine='fiona')
     print(f"Created file: {out_fname} with {len(tmpgdf)} buffers")
     print(f"\nStart time: {datetime.datetime.now()} [s]")
 
