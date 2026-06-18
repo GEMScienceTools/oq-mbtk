@@ -27,6 +27,7 @@
 """
 Module create_buffer_test
 """
+
 import toml
 import pathlib
 import tempfile
@@ -37,7 +38,6 @@ import geopandas as gpd
 from openquake.ghm.create_buffers import main
 
 HERE = pathlib.Path(__file__).parent.resolve()
-
 
 
 class BufferCreateTestCase(unittest.TestCase):
