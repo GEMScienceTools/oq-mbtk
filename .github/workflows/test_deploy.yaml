@@ -52,8 +52,7 @@ jobs:
         fi
         source ~/openquake/bin/activate
         cd ..
-        PY_VER=`echo py${{ matrix.python-version }} | tr -d .`
-        pip install -r requirements-$PY_VER-linux.txt
+        pip install -r requirements-linux.txt
         pip install -e .
         pip install pytest
     - name: Run test with pytest

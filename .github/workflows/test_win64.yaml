@@ -85,8 +85,7 @@ jobs:
           }
           C:\Users\runneradmin\openquake\Scripts\activate.ps1
           $pythonVersion = "${{ matrix.python-version }}"
-          $pyVer = "py" + $pythonVersion.Replace(".", "")
-          python -m pip install -r "requirements-$pyVer-win64.txt"
+          python -m pip install -r requirements-win64.txt
           python -m pip install -e .
           $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
