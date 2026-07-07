@@ -37,8 +37,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        #sudo apt update
-        #sudo apt-get install -y gmt gmt-dcw gmt-gshhg libgmt-dev
+        sudo apt update
+        sudo apt-get install -y gmt gmt-dcw gmt-gshhg libgmt-dev
         #python -m pip install --upgrade pip
         git clone --depth=1 -b master https://github.com/gem/oq-engine.git
         cd oq-engine
