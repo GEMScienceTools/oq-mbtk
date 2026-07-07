@@ -22,7 +22,6 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     env:
       MPLBACKEND: 'Agg'
-      PROJ_DATA: '/usr/share/proj'
       GITHUB_PULL_REQUEST: ${{ github.event.number }}
       GITHUB_DEF_BR:  ${{ github.event.repository.default_branch }}
       GITHUB_REF:  ${{ github.ref }}
@@ -64,7 +63,7 @@ jobs:
         oq --version
         sleep 3
         cd openquake
-        pytest -vs --color=yes cat ghm man mbi mbt sub wkf smt fnm
+        GDAL_DATA=/usr/share/gdal pytest -vs --color=yes cat ghm man mbi mbt sub wkf smt fnm
   pages:
     name: pages
     runs-on: ubuntu-latest
