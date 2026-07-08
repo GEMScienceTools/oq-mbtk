@@ -98,7 +98,6 @@ jobs:
 
     - name: Deploy to GitHub Pages
       if: success()
-      uses: crazy-max/ghaction-github-pages@v5
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
