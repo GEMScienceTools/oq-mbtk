@@ -97,8 +97,8 @@ jobs:
     - name: Deploy to GitHub Pages
       if: success()
       uses: crazy-max/ghaction-github-pages@v5
+      uses: peaceiris/actions-gh-pages@v4
       with:
-        target_branch: gh-pages
-        build_dir: docsrc/_build/html/
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        #publish_branch: your-branch  # default: gh-pages
+        publish_dir:  docsrc/_build/html/
