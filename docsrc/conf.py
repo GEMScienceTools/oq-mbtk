@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'OpenQuake Model Building Toolkit Suite'
-copyright = '2020-2022, GEM Hazard'
+copyright = '2020-2026, GEM Hazard'
 author = 'GEM Hazard'
 
 # The short X.Y version
@@ -78,6 +78,8 @@ pygments_style = 'default'
 
 # Preserve defaults in autodoc
 autodoc_preserve_defaults = True
+# Tell Sphinx to look for modules inside namespace packages
+autodoc_mock_imports = []
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

@@ -70,15 +70,17 @@ jobs:
     env:
       MPLBACKEND: 'Agg'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v6
       with:
         python-version: "3.12"
     - name: Install OpenQuake dependencies
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        sudo apt update
+        sudo apt-get install -y pandoc
         git clone --depth=1 https://github.com/gem/oq-engine.git
         cd oq-engine
         python3 install.py devel
