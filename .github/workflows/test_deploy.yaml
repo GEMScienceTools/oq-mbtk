@@ -87,6 +87,9 @@ jobs:
         sleep 3
         source ~/openquake/bin/activate
         pip install sphinx recommonmark sphinx_rtd_theme nbsphinx geojson
+        cd ..
+        pip install -r requirements-linux.txt
+        pip install -e .
 
     - name: Make html pages
       run: |
