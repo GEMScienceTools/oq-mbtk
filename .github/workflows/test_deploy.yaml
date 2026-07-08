@@ -79,8 +79,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sudo apt-get install pandoc
-        python -m pip install --upgrade pip
         git clone --depth=1 https://github.com/gem/oq-engine.git
         cd oq-engine
         python3 install.py devel
@@ -98,7 +96,7 @@ jobs:
 
     - name: Deploy to GitHub Pages
       if: success()
-      uses: crazy-max/ghaction-github-pages@v2
+      uses: crazy-max/ghaction-github-pages@v5
       with:
         target_branch: gh-pages
         build_dir: docsrc/_build/html/
