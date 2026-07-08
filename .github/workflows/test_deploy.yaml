@@ -81,15 +81,17 @@ jobs:
       run: |
         sudo apt update
         sudo apt-get install -y pandoc
-        git clone --depth=1 https://github.com/gem/oq-engine.git
-        cd oq-engine
+        curl -L -O https://github.com/gem/oq-engine/raw/master/install.py
         python3 install.py user --version master
         sleep 3
         source ~/openquake/bin/activate
+        pip install -r requirements-linux.txt
+        pip install .
         pip install sphinx
         pip install recommonmark
         pip install sphinx_rtd_theme
         pip install nbsphinx
+
     - name: Verify openquake.cat import
       run: |
         source ~/openquake/bin/activate
