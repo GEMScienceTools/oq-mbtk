@@ -90,6 +90,15 @@ jobs:
         pip install recommonmark
         pip install sphinx_rtd_theme
         pip install nbsphinx
+    - name: Verify openquake.cat import
+      run: |
+        source ~/openquake/bin/activate
+        python3 -c "
+        import sys
+        print('Current Python Path:', sys.path)
+        import openquake.cat.parsers.converters
+        print('Import successful!')
+        "
     - name: Make html pages
       run: |
         source ~/openquake/bin/activate
