@@ -81,30 +81,19 @@ jobs:
       run: |
         sudo apt update
         sudo apt-get install -y pandoc
-        curl -L -O https://github.com/gem/oq-engine/raw/master/install.py
-        python3 install.py user --version master
+        git clone --depth=1 https://github.com/gem/oq-engine.git
+        cd oq-engine
+        python3 install.py devel --version master
         sleep 3
         source ~/openquake/bin/activate
-        pip install -r requirements-linux.txt
-        pip install .
-        pip install sphinx
-        pip install recommonmark
-        pip install sphinx_rtd_theme
-        pip install nbsphinx
+        pip install sphinx recommonmark sphinx_rtd_theme nbsphinx geojson
 
-    - name: Verify openquake.cat import
-      run: |
-        source ~/openquake/bin/activate
-        python3 -c "
-        import sys
-        print('Current Python Path:', sys.path)
-        import openquake.cat.parsers.converters
-        print('Import successful!')
-        "
     - name: Make html pages
       run: |
         source ~/openquake/bin/activate
-        cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
+        cd docsrc
+        sphinx-apidoc -o contents/ ../openquake
+        make html
         touch _build/html/.nojekyll
 
     - name: Deploy to GitHub Pages
