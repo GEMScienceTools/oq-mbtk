@@ -14,7 +14,12 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# 1. Force the parent directory (oq-mbtk) into the path
+sys.path.insert(0, os.path.abspath(".."))
+# 2. Extend the openquake package path so Python stitches both repos together
+import openquake
+openquake.__path__.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "openquake")))
 
 
 # -- Project information -----------------------------------------------------
