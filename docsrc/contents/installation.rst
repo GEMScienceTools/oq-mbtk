@@ -1,7 +1,7 @@
 Installation
 ============
-The *oq-mbtk* is installed with the procedure described in the following. 
-Note that this procedure implies the installation of the OpenQuake engine. 
+The *oq-mbtk* is installed with the procedure described in the following.
+Note that this procedure implies the installation of the OpenQuake engine.
 It was tested on Windows, Mac OS and Linux systems.
 
 Here we demonstrate the installation of the MBTK for a linux system and Python 3.11.
@@ -25,13 +25,13 @@ Here we demonstrate the installation of the MBTK for a linux system and Python 3
 
 * Go to the folder where you cloned the oq-mbtk repository and complete the
 installation running the following commands,
-making sure to replace `requirements-py311-linux.txt` with the name of
+making sure to replace `requirements-linux.txt` with the name of
 the file corresponding to the correct python version and operating system:
 
 .. code-block:: bash
 
+    $ pip install -r requirements-linux.txt
     $ pip install -e .
-    $ pip install -r requirements-py311-linux.txt
 
 
 Julia and PSHAModelBuilder
@@ -40,14 +40,14 @@ Julia and PSHAModelBuilder
 Some of the functions of the mbtk (especially the :code:`wkf` module) require the use of the
 `PSHAModelBuilder <https://github.com/GEMScienceTools/PSHAModelBuilder>`_. These scripts
 are written in Julia to provide a more computationally efficient approach for fixed
-kernel smoothing and propogating rates to a smoothed model. To use the 
+kernel smoothing and propogating rates to a smoothed model. To use the
 PSHAModelBuilder, install `Julia <https://julialang.org/>`_ and then do the following:
 
 .. code-block:: bash
-    
+
     $ julia
     $ ]
-    $ add https://github.com/GEMScienceTools/PSHAModelBuilder.git  
+    $ add https://github.com/GEMScienceTools/PSHAModelBuilder.git
 
 GMT and pyGMT for plotting
 --------------------------
