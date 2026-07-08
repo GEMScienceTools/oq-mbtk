@@ -25,4 +25,3 @@ tables
 reportlab
 igraph
 pyvista
-processing
