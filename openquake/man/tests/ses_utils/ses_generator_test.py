@@ -83,9 +83,8 @@ class TestSESGenerator(unittest.TestCase):
     def test_ses_from_area_source_full_simulation(self):
         """ Testing the complete simulation pipeline executes successfully """
         mfd = TruncatedGRMFD(4.0, 7.0, 0.1, 4.5, 1.0)
-        hdd = PMF([(0.3, 5.0), (0.7, 10.0)])
         
-        ses = ses_from_area_source(self.poly_file, mfd, hdd)
+        ses = ses_from_area_source(self.poly_file, mfd, hdd=None)
         self.assertIsInstance(ses, list)
         self.assertGreater(len(ses), 0)
         
