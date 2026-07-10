@@ -55,6 +55,13 @@ def get_oq_polygons(fname: str):
     gdf = gpd.read_file(fname)
     polys = []
     for i_row, row in gdf.iterrows():
+        if row.geometry is None or row.geometry.exterior is None:
+            continue
+        
         coo = np.array([c for c in row.geometry.exterior.coords])
         polys.append(Polygon([Point(p[0], p[1]) for p in coo]))
+
+    if len(polys) == 0:
+        raise ValueError('The file does not contain any valid polygons')
+    
     return polys
