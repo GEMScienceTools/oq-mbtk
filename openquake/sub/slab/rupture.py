@@ -598,7 +598,7 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
             mlab.plot3d(tmp[:, 0], tmp[:, 1], tmp[:, 2]*vsc, color=(1, 0, 0))
         #
         # top of the slab mesh
-        plot_mesh_mayavi(msh, vsc, color=(0, 1, 0))
+        #plot_mesh_mayavi(msh, vsc, color=(0, 1, 0))
         #
         for key in ohs:
             for iii in range(len(ohs[key])):
