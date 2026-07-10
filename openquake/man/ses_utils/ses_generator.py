@@ -56,6 +56,8 @@ def ses_from_area_source(fname: str, mfd, hdd=None):
     src = get_area_source(mfd, polygon_fname=fname, hdd=hdd)
     src.smweight = 1.0
     rups = []
-    rups.extend(src.sample_ruptures(1000, 0))
+    result = src.sample_ruptures(1000, 0)
+    if result is not None:
+        rups.extend(result)
 
     return rups
