@@ -29,7 +29,8 @@ from scipy.stats import linregress
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
-from openquake.smt.residuals.residual_plotter_utils import (_get_residuals_density_distribution,
+from openquake.smt.residuals.residual_plotter_utils import (
+                                                    _get_residuals_density_distribution,
                                                     residuals_with_depth,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
@@ -125,7 +126,6 @@ class ResidualsTestCase(unittest.TestCase):
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
-        residuals.get_likelihood_values()
         additional_keys = ['slope', 'intercept', 'pvalue']
         values = [
                   (residuals_with_depth, "Hypocentral Depth (km)"),
@@ -151,7 +151,6 @@ class ResidualsTestCase(unittest.TestCase):
         """
         residuals = res.Residuals(self.gsims, self.imts)
         residuals.compute_residuals(self.database, component="Geometric")
-        residuals.get_likelihood_values()
         additional_keys = ['slope', 'intercept', 'pvalue']
 
         for gsim in self.gsims:
