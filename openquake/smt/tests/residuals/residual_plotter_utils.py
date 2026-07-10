@@ -29,8 +29,7 @@ from scipy.stats import linregress
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
 import openquake.smt.residuals.gmpe_residuals as res
 from openquake.smt.residuals.sm_database_visualiser import DISTANCES
-from openquake.smt.residuals.residual_plotter_utils import (residuals_density_distribution,
-                                                    likelihood,
+from openquake.smt.residuals.residual_plotter_utils import (_get_residuals_density_distribution,
                                                     residuals_with_depth,
                                                     residuals_with_magnitude,
                                                     residuals_with_vs30,
@@ -101,43 +100,14 @@ class ResidualsTestCase(unittest.TestCase):
         
         for gsim in self.gsims:
             for imt in self.imts:
-                data1 = residuals_density_distribution(
+                data1 = _get_residuals_density_distribution(
                     residuals, gsim, imt, bin_width=bin_w1)
                 self._plot_data_check(
                     data1, "Z (%s)" % imt, "Frequency", additional_keys)
-                data2 = residuals_density_distribution(
+                data2 = _get_residuals_density_distribution(
                     residuals, gsim, imt, bin_width=bin_w2)
                 self._plot_data_check(
                     data2, "Z (%s)" % imt, "Frequency", additional_keys)
-
-                # assert histogram data is ok:
-                self._hist_data_check(residuals, gsim, imt, data1, bin_w1)
-                self._hist_data_check(residuals, gsim, imt, data2, bin_w2)
-
-                # assert bin width did its job:
-                for res_type in data1:
-                    self.assertTrue(len(data1[res_type]['x']) >
-                                    len(data2[res_type]['x']))
-
-    def test_likelihood_density_distribution(self):
-        """
-        Tests basic execution of Likelihood plot data - does
-        not test correctness of values.
-        """
-        residuals = res.Residuals(self.gsims, self.imts)
-        residuals.compute_residuals(self.database, component="Geometric")
-        additional_keys = ['median']
-        bin_w1, bin_w2 = 0.1, 0.2
-
-        for gsim in self.gsims:
-            for imt in self.imts:
-                data1 = likelihood(residuals, gsim, imt, bin_width=bin_w1)
-                self._plot_data_check(
-                    data1, "LH (%s)" % imt, "Frequency", additional_keys)
-                data2 = likelihood(
-                    residuals, gsim, imt,  bin_width=bin_w2)
-                self._plot_data_check(
-                    data2, "LH (%s)" % imt, "Frequency", additional_keys)
 
                 # assert histogram data is ok:
                 self._hist_data_check(residuals, gsim, imt, data1, bin_w1)
