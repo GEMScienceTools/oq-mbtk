@@ -34,6 +34,7 @@ import unittest
 import tempfile
 import shutil
 import numpy as np
+from pathlib import Path
 
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.pmf import PMF
@@ -63,11 +64,11 @@ class TestSESGenerator(unittest.TestCase):
                 "geometry": {
                     "type": "Polygon",
                     "coordinates": [[
-                        [4.0, 44.0], 
-                        [4.0, 46.0], 
-                        [6.0, 46.0], 
-                        [6.0, 44.0], 
-                        [4.0, 44.0]
+                        [10.0, 40.0], 
+                        [10.0, 45.0], 
+                        [15.0, 45.0], 
+                        [15.0, 40.0], 
+                        [10.0, 40.0]
                     ]]
                 },
                 "properties": {}
@@ -82,10 +83,12 @@ class TestSESGenerator(unittest.TestCase):
 
     def test_ses_from_area_source_full_simulation(self):
         """ Testing the complete simulation pipeline executes successfully """
-        mfd = TruncatedGRMFD(4.0, 7.0, 0.1, 4.5, 1.0)
+        np.random.seed(42)
+        mfd = TruncatedGRMFD(4.0, 6.5, 0.1, 6.5, 1.0)
         hdd = PMF([(0.3, 5.0), (0.7, 10.0)])
         
         ses = ses_from_area_source(self.poly_file, mfd, hdd)
+        self.assertIsNotNone(ses, "ses_from_area_source function returned None!")
         self.assertIsInstance(ses, list)
         self.assertGreater(len(ses), 0)
         
@@ -93,6 +96,7 @@ class TestSESGenerator(unittest.TestCase):
         first_event = ses[0]
         self.assertIsInstance(first_event, EBRupture)
         
-        # Data integrity check: simulated magnitudes stay within the MFD bounds [4.0, 7.0]
+        # Data integrity check: simulated magnitudes stay within the MFD bounds [4.0, 6.5]
         magnitudes = [e.mag for e in ses]
-        self.assertTrue(all(4.0 <= m <= 7.0 for m in magnitudes))
+        self.assertTrue(all(4.0 <= m <= 6.5 for m in magnitudes))
+        
