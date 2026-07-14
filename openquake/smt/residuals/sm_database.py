@@ -882,7 +882,7 @@ class GroundMotionDatabase(ContextDB):
                # Use large max dist to avoid filtering out very
                # far away sites within genctx (in the ctx maker)
                'maximum_distance': magdepdist(
-                   [(2.5, 20000.), (10.2, 20000.)])}
+                   [(0.0, 20000.), (10.2, 20000.)])}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
         ctxs = list(ctxm.get_ctxs([rup], site))

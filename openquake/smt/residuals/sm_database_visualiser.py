@@ -21,8 +21,8 @@ Tool for creating visualisation of database information.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
+from openquake.smt.utils import add_borders
+from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 
 
 DISTANCES = {
@@ -144,6 +144,7 @@ def db_geographical_coverage(db1, filename):
     ax.set_ylabel('Latitude')
     ax.legend()
     plt.savefig(filename)
+    plt.close()
 
 
 def _site_selection(db1, site_class, classifier):
