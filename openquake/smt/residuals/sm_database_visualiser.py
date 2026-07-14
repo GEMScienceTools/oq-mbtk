@@ -144,6 +144,7 @@ def db_geographical_coverage(db1, filename):
     ax.set_ylabel('Latitude')
     ax.legend()
     plt.savefig(filename)
+    plt.close()
 
 
 def _site_selection(db1, site_class, classifier):
