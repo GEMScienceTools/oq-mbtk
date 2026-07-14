@@ -21,8 +21,8 @@ Tool for creating visualisation of database information.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
+from openquake.smt.utils import add_borders
+from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 
 
 DISTANCES = {
