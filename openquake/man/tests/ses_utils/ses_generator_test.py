@@ -28,21 +28,22 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
-import os
-import json
-import unittest
-import tempfile
-import shutil
 import numpy as np
-from pathlib import Path
+import json
+import os
+import shutil
+import tempfile
+import unittest
 
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.source.rupture import EBRupture
-from openquake.man.ses_utils.ses_generator import ses_from_area_source
+from openquake.man.ses_utils.ses_generator import prepare_source_for_sampling, ses_from_area_source
+from openquake.man.ses_utils.ses_source import get_area_source
+
 
 """
-Testing the function in the ses_generator.py
+Tests for the functions in ses_generator.py.
 """
 
 class TestSESGenerator(unittest.TestCase):
@@ -54,49 +55,71 @@ class TestSESGenerator(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.poly_file = os.path.join(self.test_dir, 'test_area_source.geojson')
-        
-        poly_json = {
+        self.poly_file = os.path.join(self.test_dir, "test_area_source.geojson")
+
+        polygon_geojson = {
             "type": "FeatureCollection",
             "name": "test_area",
-            "features": [{
-                "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [[
-                        [10.0, 40.0], 
-                        [10.0, 45.0], 
-                        [15.0, 45.0], 
-                        [15.0, 40.0], 
-                        [10.0, 40.0]
-                    ]]
-                },
-                "properties": {}
-            }]
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [10.0, 40.0],
+                                [10.0, 45.0],
+                                [15.0, 45.0],
+                                [15.0, 40.0],
+                                [10.0, 40.0],
+                            ]
+                        ],
+                    },
+                    "properties": {},
+                }
+            ],
         }
-        
-        with open(self.poly_file, 'w') as f:
-            json.dump(poly_json, f)
+
+        with open(self.poly_file, "w", encoding="utf-8") as file:
+            json.dump(polygon_geojson, file)
+
+        self.mfd = TruncatedGRMFD(min_mag=4.0, max_mag=6.5, bin_width=0.1, a_val=4.5, b_val=1.0)
+        self.hdd = PMF([(0.3, 5.0), (0.7, 10.0)])
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
+    def test_prepare_source_for_sampling(self):
+        """ Tests source objects receive metadata required by BaseSeismicSource.sample_ruptures(). """
+        src = get_area_source(self.mfd, polygon_fname=self.poly_file, hdd=self.hdd)
+        self.assertIsNone(src.sampling)
+        prepared_src = prepare_source_for_sampling(src)
+        self.assertIs(prepared_src, src)
+
+        self.assertEqual(src.id, 0)
+        self.assertEqual(src.offset, 0)
+        self.assertEqual(src.smweight, 1.0)
+
+        self.assertIsInstance(src.sampling, dict)
+        self.assertIn("samples", src.sampling)
+        self.assertIn("trt_smr", src.sampling)
+
+        np.testing.assert_array_equal(src.sampling["samples"], np.array([1], dtype=np.uint32))
+        np.testing.assert_array_equal(src.sampling["trt_smr"], np.array([0], dtype=np.uint32))
+
+        self.assertEqual(src.sampling["samples"].dtype, np.dtype(np.uint32))
+        self.assertEqual(src.sampling["trt_smr"].dtype, np.dtype(np.uint32))
+
     def test_ses_from_area_source_full_simulation(self):
-        """ Testing the complete simulation pipeline executes successfully """
-        np.random.seed(42)
-        mfd = TruncatedGRMFD(4.0, 6.5, 0.1, 6.5, 1.0)
-        hdd = PMF([(0.3, 5.0), (0.7, 10.0)])
-        
-        ses = ses_from_area_source(self.poly_file, mfd, hdd)
-        self.assertIsNotNone(ses, "ses_from_area_source function returned None!")
+        """ Test that the complete SES simulation pipeline executes successfully. """
+        ses = ses_from_area_source(self.poly_file, self.mfd, self.hdd)
+
         self.assertIsInstance(ses, list)
-        self.assertGreater(len(ses), 0)
-        
-        # Verify that the objects inside the list are EBRupture instances
-        first_event = ses[0]
-        self.assertIsInstance(first_event, EBRupture)
-        
-        # Data integrity check: simulated magnitudes stay within the MFD bounds [4.0, 6.5]
-        magnitudes = [e.mag for e in ses]
-        self.assertTrue(all(4.0 <= m <= 6.5 for m in magnitudes))
-        
+        self.assertGreater(len(ses), 0, "ses_from_area_source returned an empty SES.")
+
+        for event in ses:
+            self.assertIsInstance(event, EBRupture)
+
+        mags = [event.mag for event in ses]
+
+        self.assertTrue(all(4.0 <= mag <= 6.5 for mag in mags), "At least one simulated magnitude is outside the MFD bounds.")

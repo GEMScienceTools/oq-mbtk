@@ -30,34 +30,51 @@
 
 """
 module :mod:`openquake.man.ses_utils.ses_generator` provides a function to 
-generate 1000 years Stochastic Event Sets (SES) by sampling earthquake ruptures 
+simulate 1000 Stochastic Event Set (SES) by sampling earthquake ruptures 
 from configured seismic sources using Monte Carlo sampling.
 """
+
+import numpy as np
 
 from openquake.man.ses_utils.ses_source import get_area_source
 
 
+def prepare_source_for_sampling(src):
+    """
+    Prepares a source for rupture sampling.
+
+    It assigns the minimum metadata normally initialized by the
+    OpenQuake Engine so that ``sample_ruptures()`` can be called directly
+    on a source created through hazardlib.
+
+    :param src:
+        An OpenQuake seismic source.
+    :returns:
+        The prepared source with the required sampling metadata.
+    """
+    src.id = 0
+    src.offset = 0
+    src.smweight = 1.0
+    src.sampling = {
+        'samples': np.array([1], dtype=np.uint32),
+        'trt_smr': np.array([0], dtype=np.uint32),
+    }
+    return src
+
 def ses_from_area_source(fname: str, mfd, hdd=None):
     """
-    Generates a stochastic event set from an Area Source
+    Generates a stochastic event set from an Area Source.
 
     :param fname:
-        A string with the name of the file with the geometry of
-        the area source. It can be of any format (e.g. shapefile, 
-        geojson, geopackage).
+        Path to the GeoJSON file containing the area-source geometry.
     :param mfd:
-        An instance of a concrete class of 
-        :class:`openquake.hazardlib.mfd.base.BaseMFD`
+        An OpenQuake magnitude-frequency distribution instance.
     :param hdd:
-        An instance of :class:`openquake.hazardlib.pmf.PMF` instance 
-        describing the hypocentral depth distribution. For example:
-        pmf = PMF([(0.3, 5.0), (0.7, 10.0)])
+        Optional hypocentral-depth probability mass function.
+    :returns:
+        A list of :class:`~openquake.hazardlib.source.rupture.EBRupture`
+        objects representing the simulated stochastic event set.
     """
     src = get_area_source(mfd, polygon_fname=fname, hdd=hdd)
-    src.smweight = 1.0
-    rups = []
-    result = src.sample_ruptures(1000, 0)
-    if result is not None:
-        rups.extend(result)
-
-    return rups
+    prepare_source_for_sampling(src)
+    return src.sample_ruptures(num_ses=1000, ses_seed=0)
