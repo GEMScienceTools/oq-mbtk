@@ -71,6 +71,9 @@ jobs:
             Write-Host "python install.py devel --version ${env:BRANCH}"
             cd oq-engine
             python install.py devel --version ${env:BRANCH}
+            if ($LASTEXITCODE -ne 0) {
+              break
+            }
             cd ..
           }
           else
