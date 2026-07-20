@@ -9,7 +9,7 @@ description = "Model Building Toolkit"
 readme = """
 Python and OpenQuake-based Toolkit for the construction of Seismic Source
 Models
-Copyright (C) 2017-2025 GEM Foundation
+Copyright (C) 2017-2026 GEM Foundation
 """
 license = { text = "AGPL-3.0-only" }
 
