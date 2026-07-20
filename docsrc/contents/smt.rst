@@ -213,6 +213,13 @@ Plot of residual distributions versus spectral acceleration:
     Residuals w.r.t. rrup for Boore et al. 2020 and PGA:
         .. image:: /contents/smt_images/residual_wrt_dist_PGA.png
   
+    .. code-block:: ini
+       
+       > # Plot each component of residuals w.r.t. magnitude
+       > rspl.ResidualWithMagnitude(resid, gmpe, imt, fname)
+
+    Residuals w.r.t. magnitude for Boore et al. 2020 and PGA:
+        .. image:: /contents/smt_images/residual_wrt_mag_PGA.png
 
 GMPE Performance Ranking Metrics
 ********************************

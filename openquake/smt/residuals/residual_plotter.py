@@ -419,6 +419,13 @@ class ResidualWithDistance(ResidualScatterPlot):
                                        self.imt,
                                        self.distance_type)
 
+    def get_subplots_rowcols(self):
+        # Inter-event residual is not plotted against distance, so drop the
+        # third panel when the GMPE has inter/intra decomposition
+        if self.num_plots > 1:
+            return 2, 1
+        return 1, 1
+
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']
         if self.plot_type == "log":
@@ -455,6 +462,13 @@ class ResidualWithVs30(ResidualScatterPlot):
     """
     def get_plot_data(self):
         return residuals_with_vs30(self.residuals, self.gmpe, self.imt)
+
+    def get_subplots_rowcols(self):
+        # Inter-event residual is not plotted against vs30, so drop the third
+        # panel when the GMPE has inter/intra decomposition
+        if self.num_plots > 1:
+            return 2, 1
+        return 1, 1
 
     def get_axis_xlim(self, res_data, res_type):
         x = res_data['x']

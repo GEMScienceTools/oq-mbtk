@@ -1,5 +1,5 @@
 # ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
+# Copyright (C) 2026 GEM Foundation and Électricité de France
 #           _______  _______        __   __  _______  _______  ___   _
 #          |       ||       |      |  |_|  ||  _    ||       ||   | | |
 #          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
@@ -20,9 +20,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This script is produced within the scope of Work Package 5, named Simulation 
+# platform, under SIGMA3 project. For more detailed information about 
+# the project, please visit to https://sigma-programs.com/.
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
+"""
+module :mod:`openquake.man.ses_cat` provides functions to build an HMTK-formatted 
+catalogue from OpenQuake SES event/rupture outputs.
+"""
 
 import os
 import numpy as np
