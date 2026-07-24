@@ -464,7 +464,6 @@ class Residuals(object):
         nvals = len(mean)
 
         # No retained observations for this event/imt so return empty arrays
-        # so caller's empty-array handling at compute_residuals kicks in
         if nvals == 0:
             return np.array([]), np.array([])
 
