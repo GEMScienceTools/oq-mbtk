@@ -84,40 +84,21 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     return vals.astype(float), bins
 
 
-def _get_magnitudes(residuals, gmpe, imt, res_type):
+def _get_eq_vals(residuals, gmpe, imt, res_type, param):
     """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
+    Return an array of ctx[attr] values equal in length to the number of
+    residuals for given parameter (an event-specific value e.g., mag, depth).
     """
-    magnitudes = np.array([])
+    values = np.array([])
     for i, ctx in enumerate(residuals.contexts):
         keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
-            nval = np.ones(len(ctx["Ctx"].repi))
-            nval = nval[keep]
-        magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
-    
-    return magnitudes
+            nval = np.ones(len(ctx["Ctx"].repi))[keep]
+        values = np.hstack([values, getattr(ctx["Ctx"], param) * nval])
 
-
-def _get_depths(residuals, gmpe, imt, res_type):
-    """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
-    """
-    depths = np.array([])
-    for i, ctx in enumerate(residuals.contexts):
-        keep = ctx["Retained"][imt]
-        if res_type == "Inter event":
-            nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
-        else:
-            nvals = np.ones(len(ctx["Ctx"].repi))
-            nvals = nvals[keep]
-        depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
-    
-    return depths
+    return values
 
 
 def _get_vs30(residuals, imt):
@@ -155,9 +136,9 @@ def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
     length of the given residuals.
     """
     if var == "magnitude":
-        return _get_magnitudes(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "mag")
     elif var == "depth":
-        return _get_depths(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "hypo_depth")
     elif var == "vs30":
         assert res_type != "Inter event", (
             "Inter-event residuals are not plotted against vs30")
