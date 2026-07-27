@@ -338,8 +338,8 @@ class Residuals(object):
                                 self.unique_indices[gmpe][imtx].append(
                                     np.array([0]))
                             else:
-                                # Inter event residuals per-site e.g. Chiou
-                                # & Youngs (2008; 2014) case
+                                # NaN dummy (empty-obs event) or per-record
+                                # inter-event values (heteroskedastic case)
                                 self.residuals[gmpe][imtx][res_type].extend(
                                     inter_ev)
                                 self.unique_indices[gmpe][imtx].append(
