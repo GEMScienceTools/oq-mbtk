@@ -110,7 +110,7 @@ def get_mags_dists_vs30s(db1, dist_type):
     return np.array(mags), np.array(dists), np.array(vs30s)
 
 
-def db_magnitude_distance(db1, dist_type, filename):
+def db_mag_dist_vs30(db1, dist_type, filename):
     """
     Creates a plot of magnitude verses distance for a strong
     motion database.
@@ -187,7 +187,7 @@ def _site_selection(db1, site_class, classifier):
     return idx
 
 
-def db_magnitude_distance_by_site(db1,
+def db_mag_dist_vs30_by_site(db1,
                                   dist_type,
                                   filename,
                                   classification="NEHRP"):
@@ -225,7 +225,7 @@ def db_magnitude_distance_by_site(db1,
     plt.close()
 
 
-def db_magnitude_distance_by_trt(db1, dist_type, filename):
+def db_mag_dist_vs30_by_trt(db1, dist_type, filename):
     """
     Plot magnitude-distance comparison by tectonic region.
     """
