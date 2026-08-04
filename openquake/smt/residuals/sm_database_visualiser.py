@@ -20,9 +20,10 @@ Tool for creating visualisation of database information.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
-from openquake.calculators.postproc.plots import add_borders
-from openquake.smt.residuals.sm_database_selector import SMRecordSelector 
+from openquake.smt.utils import add_borders
+from openquake.smt.residuals.sm_database_selector import SMRecordSelector
 
 
 DISTANCES = {
@@ -82,15 +83,15 @@ def get_eq_and_st_coordinates(db1):
     return np.array(e_lon), np.array(e_lat), np.array(s_lon), np.array(s_lat)
 
 
-def get_magnitude_distances(db1, dist_type):
+def get_mags_dists_vs30s(db1, dist_type):
     """
     From the strong motion database, returns lists of magnitude
     and distance pairs.
     """
-    mags = []
-    dists = []
+    mags, dists, vs30s = [], [], []
     for record in db1.records:
         mags.append(record.event.magnitude.value)
+        vs30s.append(record.site.vs30)
         if dist_type == "rjb":
             rjb = DISTANCES[dist_type](record)
             if rjb:
@@ -105,19 +106,27 @@ def get_magnitude_distances(db1, dist_type):
                 dists.append(DISTANCES["rhypo"](record))
         else:
             dists.append(DISTANCES[dist_type](record))
-    return np.array(mags), np.array(dists)
+
+    return np.array(mags), np.array(dists), np.array(vs30s)
 
 
-def db_magnitude_distance(db1, dist_type, filename):
+def db_mag_dist_vs30(db1, dist_type, filename):
     """
     Creates a plot of magnitude verses distance for a strong
     motion database.
+
+    Each record's Vs30 is colormapped.
     """
+    mags, dists, vs30s = get_mags_dists_vs30s(db1, dist_type)
+    norm_vs30 = mcolors.Normalize(np.min(vs30s), np.max(vs30s))
+    cmap_vs30 = plt.get_cmap('plasma')
     plt.figure()
-    mags, dists = get_magnitude_distances(db1, dist_type)
-    plt.semilogx(dists, mags, "o", mec='k', mew=0.5)
+    sc = plt.scatter(dists, mags, c=vs30s, cmap=cmap_vs30, norm=norm_vs30,
+                     edgecolors='k', linewidths=0.5)
+    plt.xscale('log')
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)
+    plt.colorbar(sc).set_label('Vs30 (m/s)', fontsize=14)
     plt.grid()
     plt.savefig(filename)
     plt.close()
@@ -131,10 +140,10 @@ def db_geographical_coverage(db1, filename):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     eq_lons, eq_lats, st_lons, st_lats = get_eq_and_st_coordinates(db1)
-    ax.scatter(st_lons, st_lats, marker='^', color='g',
-               label='Station locations')
-    ax.scatter(eq_lons, eq_lats, marker='*', color='r',
-               label='Event hypocenters')
+    ax.scatter(
+        st_lons, st_lats, marker='^', color='g', label='Station locations')
+    ax.scatter(
+        eq_lons, eq_lats, marker='*', color='r', label='Event hypocenters')
     add_borders(ax)
     lons = np.concatenate([eq_lons, st_lons])
     lats = np.concatenate([eq_lats, st_lats])
@@ -144,6 +153,7 @@ def db_geographical_coverage(db1, filename):
     ax.set_ylabel('Latitude')
     ax.legend()
     plt.savefig(filename)
+    plt.close()
 
 
 def _site_selection(db1, site_class, classifier):
@@ -177,7 +187,7 @@ def _site_selection(db1, site_class, classifier):
     return idx
 
 
-def db_magnitude_distance_by_site(db1,
+def db_mag_dist_vs30_by_site(db1,
                                   dist_type,
                                   filename,
                                   classification="NEHRP"):
@@ -198,11 +208,11 @@ def db_magnitude_distance_by_site(db1,
         site_idx = _site_selection(db1, site_class, classification)
         if site_idx:
             site_db = selector.select_records(site_idx, as_db=True)
-            mags, dists = get_magnitude_distances(site_db, dist_type)
+            mags, dists = get_mags_dists_vs30s(site_db, dist_type)
             plt.plot(np.array(dists), np.array(mags), "o", mec='k',
                      mew=0.5, label="Site Class %s" % site_class)
             total_idx.extend(site_idx)
-    mag, dists = get_magnitude_distances(site_db, dist_type)
+    mag, dists = get_mags_dists_vs30s(site_db, dist_type)
     plt.semilogx(np.array(dists), np.array(mags), "o", mfc="None", mec='k',
                  mew=0.5, label="Unclassified", zorder=0)
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
@@ -215,7 +225,7 @@ def db_magnitude_distance_by_site(db1,
     plt.close()
 
 
-def db_magnitude_distance_by_trt(db1, dist_type, filename):
+def db_mag_dist_vs30_by_trt(db1, dist_type, filename):
     """
     Plot magnitude-distance comparison by tectonic region.
     """
@@ -227,7 +237,7 @@ def db_magnitude_distance_by_trt(db1, dist_type, filename):
     plt.figure()
     for trt in trt_types:
         subdb = selector.select_trt_type(trt, as_db=True)
-        mag, dists = get_magnitude_distances(subdb, dist_type)
+        mag, dists = get_mags_dists_vs30s(subdb, dist_type)
         plt.semilogx(dists, mag, "o", mec='k', mew=0.5, label=trt)
     plt.xlabel(DISTANCE_LABEL[dist_type], fontsize=14)
     plt.ylabel("Magnitude", fontsize=14)

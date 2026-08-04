@@ -18,10 +18,12 @@
 """
 Utilities used throughout the SMT (both Comparison and Residuals Module)
 """
+import os
 import re
 import numpy as np
 from scipy.constants import g
 from scipy.integrate import cumulative_trapezoid
+from shapely.geometry import MultiPolygon
 
 from openquake.hazardlib.geo import PlanarSurface, Point
 from openquake.hazardlib.source.rupture import BaseRupture
@@ -29,7 +31,13 @@ from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
 from openquake.hazardlib import valid
+from openquake.commonlib.readinput import read_geometries
+from openquake.hmtk.plotting.patch import PolygonPatch
+from openquake.qa_tests_data import global_risk
 
+
+# Path to geoboundaries in engine
+GEOPACKAGE = os.path.join(os.path.dirname(global_risk.__file__), 'geoBoundariesCGAZ_ADM0.gpkg')
 
 # Get a list of the available GSIMs
 AVAILABLE_GSIMS = get_available_gsims()
@@ -131,6 +139,20 @@ COLORS = [
         '#E9967A',  # dark salmon
         '#A9A9A9',  # dark gray
         ]
+
+
+### Plotting utils
+def add_borders(ax):
+    """
+    Plot the borders of the countries.
+    """
+    polys = read_geometries(GEOPACKAGE, 'shapeGroup')['geom']
+    for poly in polys:
+        if isinstance(poly, MultiPolygon):
+            for onepoly in poly.geoms:
+                ax.add_patch(PolygonPatch(onepoly, fc="tab:grey", alpha=0.2))
+        else:
+            ax.add_patch(PolygonPatch(poly, fc="tab:grey", alpha=0.2))
 
 
 ### Utils for value validation ###

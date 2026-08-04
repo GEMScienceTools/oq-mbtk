@@ -338,8 +338,8 @@ class Residuals(object):
                                 self.unique_indices[gmpe][imtx].append(
                                     np.array([0]))
                             else:
-                                # Inter event residuals per-site e.g. Chiou
-                                # & Youngs (2008; 2014) case
+                                # NaN dummy (empty-obs event) or per-record
+                                # inter-event values (heteroskedastic case)
                                 self.residuals[gmpe][imtx][res_type].extend(
                                     inter_ev)
                                 self.unique_indices[gmpe][imtx].append(
@@ -462,6 +462,10 @@ class Residuals(object):
         """
         # Get number of values (records for given event)
         nvals = len(mean)
+
+        # No retained observations for this event/imt so return empty arrays
+        if nvals == 0:
+            return np.array([]), np.array([])
 
         # Use mean tau/phi of given GMM (AY92 only considers homoskedastic sigma)
         tau = np.mean(inter)

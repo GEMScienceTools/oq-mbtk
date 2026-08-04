@@ -676,7 +676,7 @@ def reformat_att_curves(att_curves, out=None):
                         store[f"Median Plus Sigma (+ {nstd} epsilon) | {key}"
                               ] = curves[gmpe][f"median plus sigma ({unit})"]
                         store[f"Median Minus Sigma (- {nstd} epsilon) | {key}"
-                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                              ] = curves[gmpe][f"median minus sigma ({unit})"]
                         
                 # Then get the distance for given scenario
                 else:
