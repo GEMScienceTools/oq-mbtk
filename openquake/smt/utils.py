@@ -26,6 +26,8 @@ from scipy.integrate import cumulative_trapezoid
 from shapely.geometry import MultiPolygon
 
 from openquake.hazardlib.geo import PlanarSurface, Point
+from openquake.hazardlib.geo.mesh import Mesh
+from openquake.hazardlib.geo.geodetic import geodetic_distance
 from openquake.hazardlib.source.rupture import BaseRupture
 from openquake.hazardlib.gsim import get_available_gsims
 from openquake.hazardlib.gsim.gmpe_table import GMPETable
@@ -331,6 +333,28 @@ def make_rup(lon,
     rup = BaseRupture(mag, rake, trt, hypoc, srf)
     rup.hypocenter.depth = dep
     return rup
+
+
+def compute_dist_from_rup(dist_type, rup, lons, lats):
+    """
+    Compute the source-to-site distance of the given type from the
+    provided OQ rupture to each of the given station coordinates.
+    """
+    lons = np.asarray(lons, dtype=float)
+    lats = np.asarray(lats, dtype=float)
+    if dist_type == "rrup":
+        return rup.surface.get_min_distance(Mesh(lons, lats))
+    elif dist_type == "rjb":
+        return rup.surface.get_joyner_boore_distance(Mesh(lons, lats))
+    elif dist_type == "repi":
+        return geodetic_distance(
+            rup.hypocenter.longitude, rup.hypocenter.latitude, lons, lats)
+    elif dist_type == "rhypo":
+        epi = geodetic_distance(
+            rup.hypocenter.longitude, rup.hypocenter.latitude, lons, lats)
+        return np.sqrt(epi**2 + rup.hypocenter.depth**2)
+    else:
+        raise ValueError(f"Unsupported dist_type: {dist_type}")
 
 
 def full_dtype_gmm():

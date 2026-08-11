@@ -29,9 +29,13 @@ from scipy import interpolate
 
 from openquake.hazardlib.imt import PGA, SA
 from openquake.smt.comparison.sammons import sammon
-from openquake.smt.utils import clean_gmm_label, COLORS, GEM_FF_MAPPINGS
-from openquake.smt.comparison.utils_gmpes import (get_imtl_unit, 
+from openquake.smt.utils import (clean_gmm_label,
+                                 compute_dist_from_rup,
+                                 COLORS,
+                                 GEM_FF_MAPPINGS)
+from openquake.smt.comparison.utils_gmpes import (get_imtl_unit,
                                                   att_curves,
+                                                  get_rup,
                                                   get_rup_pars,
                                                   gmpe_check)
 
@@ -105,12 +109,23 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
                                                      config.dip,
                                                      config.rake,
                                                      config.aratio,
-                                                     config.trt) 
-            
+                                                     config.trt)
+
             # If plotting data get the appropriate subset
             if data is not None:
+                # Get the rupture for computing distances from if required
+                if config.station_dists_from_rup:
+                    if config.rup is not None:
+                        rup_obs = config.rup
+                    else:
+                        rup_obs = get_rup(
+                            mag, config.lon, config.lat, depth_g, ztor_g, aratio_g,
+                            strike_g, dip_g, config.rake, config.trt)
+                else:
+                    rup_obs = None
                 subset = filter_flatfile_trellis(
-                    data, imt, mag, depth_g, config.vs30, config.dist_type)
+                    data, imt, mag, depth_g, config.vs30, config.dist_type,
+                    rup=rup_obs)
             else:
                 subset = None
 
@@ -343,8 +358,19 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
 
             # If plotting data get the appropriate subset
             if data is not None:
+                # Get the rupture for computing distances from if required
+                if config.station_dists_from_rup:
+                    if config.rup is not None:
+                        rup_obs = config.rup
+                    else:
+                        rup_obs = get_rup(
+                            mag, config.lon, config.lat, depth_g, ztor_g, aratio_g,
+                            strike_g, dip_g, config.rake, config.trt)
+                else:
+                    rup_obs = None
                 subset = filter_flatfile_spectra(
-                    data, imt_list, mag, depth_g, config.vs30, dist, config.dist_type)
+                    data, imt_list, mag, depth_g, config.vs30, dist, config.dist_type,
+                    rup=rup_obs)
             else:
                 subset = None
 
@@ -1245,10 +1271,14 @@ def update_trellis_plots(mag, imt, m, i, dep, vs30, minR, maxR, r_vals, imt_list
     pyplot.loglog()
     
 
-def filter_flatfile_trellis(data, imt, mag, depth, vs30, dist_type):
+def filter_flatfile_trellis(data, imt, mag, depth, vs30, dist_type, rup=None):
     """
     Filter the dataframe of the provided flatfile for the given imt,
     magnitude, focal depth and vs30 for use in trellis plotting.
+
+    NOTE: If "rup" is provided, the flatfile distances of the retained
+    records are replaced with distances computed from the given rupture
+    to each station.
 
     NOTE: We return RotD50 values which have consistency with OQ units.
     """
@@ -1264,6 +1294,12 @@ def filter_flatfile_trellis(data, imt, mag, depth, vs30, dist_type):
 
     # Convert from flatfile units to those of GMPEs in OQ for given IMT
     subset[imt_col] = subset[imt_col] * GEM_FF_MAPPINGS[imt]["conv_factor"]
+
+    # Override flatfile distances with distances computed from the rupture
+    if rup is not None and len(subset) > 0:
+        subset[GEM_FF_MAPPINGS[dist_type]] = compute_dist_from_rup(
+            dist_type, rup, subset["st_longitude"].values,
+            subset["st_latitude"].values)
 
     # End of flatfile filtering
     if len(subset) > 0:
@@ -1485,16 +1521,27 @@ def raise_spectra_dist_error(dist, dist_type, r_vals):
                      f"shaking scenario (min = {r_min} km, max = {r_max} km)")
 
 
-def filter_flatfile_spectra(data, imts, mag, depth, vs30, dist, dist_type):
+def filter_flatfile_spectra(data, imts, mag, depth, vs30, dist, dist_type, rup=None):
     """
     Filter the dataframe of the provided flatfile for the given imt,
     magnitude, focal depth, vs30 AND distance type for use in spectra
     plotting.
 
+    NOTE: If "rup" is provided, distances used for the distance-based
+    filter (and stored in the returned subset) are computed from the
+    given rupture to each station instead of read from the flatfile.
+
     NOTE: We return RotD50 values which have consistency with OQ units.
     """
     # Filter first by magnitude, depth and vs30 first
     subset = filter_flatfile(data, mag, depth, vs30, dist_type)
+
+    # Override flatfile distances with distances computed from the rupture
+    dcol = GEM_FF_MAPPINGS[dist_type]
+    if rup is not None and len(subset) > 0:
+        subset[dcol] = compute_dist_from_rup(
+            dist_type, rup, subset["st_longitude"].values,
+            subset["st_latitude"].values)
 
     # Filter by distance (smaller window when closer to source)
     if dist <= 50:
@@ -1503,7 +1550,6 @@ def filter_flatfile_spectra(data, imts, mag, depth, vs30, dist, dist_type):
         dlim = DIST_LIM_MID
     else:
         dlim = DIST_LIM_MAX
-    dcol = GEM_FF_MAPPINGS[dist_type]
     subset = subset.loc[
         subset[dcol].between(dist - dlim, dist + dlim)].reset_index(drop=True)
     

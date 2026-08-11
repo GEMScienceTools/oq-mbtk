@@ -140,7 +140,11 @@ class Configurations(object):
         "z2pt5": -999, # Compute param using each GMM's vs30 to z2pt5
         "up_or_down_dip": 1, # Assume site is up-dip
         "volc_back_arc": False, # Asssume site is not in back-arc
-        "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
+        "eshm20_region": 0, # Assume default region for ESHM version of K20 GMM
+        "station_dists_from_rup": False} # If True, compute station distances of
+                                         # plotted flatfile observations from the
+                                         # OQ rupture instead of using the
+                                         # flatfile-stored distances
 
         # Get site params
         self.vs30 = config_file['site_properties']['vs30'] # Must be provided
@@ -417,9 +421,12 @@ def plot_trellis(filename, output_directory, obs_data_fname=None):
         --> Within +/- 150 m/s of specified Vs30
         --> NOTE: The user must provide a geographically and tectonic
             region filtered flatfile (this filtering is not done here).
-    """ 
+        --> NOTE: If the optional "station_dists_from_rup" flag is True the plotted
+            station distances are computed from the OQ rupture rather than
+            read from the flatfile.
+    """
     config = Configurations(filename)
-    
+
     store_gmm_curves = plot_trellis_util(config, output_directory, obs_data_fname)
     
     return store_gmm_curves
@@ -446,6 +453,9 @@ def plot_spectra(filename, output_directory, obs_spectra_fname=None, obs_data_fn
             distance type specified in the toml file.
         --> NOTE: The user must provide a geographically and tectonic
             region filtered flatfile (this filtering is not done here).
+        --> NOTE: If the optional "station_dists_from_rup" flag is True the plotted
+            station distances are computed from the OQ rupture rather than
+            read from the flatfile.
     """
     config = Configurations(filename)
 

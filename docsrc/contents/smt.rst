@@ -500,7 +500,8 @@ Comparing GMPEs
        .. image:: /contents/smt_images/TrellisPlots.png
    
    The user can also automatically plot observations from a ground-motion flatfile against the GMPE attenuation curves by specifying an optional argument of ``obs_data_fname``, which must be the path to a CSV file
-   containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within ``openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv``.
+   containing a GEM-format ground-motion flatfile. An example of the GEM flatfile format can be found within ``openquake\smt\tests\comparison\data\inputs\gem_flatfile_sample.csv``. If ``station_dists_from_rup`` is
+   ``True``, then the distances used for the plotting of the station data are computed from the same finite rupture used for the GMMs, and if otherwise then the distances provided in the flatfile are used instead.
 
 4. Spectra Plots
 
