@@ -33,7 +33,7 @@ import json
 import unittest
 import tempfile
 import shutil
-from openquake.man.ses_utils.ses_source import get_area_source
+from openquake.man.ses_utils.ses_source import make_area_source
 from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.source import AreaSource
@@ -64,14 +64,14 @@ class TestSESSource(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
-    def test_get_area_source_real_objects(self):
+    def test_make_area_source_real_objects(self):
         """ Testing integration using MFD and PMF objects """
         mfd = TruncatedGRMFD(4.0, 7.0, 0.1, 4.5, 1.0)
         hdd = PMF([(0.3, 5.0), (0.7, 10.0)])
         
-        src = get_area_source(mfd, self.poly_file, hdd=hdd)
+        src = make_area_source(mfd, self.poly_file, hdd=hdd)
         
         self.assertIsInstance(src, AreaSource)
-        self.assertEqual(src.upper_seismogenic_depth, 5.0)
-        self.assertEqual(src.lower_seismogenic_depth, 10.0)
+        self.assertEqual(src.upper_seismogenic_depth, 0.0)
+        self.assertEqual(src.lower_seismogenic_depth, 15.0)
         

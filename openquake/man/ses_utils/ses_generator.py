@@ -36,10 +36,10 @@ from configured seismic sources using Monte Carlo sampling.
 
 import numpy as np
 
-from openquake.man.ses_utils.ses_source import get_area_source
+from openquake.man.ses_utils.ses_source import make_area_source
 
 
-def prepare_source_for_sampling(src):
+def prepare_source_for_sampling(src, samples=1):
     """
     Prepares a source for rupture sampling.
 
@@ -49,6 +49,8 @@ def prepare_source_for_sampling(src):
 
     :param src:
         An OpenQuake seismic source.
+    :param samples:
+        Number of source-model samples associated with the source. Default is 1.
     :returns:
         The prepared source with the required sampling metadata.
     """
@@ -56,12 +58,12 @@ def prepare_source_for_sampling(src):
     src.offset = 0
     src.smweight = 1.0
     src.sampling = {
-        'samples': np.array([1], dtype=np.uint32),
+        'samples': np.array([samples], dtype=np.uint32),
         'trt_smr': np.array([0], dtype=np.uint32),
     }
     return src
 
-def ses_from_area_source(fname: str, mfd, hdd=None):
+def ses_from_area_source(fname: str, mfd, hdd=None, num_ses=1000, ses_seed=0, samples=1):
     """
     Generates a stochastic event set from an Area Source.
 
@@ -71,10 +73,16 @@ def ses_from_area_source(fname: str, mfd, hdd=None):
         An OpenQuake magnitude-frequency distribution instance.
     :param hdd:
         Optional hypocentral-depth probability mass function.
+    :param num_ses:
+        Number of stochastic event sets to simulate.
+    :param ses_seed:
+        Seed used for stochastic rupture sampling.
+    :param samples:
+        Number of source-model samples associated with the source.
     :returns:
         A list of :class:`~openquake.hazardlib.source.rupture.EBRupture`
         objects representing the simulated stochastic event set.
     """
-    src = get_area_source(mfd, polygon_fname=fname, hdd=hdd)
-    prepare_source_for_sampling(src)
-    return src.sample_ruptures(num_ses=1000, ses_seed=0)
+    src = make_area_source(mfd, polygon_fname=fname, hdd=hdd)
+    prepare_source_for_sampling(src, samples=samples)
+    return src.sample_ruptures(num_ses=num_ses, ses_seed=ses_seed)

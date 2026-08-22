@@ -43,35 +43,54 @@ from openquake.hazardlib.scalerel import get_available_area_scalerel
 from openquake.man.ses_utils.ses_geo import get_oq_polygons
 
 
-def get_area_source(
+def make_area_source(
             mfd,
             polygon_fname,
             hdd=None,
-            grid_spacing=10.
+            npd=None,
+            grid_spacing=10.,
+            msr='WC1994',
+            upper_seismogenic_depth=0.0,
+            lower_seismogenic_depth=15.0
         ):
     """
-    Returns an OQ Engine area source instance
+    Creates an OQ Engine AreaSource from a polygon geometry and
+    the provided source parameters.
 
     :param mfd:
         An instance of OQ Engine magnitude-frequency distribution class
     :param polygon_fname:
-        An instance of a OQ Engine polygon class. See :class:`openquake.hazardlib.geo.Polygon`
+        Path to file containing polygon geometry of area source (e.g. GeoJSON or shapefile).
     :param hdd:
-        An instance of a PMF class. See  :class:`openquake.hazardlib.pmf.PMF`
+        An optional :class:`openquake.hazardlib.pmf.PMF` describing the hypocentral depth distribution.
+        If not provided, a single hypocentral depth of 7.5 km is used.
+    :param npd:
+        An optional :class:`openquake.hazardlib.pmf.PMF` describing the nodal plane distribution. 
+        If not provided, a single nodal plane with strike=0, dip=90, and rake=0 is used.
     :param grid_spacing:
         Grid spacing used for area source discretization.
+    :param msr:
+        Name of the magnitude scaling relationship to use. Default is ``'WC1994'``.
+    :param upper_seismogenic_depth:
+        Upper seismogenic depth in km. Default is 0.0.
+    :param lower_seismogenic_depth:
+        Lower seismogenic depth in km. Default is 15.0.
+    :returns:
+        An :class:`openquake.hazardlib.source.AreaSource` instance created
+        from the provided geometry and source parameters.
     """
 
     # Magnitude scaling-relationship
     msrs = get_available_area_scalerel()
-    msr = msrs['WC1994']()
+    msr = msrs[msr]()
 
     # Temporal occurrence model
     time_span = 1.0
     tom = PoissonTOM(time_span)
 
     # Nodal plane distribution
-    npd = PMF([(1.0, NodalPlane(0.0, 90.0, 0.0))])
+    if npd is None:
+        npd = PMF([(1.0, NodalPlane(0.0, 90.0, 0.0))])
 
     # Upper and lower seismogenic depth
     usd = 0
@@ -80,8 +99,8 @@ def get_area_source(
     if hdd is None:
         hdd = PMF([(1.0, 7.5)])
     else:
-        usd = np.min([v[1] for v in hdd.data])
-        lsd = np.max([v[1] for v in hdd.data])
+        usd = upper_seismogenic_depth
+        lsd = lower_seismogenic_depth
 
     # Get geometry
     polys = get_oq_polygons(polygon_fname)

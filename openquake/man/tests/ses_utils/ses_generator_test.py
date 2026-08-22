@@ -39,7 +39,7 @@ from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.source.rupture import EBRupture
 from openquake.man.ses_utils.ses_generator import prepare_source_for_sampling, ses_from_area_source
-from openquake.man.ses_utils.ses_source import get_area_source
+from openquake.man.ses_utils.ses_source import make_area_source
 
 
 """
@@ -91,9 +91,9 @@ class TestSESGenerator(unittest.TestCase):
 
     def test_prepare_source_for_sampling(self):
         """ Tests source objects receive metadata required by BaseSeismicSource.sample_ruptures(). """
-        src = get_area_source(self.mfd, polygon_fname=self.poly_file, hdd=self.hdd)
+        src = make_area_source(self.mfd, polygon_fname=self.poly_file, hdd=self.hdd)
         self.assertIsNone(src.sampling)
-        prepared_src = prepare_source_for_sampling(src)
+        prepared_src = prepare_source_for_sampling(src, samples=2)
         self.assertIs(prepared_src, src)
 
         self.assertEqual(src.id, 0)
@@ -104,7 +104,7 @@ class TestSESGenerator(unittest.TestCase):
         self.assertIn("samples", src.sampling)
         self.assertIn("trt_smr", src.sampling)
 
-        np.testing.assert_array_equal(src.sampling["samples"], np.array([1], dtype=np.uint32))
+        np.testing.assert_array_equal(src.sampling["samples"], np.array([2], dtype=np.uint32))
         np.testing.assert_array_equal(src.sampling["trt_smr"], np.array([0], dtype=np.uint32))
 
         self.assertEqual(src.sampling["samples"].dtype, np.dtype(np.uint32))
@@ -123,3 +123,22 @@ class TestSESGenerator(unittest.TestCase):
         mags = [event.mag for event in ses]
 
         self.assertTrue(all(4.0 <= mag <= 6.5 for mag in mags), "At least one simulated magnitude is outside the MFD bounds.")
+
+    def test_ses_from_area_source_with_custom_sampling_parameters(self):
+        """
+        Test that SES sampling parameters can be provided explicitly.
+        """
+        ses = ses_from_area_source(
+            self.poly_file,
+            self.mfd,
+            self.hdd,
+            num_ses=50,
+            ses_seed=42,
+            samples=2,
+        )
+
+        self.assertIsInstance(ses, list)
+        self.assertGreater(len(ses), 0)
+
+        for event in ses:
+            self.assertIsInstance(event, EBRupture)
