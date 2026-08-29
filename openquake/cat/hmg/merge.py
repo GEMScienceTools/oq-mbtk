@@ -165,8 +165,8 @@ def load_catalogue(fname: str, cat_type: str, cat_code: str, cat_name: str):
         cat = parser.parse(cat_code, cat_name)
     else:
         raise ValueError("Unsupported catalogue type")
-    fmt = '    The original catalogue contains {:d} events'
-    print(fmt.format(len(cat.events)))
+    print(f'    The original catalogue contains {len(cat.events):d} events')
+
     return cat
 
 
@@ -192,14 +192,23 @@ def process_catalogues(settings_fname: str) -> None:
         fname_shp = os.path.join(path, tmps)
         buffr = float(settings["general"].get("region_buffer", 0.))
 
-    # Check that the file
+    # Check that the file exists
     if len(settings["catalogues"]) < 1:
         raise ValueError("Please specify a catalogue in the settings")
+        
+    # Creating output folder
+    out_path = settings["general"].get("output_path", "./out")
+    out_path = os.path.join(path, out_path)
+
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
+
+    prefix = settings["general"].get("output_prefix", "")
 
     # Process the catalogue. `tdict` is dictionary with the info
     # required to merge one specific catalogue.
     for icat, tdict in enumerate(settings["catalogues"]):
-        
+
         # Get settings
         fname = os.path.join(path, tdict["filename"])
         cat_type = tdict["type"]
@@ -215,6 +224,9 @@ def process_catalogues(settings_fname: str) -> None:
             nev = catroot.get_number_events()
             print(f"   Catalogue contains: {nev:d} events")
 
+            if nev == 0:
+                raise ValueError(f'Empty catalogue in {fname}')
+
             select_flag = tdict.get("select_region", False)
             if select_flag:
                 msg = "Selecting earthquakes within the region shapefile"
@@ -224,6 +236,7 @@ def process_catalogues(settings_fname: str) -> None:
                 print("      " + msg)
 
             min_mag = settings["general"].get("minimum_magnitude", False)
+
             if min_mag:
                 msg = "Selecting earthquakes above {:f}".format(min_mag)
                 print("      " + msg)
@@ -247,11 +260,18 @@ def process_catalogues(settings_fname: str) -> None:
 
         # Process the additional catalogues
         else:
-
+            
             # Load the catalogue and get the number of events
             tmpcat = load_catalogue(fname, cat_type, cat_code, cat_name)
             nev = tmpcat.get_number_events()
             print(f"   Catalogue contains: {nev:d} events")
+            
+            if min_mag and cat_type == 'csv':
+                msg = "Selecting earthquakes above {:f}".format(min_mag)
+                print("      " + msg)
+                tmpcat = magnitude_selection(tmpcat, min_mag)
+                nev = tmpcat.get_number_events()
+                print(f"   Catalogue contains: {nev:d} events")
 
             # If requested, select the earthquakes within the polygon
             # specified in the configuration file
@@ -292,11 +312,11 @@ def process_catalogues(settings_fname: str) -> None:
                 else:
                     fle = tempfile.NamedTemporaryFile(mode = 'w', delete=False)
                     logfle=fle.name
-                    
+
 
             else:
                 logfle = tdict["log_file"]
-            
+
             print(f"   Log file: {logfle:s}".format())
             # Perform the merge
             meth = catroot.add_external_idf_formatted_catalogue
@@ -306,21 +326,21 @@ def process_catalogues(settings_fname: str) -> None:
             # Update the spatial index
             print("      Updating index")
             catroot._create_spatial_index()
-        
+            
+            # save a tmp version
+            print("saving a version...")
+            otab_tmp, mtab_tmp = catroot.build_dataframe()
+            temp_fname_otab = os.path.join(out_path, "{:s}_otab_working.h5".format(prefix))
+            temp_fname_mtab = os.path.join(out_path,"{:s}_mtab_working.h5".format(prefix))
+            otab_tmp.to_hdf(temp_fname_otab, '/tmp_origins', append = False)
+            mtab_tmp.to_hdf(temp_fname_mtab, '/tmp_magnitudes', append = False)
+            
         nev = catroot.get_number_events()
         print(f"   Whole catalogue contains: {nev:d} events")
 
     # Building dataframes
     otab, mtab = catroot.build_dataframe()
 
-    # Creating output folder
-    out_path = settings["general"].get("output_path", "./out")
-    out_path = os.path.join(path, out_path)
-
-    if not os.path.exists(out_path):
-        os.mkdir(out_path)
-
-    prefix = settings["general"].get("output_prefix", "")
     fname_or = os.path.join(out_path, "{:s}otab.h5".format(prefix))
     fname_mag = os.path.join(out_path, "{:s}mtab.h5".format(prefix))
 

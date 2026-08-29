@@ -206,7 +206,9 @@ class ISFReader(BaseCatalogueDatabaseReader):
         is_origin = False
         is_magnitude = False
         comment_str = ""
+
         for row in f.readlines():
+
             # Strip newline carriage
             if row.endswith("\r\n"):
                 # If the file was compiled on windows machines
@@ -220,6 +222,9 @@ class ISFReader(BaseCatalogueDatabaseReader):
                 # Ignore empty rows
                 continue
             elif "DATA_TYPE EVENT IMS1.0" in row:
+                # Ignore header row
+                continue
+            elif "DATA_TYPE EVENT ISF2.1" in row:
                 # Ignore header row
                 continue
             elif "ISC Bulletin" in row:
@@ -273,7 +278,9 @@ class ISFReader(BaseCatalogueDatabaseReader):
             else:
                 pass
 
-            if is_magnitude and len(row) == 38:
+            rsplt = re.split('\\s+', row)
+
+            if is_magnitude and len(rsplt) >= 4:
                 # Is a magnitude row
                 mag = get_event_magnitude(row,
                                           event.id,
@@ -283,14 +290,17 @@ class ISFReader(BaseCatalogueDatabaseReader):
                     magnitudes.append(mag)
                 continue
 
-            if is_origin and len(row) == 136:
+            chk = re.search('^\\d{4}/\\d{2}/\\d{2}', rsplt[0])
+            if is_origin and chk:
                 # Is an origin row
                 orig = get_event_origin_row(row,
                                             self.selected_origin_agencies)
                 if orig:
                     origins.append(orig)
+
         if event is not None:
             self._build_event(event, origins, magnitudes, comment_str)
+
         if len(self.rejected_catalogue):
             # Turn list of rejected events into its own instance of
             # ISFCatalogue
@@ -300,6 +310,7 @@ class ISFReader(BaseCatalogueDatabaseReader):
                 events=self.rejected_catalogue)
         f.close()
         self.catalogue.ids = [e.id for e in self.catalogue.events]
+
         return self.catalogue
 
     def _build_event(self, event, origins, magnitudes, comment_str):

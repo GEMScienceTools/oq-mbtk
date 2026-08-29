@@ -43,7 +43,7 @@ def get_table_agency_mag(work, mthresh=5.0, nthresh=0):
 
     x = PrettyTable()
     tbl = []
-    x.field_names = ["Magnitude Type", "Agency", "Number of events"]
+    x.field_names = ["Agency", "Magnitude Type", "Number of events"]
     other = 0
     total = 0
 
