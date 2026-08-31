@@ -31,6 +31,7 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.calc.filters import magdepdist, MINMAG, MAXMAG
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
 from openquake.hazardlib.gsim.mgmpe.generic_gmpe_avgsa import (
     GmpeIndirectAvgSA, GenericGmpeAvgSA)
@@ -251,13 +252,25 @@ def att_curves(gmpe,
 
     # Create context
     mag_str = [f'{mag:.2f}']
-    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
+    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str,
+           'maximum_distance': magdepdist(  # Buffer so all sites in req range
+               [(MINMAG, maxR + 100), (MAXMAG, maxR + 100)])}
     ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
     ctxs = list(ctxm.get_ctxs([rup], sites))
     ctxs = ctxs[0]
-
+    
     # Compute ground-motions
-    mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    try:
+        mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    except KeyError as exc:
+        # KeyError raised if IMT not supported in a CoeffsTable
+        if exc.args and str(exc.args[0]) == str(imt):
+            # Provide nans as not plotted and skipped in interp for spectra
+            mean, std, tau, phi = np.full((4, 1, 1, len(ctxs)), np.nan)
+        else:
+            raise
+
+    # Get distances
     if dist_type == 'repi':
         distances = ctxs.repi
     elif dist_type == 'rrup':
