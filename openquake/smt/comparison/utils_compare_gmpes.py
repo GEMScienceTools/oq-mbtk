@@ -45,6 +45,11 @@ PERIODS = [PGA(), SA(0.025), SA(0.04), SA(0.05), SA(0.07), SA(0.1), SA(0.15),
            SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0), SA(6.5), SA(7.0), SA(7.5),
            SA(8.0), SA(8.5), SA(9.0), SA(9.5), SA(10.0)]
 
+# Max R for attenuation curves interpolated to get spectra - this
+# ensures we are always within interp range up to about requested
+# distance of 2000 km
+SPECTRA_RMAX = 2000
+
 # Fltering params for plotting observations against GMPEs
 MAG_LIM = 0.25 # Mw
 DEP_LIM = 15 # km
@@ -379,7 +384,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
-                                                           500, # Assume record dist < 500 km
+                                                           max(SPECTRA_RMAX, dist + 50), # Ensure r_vals covers requested dist (rup extent shrinks rrup)
                                                            1,   # Step of 1 km for site spacing
                                                            imt.string,
                                                            config.dist_type,
