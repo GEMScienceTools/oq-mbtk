@@ -70,37 +70,36 @@ jobs:
     env:
       MPLBACKEND: 'Agg'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v6
       with:
         python-version: "3.12"
-    - name: Install OpenQuake dependencies
+    - name: Install dependencies and make html pages
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sudo apt-get install pandoc
-        python -m pip install --upgrade pip
+        sudo apt update
+        sudo apt-get install -y pandoc gmt gmt-dcw gmt-gshhg libgmt-dev
         git clone --depth=1 https://github.com/gem/oq-engine.git
         cd oq-engine
-        python3 install.py devel
+        python3 install.py devel --version master
         sleep 3
         source ~/openquake/bin/activate
-        pip install sphinx
-        pip install recommonmark
-        pip install sphinx_rtd_theme
-        pip install nbsphinx
-    - name: Make html pages
-      run: |
-        source ~/openquake/bin/activate
-        cd docsrc ; sphinx-apidoc -o contents/ ../openquake ; make html
+        pip install sphinx recommonmark sphinx_rtd_theme nbsphinx geojson
+        cd ..
+        pip install -r requirements-linux.txt
+        pip install -e .
+        pip list
+        cd docsrc
+        sphinx-apidoc -o contents/ ../openquake
+        make html
         touch _build/html/.nojekyll
 
     - name: Deploy to GitHub Pages
       if: success()
-      uses: crazy-max/ghaction-github-pages@v2
+      uses: peaceiris/actions-gh-pages@v4
       with:
-        target_branch: gh-pages
-        build_dir: docsrc/_build/html/
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        #publish_branch: your-branch  # default: gh-pages
+        publish_dir:  docsrc/_build/html/
