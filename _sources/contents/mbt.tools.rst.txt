@@ -1,0 +1,139 @@
+mbt.tools package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbt.tools.fault_modeler
+   mbt.tools.fm
+   mbt.tools.mfd_sample
+   mbt.tools.model_building
+   mbt.tools.site
+   mbt.tools.strain
+   mbt.tools.tr
+
+Submodules
+----------
+
+mbt.tools.adaptive\_smoothing module
+------------------------------------
+
+.. automodule:: mbt.tools.adaptive_smoothing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.area module
+---------------------
+
+.. automodule:: mbt.tools.area
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.automator module
+--------------------------
+
+.. automodule:: mbt.tools.automator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.completeness module
+-----------------------------
+
+.. automodule:: mbt.tools.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.faults module
+-----------------------
+
+.. automodule:: mbt.tools.faults
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.general module
+------------------------
+
+.. automodule:: mbt.tools.general
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.geo module
+--------------------
+
+.. automodule:: mbt.tools.geo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.mfd module
+--------------------
+
+.. automodule:: mbt.tools.mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model module
+----------------------
+
+.. automodule:: mbt.tools.model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.notebook module
+-------------------------
+
+.. automodule:: mbt.tools.notebook
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.smooth module
+-----------------------
+
+.. automodule:: mbt.tools.smooth
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.smooth3d module
+-------------------------
+
+.. automodule:: mbt.tools.smooth3d
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.strain module
+-----------------------
+
+.. automodule:: mbt.tools.strain
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.utils module
+----------------------
+
+.. automodule:: mbt.tools.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:

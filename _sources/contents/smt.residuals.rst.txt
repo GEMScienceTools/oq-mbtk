@@ -1,0 +1,77 @@
+smt.residuals package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   smt.residuals.parsers
+
+Submodules
+----------
+
+smt.residuals.context\_db module
+--------------------------------
+
+.. automodule:: smt.residuals.context_db
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.gmpe\_residuals module
+------------------------------------
+
+.. automodule:: smt.residuals.gmpe_residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.residual\_plotter module
+--------------------------------------
+
+.. automodule:: smt.residuals.residual_plotter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.residual\_plotter\_utils module
+---------------------------------------------
+
+.. automodule:: smt.residuals.residual_plotter_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.sm\_database module
+---------------------------------
+
+.. automodule:: smt.residuals.sm_database
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.sm\_database\_selector module
+-------------------------------------------
+
+.. automodule:: smt.residuals.sm_database_selector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.residuals.sm\_database\_visualiser module
+---------------------------------------------
+
+.. automodule:: smt.residuals.sm_database_visualiser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:

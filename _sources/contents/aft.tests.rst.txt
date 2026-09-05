@@ -1,0 +1,29 @@
+aft.tests package
+=================
+
+Submodules
+----------
+
+aft.tests.test\_aftershock\_probabilities module
+------------------------------------------------
+
+.. automodule:: aft.tests.test_aftershock_probabilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+aft.tests.test\_rupture\_distances module
+-----------------------------------------
+
+.. automodule:: aft.tests.test_rupture_distances
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: aft.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

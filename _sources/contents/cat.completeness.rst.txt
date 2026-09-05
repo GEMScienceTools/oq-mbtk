@@ -1,0 +1,53 @@
+cat.completeness package
+========================
+
+Submodules
+----------
+
+cat.completeness.analysis module
+--------------------------------
+
+.. automodule:: cat.completeness.analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.completeness.generate module
+--------------------------------
+
+.. automodule:: cat.completeness.generate
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.completeness.mfd\_eval\_plots module
+----------------------------------------
+
+.. automodule:: cat.completeness.mfd_eval_plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.completeness.norms module
+-----------------------------
+
+.. automodule:: cat.completeness.norms
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.completeness.plot module
+----------------------------
+
+.. automodule:: cat.completeness.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: cat.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:

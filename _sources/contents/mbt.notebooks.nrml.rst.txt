@@ -1,0 +1,10 @@
+mbt.notebooks.nrml package
+==========================
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.nrml
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,166 @@
+fnm.tests package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   fnm.tests.data
+   fnm.tests.inversion
+
+Submodules
+----------
+
+fnm.tests.bbox\_test module
+---------------------------
+
+.. automodule:: fnm.tests.bbox_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.connection\_3d\_test module
+-------------------------------------
+
+.. automodule:: fnm.tests.connection_3d_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.connection\_angle\_test module
+----------------------------------------
+
+.. automodule:: fnm.tests.connection_angle_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.connection\_test module
+---------------------------------
+
+.. automodule:: fnm.tests.connection_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.datastore\_test module
+--------------------------------
+
+.. automodule:: fnm.tests.datastore_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.importer\_test module
+-------------------------------
+
+.. automodule:: fnm.tests.importer_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.interface\_test module
+--------------------------------
+
+.. automodule:: fnm.tests.interface_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.mesh\_test module
+---------------------------
+
+.. automodule:: fnm.tests.mesh_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.msr\_test module
+--------------------------
+
+.. automodule:: fnm.tests.msr_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.rupture\_connection\_test module
+------------------------------------------
+
+.. automodule:: fnm.tests.rupture_connection_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.rupture\_fsys\_test module
+------------------------------------
+
+.. automodule:: fnm.tests.rupture_fsys_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.rupture\_section\_test module
+---------------------------------------
+
+.. automodule:: fnm.tests.rupture_section_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.rupture\_test module
+------------------------------
+
+.. automodule:: fnm.tests.rupture_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.section\_test module
+------------------------------
+
+.. automodule:: fnm.tests.section_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.test\_fault\_modeler module
+-------------------------------------
+
+.. automodule:: fnm.tests.test_fault_modeler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.test\_fault\_network\_serializer module
+-------------------------------------------------
+
+.. automodule:: fnm.tests.test_fault_network_serializer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.test\_rupture\_connections module
+-------------------------------------------
+
+.. automodule:: fnm.tests.test_rupture_connections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.tests.test\_rupture\_filtering module
+-----------------------------------------
+
+.. automodule:: fnm.tests.test_rupture_filtering
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: fnm.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:
