@@ -47,7 +47,9 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         cls.GEM_flatfile_directory = os.path.join(
             BASE, "gem_flatfile_test_file.csv")
         cls.db_file = os.path.join(
-            BASE, "gem_conversion_test_metadata")       
+            BASE, "gem_conversion_test_metadata")      
+        # ASK14 contains an aftershock term requiring
+        # is_aftershock and crjb in the rupture context 
         cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")

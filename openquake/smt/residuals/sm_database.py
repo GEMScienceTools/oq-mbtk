@@ -950,9 +950,9 @@ class GroundMotionDatabase(ContextDB):
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
 
-        # Aftershock flag and crjb
-        ctx.is_aftershock = getattr(record.event, 'is_aftershock', False)
-        ctx.crjb = getattr(record.event, 'crjb', np.nan)
+        # Aftershock flag and crjb (ASK14 Class 2 term)
+        ctx.is_aftershock = record.event.is_aftershock
+        ctx.crjb = record.event.crjb
 
         # Add TRT if available
         if record.event.tectonic_region is not None:

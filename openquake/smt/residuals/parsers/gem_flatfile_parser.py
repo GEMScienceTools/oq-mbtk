@@ -206,19 +206,11 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not eq_depth:
             raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
-        # Aftershock flag from the GEM flatfile mainshock/aftershock column.
-        # Column values are the strings 'mainshock', 'aftershock', 'foreshock'
-        # or 'undefined' (see gem_global_flatfile utils_flatfile.py); only
-        # 'aftershock' maps to True so ASK14's Class 2 term is applied.
-        ms_as_flag = metadata.get('mainshock_aftershock_flag_from_db', '')
-        is_aftershock = (ms_as_flag or '').strip().lower() == 'aftershock'
+        # Aftershock flag 
+        is_aftershock = metadata['mainshock_aftershock_flag_from_db'] == 'aftershock'
 
-        # Centroid Joyner-Boore distance to the main-shock rupture, required
-        # by ASK14's aftershock term for Class 2 events. Left as nan if the
-        # column is absent or empty.
-        crjb = utils.vfloat(metadata.get('CJB_dist', ''), 'CJB_dist')
-        if crjb is None:
-            crjb = np.nan
+        # crjb (aftershock distance metric used in ASK14)
+        crjb = utils.vfloat(metadata['CJB_dist'], 'CJB_dist')
 
         # Make SMT EQ object
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
