@@ -86,7 +86,7 @@ HEADERS = ["event_id",
            "shortest_usable_period",
            "longest_usable_period",
            "mainshock_aftershock_flag_from_db",
-           "CJB_dist"
+           "CJB_dist" # Aftershock distance metric in ASK14
            ]
 
 M_PRECEDENCE = ["Mw", "Ms", "ML"]
