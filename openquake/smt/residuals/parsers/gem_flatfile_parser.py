@@ -20,6 +20,7 @@ Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import os
 import csv
+import numpy as np
 import pandas as pd
 import copy
 import pickle
@@ -83,7 +84,9 @@ HEADERS = ["event_id",
            "V_lp",
            "W_lp",
            "shortest_usable_period",
-           "longest_usable_period"
+           "longest_usable_period",
+           "mainshock_aftershock_flag_from_db",
+           "CJB_dist"
            ]
 
 M_PRECEDENCE = ["Mw", "Ms", "ML"]
@@ -203,10 +206,26 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not eq_depth:
             raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
+        # Aftershock flag from the GEM flatfile mainshock/aftershock column.
+        # Column values are the strings 'mainshock', 'aftershock', 'foreshock'
+        # or 'undefined' (see gem_global_flatfile utils_flatfile.py); only
+        # 'aftershock' maps to True so ASK14's Class 2 term is applied.
+        ms_as_flag = metadata.get('mainshock_aftershock_flag_from_db', '')
+        is_aftershock = (ms_as_flag or '').strip().lower() == 'aftershock'
+
+        # Centroid Joyner-Boore distance to the main-shock rupture, required
+        # by ASK14's aftershock term for Class 2 events. Left as nan if the
+        # column is absent or empty.
+        crjb = utils.vfloat(metadata.get('CJB_dist', ''), 'CJB_dist')
+        if crjb is None:
+            crjb = np.nan
+
         # Make SMT EQ object
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet)
-                         tectonic_region=metadata['event_trt_from_classifier']
+                         tectonic_region=metadata['event_trt_from_classifier'],
+                         is_aftershock=is_aftershock,
+                         crjb=crjb
                          )
         
         # Get preferred magnitude and list

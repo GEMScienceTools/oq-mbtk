@@ -69,6 +69,13 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         # Record IDs should be equal to the specified target IDs
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
 
+        # Aftershock flag should be True only for the single record labelled
+        # 'aftershock' in the flatfile; all others parse to False.
+        aftershock_flags = [rec.event.is_aftershock for rec in db]
+        self.assertEqual(aftershock_flags, [False, True, False, False, False])
+        # crjb should be populated only for the aftershock record.
+        self.assertAlmostEqual(db.records[1].event.crjb, 3.0)
+
         # Also run an arbitrary residual analysis to check
         # the constructed db is functioning correctly
         residuals = res.Residuals(self.gmpe_list, self.imts)

@@ -278,6 +278,11 @@ class Earthquake(object):
         Focal mechanism as instance of the :class: FocalMechanism
     :param tectonic_region:
         Tectonic region of the earthquake
+    :param bool is_aftershock:
+        True if the event is classified as an aftershock
+    :param float crjb:
+        Centroid Joyner-Boore distance (shortest horizontal distance from the
+        aftershock rupture centroid to the edge of the main shock rupture)
     """
     def __init__(self,
                  eq_id,
@@ -289,7 +294,9 @@ class Earthquake(object):
                  magnitude,
                  rupture=None,
                  focal_mechanism=None,
-                 tectonic_region=None):
+                 tectonic_region=None,
+                 is_aftershock=False,
+                 crjb=np.nan):
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
@@ -301,6 +308,8 @@ class Earthquake(object):
         self.rupture = rupture
         self.mechanism = focal_mechanism
         self.tectonic_region = tectonic_region
+        self.is_aftershock = is_aftershock
+        self.crjb = crjb
 
 
 class RecordDistance(object):
@@ -940,6 +949,10 @@ class GroundMotionDatabase(ContextDB):
         ctx.hypo_depth = record.event.depth
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
+
+        # Aftershock flag and crjb
+        ctx.is_aftershock = getattr(record.event, 'is_aftershock', False)
+        ctx.crjb = getattr(record.event, 'crjb', np.nan)
 
         # Add TRT if available
         if record.event.tectonic_region is not None:
