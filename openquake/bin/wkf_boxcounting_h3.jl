@@ -36,6 +36,9 @@ function parse_commandline()
             help = "weighting option for events [one, mfd, completeness]"
 			arg_type = String
 			default = "one"
+		"--return_empty_cells", "-e"
+		    help = "if set, include empty cells in the output"
+			action = :store_true
     end
 
     return parse_args(s)
@@ -53,9 +56,10 @@ function main()
 	end
 
 	# Running boxcounting
-	PSHAModelBuilder.boxcounting(args["cat"], args["h3_level"], 
-                args["mapping"], args["config"], 
-	            args["folder_out"], args["year_end"], args["weighting"]);
+	PSHAModelBuilder.boxcounting(args["cat"], args["h3_level"],
+                args["mapping"], args["config"],
+	            args["folder_out"], args["year_end"], args["weighting"];
+	            return_empty_cells=args["return_empty_cells"]);
 
 end
 
