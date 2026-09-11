@@ -20,6 +20,7 @@ Parse the GEM globally homogenised flatfile into SMT metadata.
 """
 import os
 import csv
+import numpy as np
 import pandas as pd
 import copy
 import pickle
@@ -83,7 +84,9 @@ HEADERS = ["event_id",
            "V_lp",
            "W_lp",
            "shortest_usable_period",
-           "longest_usable_period"
+           "longest_usable_period",
+           "mainshock_aftershock_flag_from_db",
+           "CJB_dist" # Aftershock distance metric in ASK14
            ]
 
 M_PRECEDENCE = ["Mw", "Ms", "ML"]
@@ -203,10 +206,18 @@ class GEMFlatfileParser(SMDatabaseReader):
         if not eq_depth:
             raise ValueError(f'Depth missing for {eq_id} in admitted flatfile')
 
+        # Aftershock flag 
+        is_aftershock = metadata['mainshock_aftershock_flag_from_db'] == 'aftershock'
+
+        # crjb (aftershock distance metric used in ASK14)
+        crjb = utils.vfloat(metadata['CJB_dist'], 'CJB_dist')
+
         # Make SMT EQ object
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          None, # Magnitude not defined yet)
-                         tectonic_region=metadata['event_trt_from_classifier']
+                         tectonic_region=metadata['event_trt_from_classifier'],
+                         is_aftershock=is_aftershock,
+                         crjb=crjb
                          )
         
         # Get preferred magnitude and list

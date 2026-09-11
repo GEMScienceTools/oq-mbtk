@@ -82,7 +82,9 @@ HEADERS = ["event_id",
            "W_hp",
            "U_lp",
            "V_lp",
-           "W_lp"]
+           "W_lp",
+           "mainshock_aftershock_flag_from_db",
+           "CJB_dist"]
 
 
 def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
@@ -96,6 +98,21 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     ngawest2['fm_type'] = pd.Series()
     ngawest2['station_id'] = pd.Series()
     ngawest2['vs30_meas'] = pd.Series()
+
+    # Wooddell & Abrahamson (2014) class -> mainshock/aftershock/foreshock label
+    def _wa_class_to_label(val):
+        if pd.isnull(val):
+            return 'undefined'
+        s = str(val).strip()
+        if s.startswith('C1f'):
+            return 'foreshock'
+        if s.startswith('C2'):
+            return 'aftershock'
+        if s.startswith('C1'):
+            return 'mainshock'
+        return 'undefined'
+    ngawest2['mainshock_aftershock_flag_from_db'] = ngawest2[
+        'TYPE(CRjb = 0)'].apply(_wa_class_to_label)
 
     for idx, rec in ngawest2.iterrows():
         
@@ -206,10 +223,13 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
 
     "U_hp":ngawest2['HP-H1 (Hz)'],
     "V_hp":ngawest2['HP-H2 (Hz)'],
-    "W_hp":ngawest2_vert['HP-V (Hz)'],  
+    "W_hp":ngawest2_vert['HP-V (Hz)'],
     "U_lp":ngawest2['LP-H1 (Hz)'],
     "V_lp":ngawest2['LP-H2 (Hz)'],
-    "W_lp":ngawest2_vert['LP-V (Hz)'], 
+    "W_lp":ngawest2_vert['LP-V (Hz)'],
+
+    "mainshock_aftershock_flag_from_db": ngawest2['mainshock_aftershock_flag_from_db'],
+    "CJB_dist": ngawest2['CRjb'],
 
     "U_pga":None,
     "V_pga":None,
@@ -551,10 +571,18 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_depth = utils.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
             raise ValueError('Depth missing an events in admitted flatfile')
-        
+
+        # Aftershock flag
+        is_aftershock = metadata['mainshock_aftershock_flag_from_db'] == 'aftershock'
+
+        # crjb (aftershock distance metric used in ASK14)
+        crjb = utils.vfloat(metadata['CJB_dist'], 'CJB_dist')
+
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          magnitude=None, # Magnitude not assigned yet)
-                         tectonic_region="active_crustal")
+                         tectonic_region="active_crustal",
+                         is_aftershock=is_aftershock,
+                         crjb=crjb)
         
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
