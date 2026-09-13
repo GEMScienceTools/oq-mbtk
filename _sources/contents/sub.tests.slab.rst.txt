@@ -1,0 +1,85 @@
+sub.tests.slab package
+======================
+
+Submodules
+----------
+
+sub.tests.slab.create\_fault\_test module
+-----------------------------------------
+
+.. automodule:: sub.tests.slab.create_fault_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.fit\_plane\_test module
+--------------------------------------
+
+.. automodule:: sub.tests.slab.fit_plane_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_smooth\_test module
+-------------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_smooth_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_test\_cam module
+----------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_test_cam
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_test\_hypocenter module
+-----------------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_test_hypocenter
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_test\_pai module
+----------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_test_pai
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_test\_sa06 module
+-----------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_test_sa06
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_test\_south\_america\_slab6 module
+----------------------------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_test_south_america_slab6
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.slab.rupture\_utils\_test module
+------------------------------------------
+
+.. automodule:: sub.tests.slab.rupture_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.tests.slab
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,26 @@
+mbt.notebooks package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbt.notebooks.catalogue
+   mbt.notebooks.compare
+   mbt.notebooks.nrml
+   mbt.notebooks.project
+   mbt.notebooks.sources
+   mbt.notebooks.sources_area
+   mbt.notebooks.sources_distributed_s
+   mbt.notebooks.sources_shallow_fault
+   mbt.notebooks.tectonics
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks
+   :members:
+   :show-inheritance:
+   :undoc-members:

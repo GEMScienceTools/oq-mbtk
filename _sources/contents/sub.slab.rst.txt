@@ -1,0 +1,45 @@
+sub.slab package
+================
+
+Submodules
+----------
+
+sub.slab.inslab module
+----------------------
+
+.. automodule:: sub.slab.inslab
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.slab.rupture module
+-----------------------
+
+.. automodule:: sub.slab.rupture
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.slab.rupture\_utils module
+------------------------------
+
+.. automodule:: sub.slab.rupture_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.slab.utils\_plot module
+---------------------------
+
+.. automodule:: sub.slab.utils_plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.slab
+   :members:
+   :show-inheritance:
+   :undoc-members:

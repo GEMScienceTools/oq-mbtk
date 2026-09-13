@@ -1,0 +1,45 @@
+sub.tests.misc package
+======================
+
+Submodules
+----------
+
+sub.tests.misc.edge\_test module
+--------------------------------
+
+.. automodule:: sub.tests.misc.edge_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.misc.mesh\_test module
+--------------------------------
+
+.. automodule:: sub.tests.misc.mesh_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.misc.profile\_test module
+-----------------------------------
+
+.. automodule:: sub.tests.misc.profile_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.tests.misc.utils\_test module
+---------------------------------
+
+.. automodule:: sub.tests.misc.utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.tests.misc
+   :members:
+   :show-inheritance:
+   :undoc-members:

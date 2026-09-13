@@ -1,0 +1,39 @@
+mbt.tests package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbt.tests.notebooks
+   mbt.tests.tools
+   mbt.tests.workflows
+
+Submodules
+----------
+
+mbt.tests.adaptive\_smoothing\_test module
+------------------------------------------
+
+.. automodule:: mbt.tests.adaptive_smoothing_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.oqt\_project\_test module
+-----------------------------------
+
+.. automodule:: mbt.tests.oqt_project_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

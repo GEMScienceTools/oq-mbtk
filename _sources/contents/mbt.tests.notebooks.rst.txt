@@ -1,0 +1,20 @@
+mbt.tests.notebooks package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbt.tests.notebooks.project
+   mbt.tests.notebooks.sources_area
+   mbt.tests.notebooks.sources_shallow_fault
+
+Module contents
+---------------
+
+.. automodule:: mbt.tests.notebooks
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,10 @@
+mbt.notebooks.tectonics package
+===============================
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.tectonics
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,10 @@
+mbt.notebooks.sources package
+=============================
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.sources
+   :members:
+   :show-inheritance:
+   :undoc-members:

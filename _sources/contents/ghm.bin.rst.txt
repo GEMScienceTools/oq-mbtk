@@ -1,0 +1,10 @@
+ghm.bin package
+===============
+
+Module contents
+---------------
+
+.. automodule:: ghm.bin
+   :members:
+   :show-inheritance:
+   :undoc-members:
