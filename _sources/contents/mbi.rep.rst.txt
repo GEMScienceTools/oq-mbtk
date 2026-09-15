@@ -1,0 +1,21 @@
+mbi.rep package
+===============
+
+Submodules
+----------
+
+mbi.rep.logictree module
+------------------------
+
+.. automodule:: mbi.rep.logictree
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbi.rep
+   :members:
+   :show-inheritance:
+   :undoc-members:

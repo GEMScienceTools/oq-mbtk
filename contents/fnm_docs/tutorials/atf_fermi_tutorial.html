@@ -1,0 +1,743 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Basic Fault Network Modeling with Fermi &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="prev" title="Fault Network Modeling(fnm) a.k.a. Fermi" href="../../fnm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../wkf.html">SSC workflow (wkf) module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../fnm.html">Fault Network Modeling(fnm) a.k.a. Fermi</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Basic Fault Network Modeling with Fermi</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Overview-of-the-Fault-Network-Modeling-process">Overview of the Fault Network Modeling process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Building-the-fault-network">Building the fault network</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Settings-for-the-fault-network-creation">Settings for the fault network creation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Loading-the-fault-data">Loading the fault data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Building the fault network</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Making-constraints-for-the-rupture-rate-inversion">Making constraints for the rupture rate inversion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Writing-the-results-to-an-OpenQuake-source">Writing the results to an OpenQuake source</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../fnm.html">Fault Network Modeling(fnm) a.k.a. Fermi</a></li>
+      <li class="breadcrumb-item active">Basic Fault Network Modeling with Fermi</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/contents/fnm_docs/tutorials/atf_fermi_tutorial.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Basic-Fault-Network-Modeling-with-Fermi">
+<h1>Basic Fault Network Modeling with Fermi<a class="headerlink" href="#Basic-Fault-Network-Modeling-with-Fermi" title="Link to this heading"></a></h1>
+<p>Fermi is a tool to create fault sources for PSHA that are capable of subfault to multifault ruptures, treating the faults as a network.</p>
+<p>This is an entry-level tutorial, showing the common useful methods and constraints to build a fault source model. However additional configuration is possible for special cases, to be covered in later tutorials.</p>
+<section id="Overview-of-the-Fault-Network-Modeling-process">
+<h2>Overview of the Fault Network Modeling process<a class="headerlink" href="#Overview-of-the-Fault-Network-Modeling-process" title="Link to this heading"></a></h2>
+<p>The modeling process looks like this:</p>
+<ol class="arabic">
+<li><p>Creation of subfaults</p>
+<p>In this step, the fault traces are expanded down-dip to 3D surfaces, and then broken into smaller, atomic units called ‘subfaults’ that are capable of independent ruptures. The individual subfault ruptures are the smallest on-fault ruptures in the fault source. For regional PSHA models, 10x10 km subfaults are a fine subfault size, which is about a M 6.0 rupture. This can be smaller or larger if desired, for example smaller for site-specific studies, or larger for continental-scale models; the
+tradeoffs here are the number of ruptures produced and the computational expense in the rupture creation and rate inversion.</p>
+</li>
+<li><p>Creation of single-fault ruptures</p>
+<p>Single-fault ruptures are composed of one or more subfaults. Ruptures with more than one subfault are rectangular groups of contiguous subfaults. These fall within rupture aspect ratio bounds, which are different for ruptures that don’t fully saturate the down-dip width of the fault and those that do: ruptures that do are allowed to grow much longer than those that do not, consistent with observations from nature. Note that these aspect ratio bounds are configurable.</p>
+</li>
+<li><p>Creation of multifault ruptures</p>
+<p>Multifault ruptures are created by joining single-fault ruptures that are separated by a ‘jump’ distance less than some specified value (typically 5-10 km). This is done through graph theoretical methods: a N x N distance matrix is created (where N is the number of ruptures) and then this matrix is pared for distances greater than the jump distance, creating an adjacency matrix. Then, all of the unique sets of adjacent ruptures is found through a depth-first search algorithm operating on the
+adjacency matrix.</p>
+<p>This typically produces an enormous number of ruptures, so additional filtering should be done on the adjacency matrix before the multifault ruptures are created. The most substantial is limiting multifault ruptures to be combinations of full-fault single-fault ruptures (rather than all subfault ruptures), which for reasons of computational expense will need to be done when more than a few faults are involved, unless one wants to use an HPC system or the subfaults themselves are &gt;20x20 km.
+This is in line with theory and observations suggesting that earthquake ruptures are much more likely to stop at geometric complexities in faults (including gaps and stepovers) than in the middle of fault segments. Similarly, the geometrical compatibilities between faults themselves can be quantified and used as a filter on the adjacency matrix.</p>
+</li>
+<li><p>(Optional) Plausibility filtering of multifault ruptures</p>
+<p>Research of rupture propagation through geometrical complexities and related topics indicates that not all potential multifault ruptures are equally plausible. Therefore, we can increase the model’s fidelity to nature and reduce its computational load by filtering the ruptures by their plausbility. The plausibility of a rupture is quantified by assessing the jump distance, the angular distance between the traces of adjacent faults, and the angular distance between the azimuth of slip between
+adjacent faults; each of these yields a plausibility value between 0 and 1 for each connection between faults (or ruptures), which are multiplied for each connection: a three-fault rupture will have a total plausibility value that is the product of the three criteria for two connections. The ruptures are then stochastically filtered by their plausibility, by sampling a uniform random number from [0-1) for each rupture and comparing to the plausibility; if the plausbility is higher than the
+random number, the rupture is retained. All single-fault ruptures have a plausibility of 1.0 so they are not filtered. Tuning parameters exist for the plausibility calculations for each criterion.</p>
+<p>In this tutorial, the plausibility filtering is not used.</p>
+</li>
+<li><p>Rupture rate inversion</p>
+<p>Once Fermi has made the ruptures, the next step is to determine the annual occurrence rates of each rupture, through an inversion of geological and seismological constraints, such as fault slip rates and magnitude-frequency distributions. This happens through the creation of a system of linear equations which represent the constraints, which is solved using a non-negative least-squares solver developed for this application.</p>
+<ol class="arabic simple">
+<li><p><em>Choosing constraints</em> There are a variety of data types and constraints that can be used to solve for the rupture rates. The most commonly used by nearly all workers in the field are fault slip rates, which may be found through geologic or geodetic means. We are also using two types of magnitude-frequency distribution information. The first is a normal magnitude-frequency distribution, which has absolute rates (frequencies) for each magnitude bin. The second is what is here called a
+‘relative’ magnitude-frequency distribution, in which only the shape (the relative rates) of the MFD is used, i.e. there is a b-value but no a-value. We will use the absolute MFD as a constraint on the model-wide magnitude-frequency distribution, and relative MFDs for each fault, to ensure that the faults are producing a range of magnitudes.</p></li>
+<li><p><em>Solving for the rupture rates</em> Once the constraints have been chosen, a system of equations is created; each constraint becomes a block of equations, that are then stacked to form the final system. Though the system is linear (i.e., the variables we are solving for, the rupture rates, are related to each other additively not multiplicatively), we can’t do a direct solve on the system because the solution must be non-negative: rupture rates can be zero, but not negative (that would be
+meaningless). We use a non-negative projected-gradient weighted least-squares solver, which is an iterative method that offers rapid convergence.</p></li>
+</ol>
+</li>
+<li><p>Writing fault sources</p>
+<p>After the rupture rates have been determined, the fault network can be saved as an OpenQuake fault source.</p>
+</li>
+</ol>
+</section>
+<section id="Building-the-fault-network">
+<h2>Building the fault network<a class="headerlink" href="#Building-the-fault-network" title="Link to this heading"></a></h2>
+<p>First we must import the modules and functions.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># Start the logging with level INFO to provide
+# good information about the progress and results
+
+import logging
+logging.basicConfig(
+    format=&#39;%(asctime)s - %(message)s&#39;,
+    datefmt=&#39;%d-%b-%y %H:%M:%S&#39;,
+    level=logging.INFO,
+)
+</pre></div>
+</div>
+</div>
+<p>Fermi is the <code class="docutils literal notranslate"><span class="pre">openquake.fnm</span></code> module. The basic entry point is the <code class="docutils literal notranslate"><span class="pre">openquake.fnm.all_together_now</span></code> submodule, which provides the functions <code class="docutils literal notranslate"><span class="pre">build_fault_network</span></code> and <code class="docutils literal notranslate"><span class="pre">build_system_of_equations</span></code>.</p>
+<p>However, we are also going to import a number of other functions to allow us to use more constraints in solving for the rupture rates, such as magnitude-frequency constraints for all of the faults involved as well as for the region.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from openquake.hazardlib.mfd import TruncatedGRMFD
+
+from openquake.fnm.exporter import (
+    make_multifault_source,
+    write_multifault_source,
+)
+from openquake.fnm.all_together_now import (
+    build_fault_network,
+    build_system_of_equations,
+)
+from openquake.fnm.inversion.utils import (
+    rup_df_to_rupture_dicts,
+    get_fault_moment_rate,
+    make_fault_mfd,
+)
+from openquake.fnm.inversion.plots import (
+    plot_soln_slip_rates,
+    plot_soln_mfd,
+    plot_mfd,
+)
+from openquake.fnm.inversion.soe_builder import (
+    make_fault_rel_mfd_equation_components,
+)
+
+from openquake.fnm.inversion.solver import solve_nnls_pg
+</pre></div>
+</div>
+</div>
+<section id="Settings-for-the-fault-network-creation">
+<h3>Settings for the fault network creation<a class="headerlink" href="#Settings-for-the-fault-network-creation" title="Link to this heading"></a></h3>
+<p>Fault network modeling is complex; there are a number of parameters that control many of the aspects of the process, such as the size of the subfaults, the maximum jump distance, whether to filter by plausibility, etc. Note that these settings do not directly control the rupture rate inversion–that comes later.</p>
+<p>The list of the available settings and their defaults may be found <a class="reference external" href="https://github.com/GEMScienceTools/oq-mbtk/blob/7cbd649c7c46f17afc44a4664686d621e9fec53e/openquake/fnm/all_together_now.py#L59">in the code</a>.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>settings = {
+    # fraction of slip rate released in mainshocks
+    &quot;seismic_fraction&quot;: 1.0,
+    # Size of subfault length/width in km
+    &quot;subsection_size&quot;: 10.0,
+    &quot;max_jump_distance&quot;: 10.0, # maximum 3d distance between faults that can co-rupture
+    &quot;parallel_subfault_build&quot;: True, #set to False if you run in IPython interactively
+    &#39;full_fault_only_mf_ruptures&#39;: True, # Set to False for site-specific analysis with just a few faults
+    &quot;filter_by_plausibility&quot;: True, #set to True if you want to remove some geometrically implausible ruptures
+    &quot;fault_mfd_b_value&quot;: 1.0, # change as you like
+    &quot;export_fault_mfds&quot;: True, # create MFD objects for faults during processing
+}
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Loading-the-fault-data">
+<h3>Loading the fault data<a class="headerlink" href="#Loading-the-fault-data" title="Link to this heading"></a></h3>
+<p>This file shows a part of the Altyn Tagh and Qilian Shan in northern Tibet. The total fault system covers several hundred kilometers in either direction and shows much of the complexity inherent in fault systems worldwide, while still being small enough to be handled in a short amount of time by Fermi.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fault_geojson = &quot;../../../../openquake/fnm/tests/data/atf_qilian.geojson&quot;
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>gpd.read_file(fault_geojson).plot()
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Warning 3: Cannot find header.dxf (GDAL_DATA is not defined)
+/Users/itchy/src/miniforge3/envs/oq2/lib/python3.12/site-packages/pyogrio/core.py:35: RuntimeWarning: Could not detect GDAL data files. Set GDAL_DATA environment variable to the correct path.
+  _init_gdal_data()
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;Axes: &gt;
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_12_2.png" src="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_12_2.png" />
+</div>
+</div>
+<p>Now let’s look at the attributes of the data. The required ones are:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>gpd.read_file(fault_geojson).head()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>extension_err</th>
+      <th>cde</th>
+      <th>name</th>
+      <th>net_slip_rate</th>
+      <th>extension_rate</th>
+      <th>lsd</th>
+      <th>net_slip_rate_err</th>
+      <th>hw</th>
+      <th>dip_dir</th>
+      <th>fid</th>
+      <th>dextral_err</th>
+      <th>fw</th>
+      <th>dip</th>
+      <th>dextral_rate</th>
+      <th>usd</th>
+      <th>rake</th>
+      <th>geometry</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.093</td>
+      <td>0.001</td>
+      <td></td>
+      <td>3.725</td>
+      <td>0.091</td>
+      <td>20.0</td>
+      <td>0.078</td>
+      <td>104</td>
+      <td>S</td>
+      <td>282</td>
+      <td>0.078</td>
+      <td>103</td>
+      <td>89.0</td>
+      <td>-3.724</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>LINESTRING (90.73336 38.64673, 90.73935 38.648...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.086</td>
+      <td>0.004</td>
+      <td></td>
+      <td>2.546</td>
+      <td>-2.511</td>
+      <td>15.0</td>
+      <td>0.094</td>
+      <td>122</td>
+      <td>SW</td>
+      <td>309</td>
+      <td>0.114</td>
+      <td>115</td>
+      <td>15.0</td>
+      <td>-0.421</td>
+      <td>0.0</td>
+      <td>5.9</td>
+      <td>LINESTRING (98.39916 39.53902, 98.43676 39.516...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.075</td>
+      <td>-0.001</td>
+      <td>Luliang Thrust</td>
+      <td>2.873</td>
+      <td>-1.860</td>
+      <td>15.0</td>
+      <td>0.075</td>
+      <td>140</td>
+      <td>NE</td>
+      <td>331</td>
+      <td>0.066</td>
+      <td>104</td>
+      <td>15.0</td>
+      <td>2.191</td>
+      <td>0.0</td>
+      <td>179.2</td>
+      <td>LINESTRING (95.64242 37.59772, 95.63424 37.600...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.140</td>
+      <td>-0.004</td>
+      <td>Qaidam Thrust</td>
+      <td>1.551</td>
+      <td>-0.321</td>
+      <td>15.0</td>
+      <td>0.111</td>
+      <td>141</td>
+      <td>NE</td>
+      <td>332</td>
+      <td>0.118</td>
+      <td>140</td>
+      <td>15.0</td>
+      <td>-1.518</td>
+      <td>0.0</td>
+      <td>0.2</td>
+      <td>LINESTRING (96.49668 37.88915, 96.44849 37.922...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.237</td>
+      <td>-0.024</td>
+      <td></td>
+      <td>1.591</td>
+      <td>-1.460</td>
+      <td>15.0</td>
+      <td>0.186</td>
+      <td>138</td>
+      <td>NE</td>
+      <td>333</td>
+      <td>0.180</td>
+      <td>141</td>
+      <td>15.0</td>
+      <td>-0.634</td>
+      <td>0.0</td>
+      <td>2.3</td>
+      <td>LINESTRING (96.27662 38.47767, 96.26163 38.479...</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="id1">
+<h3>Building the fault network<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>This is done with a single command. The fault network is a dictionary of the different components.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>fault_network = build_fault_network(
+        fault_geojson=fault_geojson,
+        settings=settings,
+        )
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+21-Mar-26 07:01:50 - Building faults from geojson
+21-Mar-26 07:01:50 -    27 faults built from geojson
+21-Mar-26 07:01:50 -    done in 0.1 s
+21-Mar-26 07:01:50 - Making subfaults in parallel
+21-Mar-26 07:01:56 -    done in 6.8 s
+21-Mar-26 07:01:56 -    828 subfaults from 27 faults
+21-Mar-26 07:01:56 - Making single fault rup df and distance matrix
+21-Mar-26 07:01:56 -   making single-fault ruptures
+21-Mar-26 07:01:56 -   calculating fault distances
+21-Mar-26 07:01:56 -   making dist_adj_matrix (7046, 7046)
+21-Mar-26 07:01:56 -   filtering and calculating pairwise rupture distances
+21-Mar-26 07:01:57 -    done in 0.5 s
+21-Mar-26 07:01:57 -    7,046 single-fault ruptures
+21-Mar-26 07:01:57 -    64 close ruptures out of 4,096 connections (1.6%)
+21-Mar-26 07:01:57 -   Filtering by rupture overlap
+21-Mar-26 07:01:57 -    Getting proximal rup angles
+21-Mar-26 07:01:57 -    Calculating overlap
+21-Mar-26 07:01:57 -    done in 0.3 s
+21-Mar-26 07:01:57 -    50 connections remaining
+21-Mar-26 07:01:57 - Building subfault dataframe
+21-Mar-26 07:01:57 -    done in 0.0 s
+21-Mar-26 07:01:57 - Getting multifault ruptures
+21-Mar-26 07:01:57 -    making adjacency dictionary
+21-Mar-26 07:01:57 -    finding connected subgraphs
+21-Mar-26 07:01:57 -    3 connected subgraphs found
+21-Mar-26 07:01:57 -    getting all contiguous vertex sets
+21-Mar-26 07:01:57 -            finished subgraph 1
+21-Mar-26 07:01:57 -            finished subgraph 2
+21-Mar-26 07:01:57 -            finished subgraph 3
+21-Mar-26 07:01:57 -    done in 0.1 s
+21-Mar-26 07:01:57 -    449 multifault ruptures
+21-Mar-26 07:01:57 - Making rupture dataframe
+21-Mar-26 07:01:58 - Getting fault groups
+21-Mar-26 07:01:58 -    making adjacency dictionary
+21-Mar-26 07:01:58 -    6 groups
+21-Mar-26 07:01:58 -    done in 0.3 s
+21-Mar-26 07:01:58 - Filtering ruptures by plausibility
+21-Mar-26 07:01:58 -    done in 0.4 s
+21-Mar-26 07:01:58 -    7,064 ruptures remaining (94.2 %)
+21-Mar-26 07:01:58 - total time: 8.5 s
+</pre></div></div>
+</div>
+</section>
+<section id="Making-constraints-for-the-rupture-rate-inversion">
+<h3>Making constraints for the rupture rate inversion<a class="headerlink" href="#Making-constraints-for-the-rupture-rate-inversion" title="Link to this heading"></a></h3>
+<p>The first step is to choose the set of ruptures that we’ll use in the model. Because we are not filtering by plausibility, this choice is made for us. The ruptures are found in a Pandas dataframe, <code class="docutils literal notranslate"><span class="pre">fault_network['rupture_df']</span></code>. If we were choosing to filter the ruptures, and then use the filtered set, we would find that at <code class="docutils literal notranslate"><span class="pre">fault_network['rupture_df_keep']</span></code>. We will also make a dictionary out of the ruptures that we want to use, which makes certain steps easier.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rup_key = &#39;rupture_df&#39;
+rup_set = fault_network[rup_key]
+rups = rup_df_to_rupture_dicts(rup_set)
+</pre></div>
+</div>
+</div>
+<p>Now we’re going to create relative MFD constraints for each fault.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># MFD constraints (b-value only, no a-value) for faults
+fault_rel_mfds = make_fault_rel_mfd_equation_components(
+    rups,
+    fault_network,
+    b_value=settings[&#39;fault_mfd_b_value&#39;],
+    fault_key=&#39;faults&#39;,
+    rup_key=rup_key,
+    )
+</pre></div>
+</div>
+</div>
+<p>Here we create an absolute MFD for the whole fault system. Fermi can use any OpenQuake MFD class in the inversion, or a dictionary with magnitude bins and rates. In most cases, one would fit an MFD to the regional seismicity, which requires estimating the completeness of the catalog as well. We won’t get into that here, so instead we will fit one to the total moment rate of the faults.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span># absolute MFD for whole model
+fault_moment = sum(get_fault_moment_rate(fault)
+                   for i, fault in fault_network[&#39;subfault_df&#39;].iterrows())
+model_abs_mfd = TruncatedGRMFD.from_moment(
+    min_mag=rup_set.mag.min(),
+    max_mag=rup_set.mag.max(),
+    bin_width=0.1,
+    b_val=1.0, # as you&#39;d like
+    moment_rate=fault_moment,
+)
+</pre></div>
+</div>
+</div>
+<p>Now we build the system of equations. We use the ruptures we’ve selected, and we are making slip rate equations for each subfault, not each fault. We are using the per-fault relative MFDs and the model-wide absolute MFD. You can see here how you’d make a model-wide relative MFD if you wanted to, and how to change its b-value.</p>
+<p>The system of equations is represented by the <code class="docutils literal notranslate"><span class="pre">lhs</span></code>, the left-hand-side matrix of equations (often called the design matrix); the <code class="docutils literal notranslate"><span class="pre">rhs</span></code>, the right-hand side vector of ‘knowns’ that we want to target (i.e. the actual slip rates or MFD bin rates); and the <code class="docutils literal notranslate"><span class="pre">err</span></code> vector of weights, which are derived from the uncertainties for the slip rates, and more arbitrary weights for the bin rates and other constraints.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>lhs, rhs, err = build_system_of_equations(
+    rup_set,
+    fault_network[&quot;subfault_df&quot;],
+    fault_rel_mfds=fault_rel_mfds,
+    mfd_rel_weight=1e2,
+    mfd_rel_mode=&#39;shape&#39;,
+    #mfd_rel_eqns=True, # if you want a regional (relative, no a-value) MFD
+    #mfd_rel_b_val=1.0, # adjust as you&#39;d like,
+    mfd=model_abs_mfd, # set to None if you don&#39;t want to use
+)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+21-Mar-26 07:01:59 - Making slip rate eqns
+21-Mar-26 07:02:00 - Making regional MFD relative eqns
+21-Mar-26 07:02:00 - Making MFD absolute eqns
+21-Mar-26 07:02:00 - stacking results
+</pre></div></div>
+</div>
+<p>Now we’ll solve the equations. There are several stopping conditions. The solver is relatively rapid; for this model with 7000 ruptures, we can get a good solution in a few minutes. Note that the speed of convergence is determined not only by the number of ruptures in the system, but by the nature of the constraints and how steep the gradient is. Sometimes adding constraints can cause a solution to be reached in seconds, and sometimes it can take much longer.</p>
+<p>My recommendation is to start with a small number of iterations (~1e4), see how fast it takes and the quality of the solution, and then work up from there. The best stopping condition is the <code class="docutils literal notranslate"><span class="pre">stall_val</span></code> which triggers when the misfit history stops improving, but this needs to be calibrated for each problem.</p>
+<p>Here we’re using 200,000 iterations, which takes a few minutes on a modern laptop.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>logging.info(&quot;Solving&quot;)
+rup_rates, misfit_history = solve_nnls_pg(
+    lhs,
+    rhs,
+    weights=err,
+    max_iters=int(2e5),
+    accept_grad=-1, # continue to completion of iterations
+    accept_norm=-1, # continue to completion of iterations
+    stall_val=1e-6, # continue until solutions is pretty stable
+)
+rup_rates = pd.Series(rup_rates, index=rup_set.index)
+logging.info(&quot;Done solving&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+21-Mar-26 07:02:00 - Solving
+21-Mar-26 07:05:37 - Done solving
+</pre></div></div>
+</div>
+<p>Now we’re done and we can set the rates.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>rup_set[&quot;occurrence_rate&quot;] = rup_rates
+</pre></div>
+</div>
+</div>
+<p>Let’s look at the results:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure()
+plot_soln_slip_rates(
+    rup_rates,
+    fault_network[&#39;subfault_df&#39;].net_slip_rate,
+    lhs,
+    errs=fault_network[&quot;subfault_df&quot;].net_slip_rate_err,
+    units=&quot;mm/yr&quot;,
+)
+plt.title(&quot;Observed and modeled slip rates&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Observed and modeled slip rates&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_31_1.png" src="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_31_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure()
+plot_mfd(model_abs_mfd, label=&quot;Model MFD&quot;)
+plot_soln_mfd(rup_rates.values, rups, label=&quot;Solution MFD&quot;)
+plt.legend(loc=&quot;lower left&quot;)
+plt.title(&quot;Solution MFD&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Solution MFD&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_32_1.png" src="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_32_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>plt.figure()
+plt.semilogy(misfit_history)
+plt.title(&quot;Solution misfit history&quot;)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Text(0.5, 1.0, &#39;Solution misfit history&#39;)
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_33_1.png" src="../../../_images/contents_fnm_docs_tutorials_atf_fermi_tutorial_33_1.png" />
+</div>
+</div>
+</section>
+<section id="Writing-the-results-to-an-OpenQuake-source">
+<h3>Writing the results to an OpenQuake source<a class="headerlink" href="#Writing-the-results-to-an-OpenQuake-source" title="Link to this heading"></a></h3>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>mfs = make_multifault_source(
+    fault_network,
+    source_id=&#39;atf_qilian&#39;,
+    name=&quot;Altyn Tagh--Qilian Shan faults&quot;,
+    ruptures_for_output=&#39;all&#39;, #use &#39;filtered&#39; if you filtered by plausibility
+    rupture_occurrence_rates=rup_rates,
+)
+
+write_multifault_source(&quot;.&quot;, mfs)
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../../fnm.html" class="btn btn-neutral float-left" title="Fault Network Modeling(fnm) a.k.a. Fermi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

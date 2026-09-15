@@ -1,0 +1,37 @@
+mbt.tests.workflows package
+===========================
+
+Submodules
+----------
+
+mbt.tests.workflows.workflow01\_test module
+-------------------------------------------
+
+.. automodule:: mbt.tests.workflows.workflow01_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.workflows.workflow02\_test module
+-------------------------------------------
+
+.. automodule:: mbt.tests.workflows.workflow02_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.workflows.workflow03\_test module
+-------------------------------------------
+
+.. automodule:: mbt.tests.workflows.workflow03_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tests.workflows
+   :members:
+   :show-inheritance:
+   :undoc-members:
