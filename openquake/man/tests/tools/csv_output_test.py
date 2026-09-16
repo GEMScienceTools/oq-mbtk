@@ -23,6 +23,7 @@ import unittest
 import tempfile
 import numpy as np
 
+from openquake.calculators.tests import open8
 from openquake.calculators.export import export
 from openquake.calculators.base import run_calc
 
@@ -36,13 +37,6 @@ BASE_CASE8 = os.path.join(BASE_DATA_PATH, 'case_8')
 OVERWRITE = False
 
 
-def open_file(fname, mode='r')
-    """
-    Helper to open file
-    """
-    return open(fname, mode, encoding='utf-8')
-
-
 class TestMeanMDE(unittest.TestCase):
 
     def test_output_mre(self):
@@ -53,8 +47,8 @@ class TestMeanMDE(unittest.TestCase):
         fout = 'test-1.csv'
         csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-1.csv')
-        expected_lines = [line for line in open_file(expected)]
-        actual_lines = [line for line in open_file(fout)]
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
         assert expected_lines == actual_lines
         os.remove(fout)
 
@@ -66,8 +60,8 @@ class TestMeanMDE(unittest.TestCase):
         fout = 'test-2.csv'
         csv.mean_mde_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_mde-2.csv')
-        expected_lines = [line for line in open_file(expected)]
-        actual_lines = [line for line in open_file(fout)]
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
 
         actual_lines = [[float(j) for j in i.split()] for i in actual_lines]
         expected_lines = [[float(j) for j in i.split()] for i in expected_lines]
@@ -95,8 +89,8 @@ class TestMeanMDE(unittest.TestCase):
 
         csv.mean_mde_for_gmt(fname1, path1, 0.002105, 'SA(0.1)', 1e-10)
         csv.mean_mde_for_gmt(fname2, path2, 0.002105, 'SA(0.1)', 1e-10)
-        expect_lines1 = [[float(j) for j in i.split()] for i in open_file(path1)]
-        expect_lines2 = [[float(j) for j in i.split()] for i in open_file(path2)]
+        expect_lines1 = [[float(j) for j in i.split()] for i in open8(path1)]
+        expect_lines2 = [[float(j) for j in i.split()] for i in open8(path2)]
         expect_lines1 = np.array(expect_lines1)
         expect_lines2 = np.array(expect_lines2)
         aae = np.testing.assert_almost_equal
@@ -110,8 +104,8 @@ class TestMeanMDE(unittest.TestCase):
         fout = 'test-1.csv'
         csv.mean_llt_for_gmt(fname, fout, 0.002105, 'SA(0.1)', 1e-10)
         expected = os.path.join(BASE_EXP_PATH, 'site_0.002105_SA01_llt.csv')
-        expected_lines = [line for line in open_file(expected)]
-        actual_lines = [line for line in open_file(fout)]
+        expected_lines = [line for line in open8(expected)]
+        actual_lines = [line for line in open8(fout)]
         assert expected_lines == actual_lines
         os.remove(fout)
 
@@ -138,7 +132,7 @@ class OutputTestCase(unittest.TestCase):
 
         # Test MDE format
         actual_lines = []
-        for i, line in enumerate(open_file(fname_mde)):
+        for i, line in enumerate(open8(fname_mde)):
             if i == 0:
                 hea1_comp = line
             elif i == 1:
@@ -147,7 +141,7 @@ class OutputTestCase(unittest.TestCase):
                 actual_lines.append([float(j) for j in line.split()[1:]])
 
         expected_lines = []
-        for i, line in enumerate(open_file(exp_mde)):
+        for i, line in enumerate(open8(exp_mde)):
             if i == 0:
                 hea1_exp = line
             elif i == 1:
@@ -170,7 +164,7 @@ class OutputTestCase(unittest.TestCase):
         actual_lines_strings = []
 
         inds = [1, 2, 4, 5, 6]
-        for i, line in enumerate(open_file(fname_llt)):
+        for i, line in enumerate(open8(fname_llt)):
             if i == 0:
                 hea1_comp = line
             elif i == 1:
@@ -183,7 +177,7 @@ class OutputTestCase(unittest.TestCase):
 
         expected_lines_floats = []
         expected_lines_strings = []
-        for i, line in enumerate(open_file(exp_llt)):
+        for i, line in enumerate(open8(exp_llt)):
             if i == 0:
                 hea1_exp = line
             elif i == 1:
