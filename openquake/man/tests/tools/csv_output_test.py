@@ -36,7 +36,7 @@ BASE_CASE8 = os.path.join(BASE_DATA_PATH, 'case_8')
 OVERWRITE = False
 
 
-def open_file(fname, mode='r')
+def open_file(fname, mode='r'):
     """
     Helper to open file
     """
