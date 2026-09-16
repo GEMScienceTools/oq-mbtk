@@ -46,6 +46,7 @@ dependencies = [
     "jupyter_client >= 5.0.0",
     "nbconvert",
     "nbformat",
+	"pandas<2.2.3",
     "nbstripout >= 0.3.0",
     "netCDF4 >= 1.7",
     "notebook >= 5.0.0",
