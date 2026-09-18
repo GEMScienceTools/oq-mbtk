@@ -91,10 +91,18 @@ jobs:
           $Env:PYTHONUTF8=1
           Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
           oq.exe --version
+          $curDir = Get-Location
+          Write-Host "Current Working Directory: $curDir"
           Write-Host "Print all environments variables to check"
           dir env:
           Write-Host "Print all pypip packages"
           pip list
+      - name: Run tests
+        env:
+          BRANCH: ${{ github.event.inputs.git-ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          C:\Users\runneradmin\openquake\Scripts\activate.ps1
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
           cd openquake
