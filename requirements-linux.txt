@@ -11,6 +11,8 @@ nbstripout >= 0.3.0
 notebook >= 5.0.0
 pylint >= 2.1.1
 rtree >= 0.9.4
+cftime ~= 1.6.5 
+netCDF4 ~=1.7.4
 #
 # Generic
 openpyxl
