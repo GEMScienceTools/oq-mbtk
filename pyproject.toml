@@ -18,6 +18,7 @@ authors = [
 ]
 maintainers = [
     { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
+    { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
 ]
 
 keywords = [
@@ -67,6 +68,7 @@ Documentation = "https://gemsciencetools.github.io/oq-mbtk/index.html"
 oqm = "openquake.mbi.__main__:oqm"
 
 [tool.setuptools.packages.find]
+namespaces = true
 where = ["."]
 include = ["openquake*"]
 
