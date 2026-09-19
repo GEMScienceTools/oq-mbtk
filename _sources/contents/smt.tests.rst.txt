@@ -1,0 +1,31 @@
+smt.tests package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   smt.tests.comparison
+   smt.tests.demos
+   smt.tests.residuals
+
+Submodules
+----------
+
+smt.tests.utils\_intensity\_measures\_test module
+-------------------------------------------------
+
+.. automodule:: smt.tests.utils_intensity_measures_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

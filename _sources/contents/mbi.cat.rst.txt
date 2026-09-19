@@ -1,0 +1,85 @@
+mbi.cat package
+===============
+
+Submodules
+----------
+
+mbi.cat.MFDs\_sample\_mag\_sigma module
+---------------------------------------
+
+.. automodule:: mbi.cat.MFDs_sample_mag_sigma
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.check\_duplicates module
+--------------------------------
+
+.. automodule:: mbi.cat.check_duplicates
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.completeness\_analysis module
+-------------------------------------
+
+.. automodule:: mbi.cat.completeness_analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.completeness\_generate module
+-------------------------------------
+
+.. automodule:: mbi.cat.completeness_generate
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.create\_csv module
+--------------------------
+
+.. automodule:: mbi.cat.create_csv
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.create\_figures module
+------------------------------
+
+.. automodule:: mbi.cat.create_figures
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.homogenise module
+-------------------------
+
+.. automodule:: mbi.cat.homogenise
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.merge module
+--------------------
+
+.. automodule:: mbi.cat.merge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.cat.purge\_earthquakes module
+---------------------------------
+
+.. automodule:: mbi.cat.purge_earthquakes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbi.cat
+   :members:
+   :show-inheritance:
+   :undoc-members:
