@@ -183,4 +183,4 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
                                      style='points')
 
             # Commented out - it blocks the tests on CI unless plot is manually closed
-            #_ = plotter.show(interactive=True)
+            _ = plotter.show(interactive=True)
