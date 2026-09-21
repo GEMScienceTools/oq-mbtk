@@ -182,5 +182,4 @@ class RuptureCreationSmoothedTest(unittest.TestCase):
                                      nan_opacity=0.0, opacity=1.0,
                                      style='points')
 
-            # Commented out - it blocks the tests on CI unless plot is manually closed
             _ = plotter.show(interactive=True)
