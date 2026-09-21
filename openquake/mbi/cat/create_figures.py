@@ -26,6 +26,7 @@
 # coding: utf-8
 
 import os
+import tempfile
 import pandas as pd
 
 from openquake.baselib import sap
@@ -58,8 +59,8 @@ def main(cat_fname: str, *, out_folder: str = './figs', mmin: float = 4.0):
 
     #
     # Map with the homogenised catalogue
-    fname = os.path.join(out_folder, './tmp/tmp.txt')
-    fname_gmt = '/tmp/gmt.txt'
+    fname = os.path.join(out_folder, 'tmp', 'tmp.txt')
+    fname_gmt = os.path.join(tempfile.gettempdir(), 'gmt.txt')
     write_gmt_file(cat, fname_gmt=fname_gmt, mmin=4.0)
     fname = os.path.join(out_folder, 'hom_cat_map.pdf')
     fname = plot_catalogue(fname_gmt, fname_fig=fname,
