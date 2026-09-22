@@ -315,25 +315,20 @@ class ComparisonTestCase(unittest.TestCase):
 
     def test_reference_depths_real_and_sentinel(self):
         """
-        Exercise the three reference depths (z1pt0, z2pt5, z1pt4) with both
-        real values and the -999 sentinel that triggers each GMM's own Vs30
-        based inference. GMMs picked: CY14 (uses z1pt0),
-        CampbellBozorgnia2014 (uses z2pt5), MorikawaFujiwara2013Crustal
-        (uses z1pt4).
+        Test Vs30-based inference of z1pt0, z2pt5, z1pt4 is working correctly
         """
         base = toml.load(self.config_file)
         base['models'] = {
-            'ChiouYoungs2014': {'lt_weight_gmc1': 0.34},
-            'CampbellBozorgnia2014': {'lt_weight_gmc1': 0.33},
-            'MorikawaFujiwara2013Crustal': {'lt_weight_gmc1': 0.33}}
-        base.pop('ratios_baseline_gmm', None)
-        base['euclidean_analysis']['gmpe_labels'] = ['CY14', 'CB14', 'MF13']
+            'ChiouYoungs2014': {'lt_weight_gmc1': 0.34}, # z1pt0
+            'CampbellBozorgnia2014': {'lt_weight_gmc1': 0.33}, # z2pt5
+            'MorikawaFujiwara2013Crustal': {'lt_weight_gmc1': 0.33}} # z1pt4
 
         cases = [
             ('real', {'z1pt0': 30.0, 'z2pt5': 0.57, 'z1pt4': 100.0}),
             ('sentinel', {'z1pt0': -999, 'z2pt5': -999, 'z1pt4': -999}),
         ]
-        for tag, depths in cases:
+        for tag, depths in cases: # tag is key, depths is the dict
+            # Make the assoc. toml and write it to a tmp
             cfg = dict(base)
             cfg['site_properties'] = {**base['site_properties'], **depths}
             tmp_pth = os.path.join(
@@ -341,13 +336,13 @@ class ComparisonTestCase(unittest.TestCase):
             with open(tmp_pth, 'w', encoding='utf-8') as f:
                 toml.dump(cfg, f)
 
-            # Config picks up the depths as-written
+            # Check config uses the right depths
             config = comp.Configurations(tmp_pth)
             self.assertEqual(config.z1pt0, depths['z1pt0'])
             self.assertEqual(config.z2pt5, depths['z2pt5'])
             self.assertEqual(config.z1pt4, depths['z1pt4'])
 
-            # Pipeline runs end-to-end for both real and sentinel inputs
+            # Check it runs
             comp.plot_trellis(tmp_pth, self.outdir)
 
     def test_distance_matrix(self):
