@@ -148,6 +148,7 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
+                                                         config.z1pt4,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          imt,
@@ -384,6 +385,7 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
+                                                           config.z1pt4,
                                                            max(SPECTRA_RMAX, dist + 50), # Ensure r_vals covers requested dist (rup extent shrinks rrup)
                                                            1,   # Step of 1 km for site spacing
                                                            imt.string,
@@ -550,6 +552,7 @@ def plot_ratios_util(config, output_directory):
                                  config.vs30,
                                  config.z1pt0,
                                  config.z2pt5,
+                                 config.z1pt4,
                                  config.maxR,
                                  1, # Step of 1 km for sites
                                  imt,
@@ -592,6 +595,7 @@ def plot_ratios_util(config, output_directory):
                                      config.vs30,
                                      config.z1pt0,
                                      config.z2pt5,
+                                     config.z1pt4,
                                      config.maxR,
                                      1, # Step of 1 km for sites
                                      imt,
@@ -721,6 +725,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
+                                                         config.z1pt4,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          imt,

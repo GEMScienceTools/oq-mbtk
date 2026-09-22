@@ -118,7 +118,7 @@ def get_sites_from_rupture(rup,
                                   npoints)
 
     sites = []
-    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
+    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5', 'z1pt4'])
 
     if len(pointsn):
         lons = reversed(pointsn[0][0:])
@@ -127,7 +127,8 @@ def get_sites_from_rupture(rup,
             site = Site(Point(lon, lat, 0.0),
                         vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'],
-                        z2pt5=site_props['z2pt5'])
+                        z2pt5=site_props['z2pt5'],
+                        z1pt4=site_props['z1pt4'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -137,7 +138,8 @@ def get_sites_from_rupture(rup,
             site = Site(Point(lon, lat, 0.0),
                         vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'],
-                        z2pt5=site_props['z2pt5'])
+                        z2pt5=site_props['z2pt5'],
+                        z1pt4=site_props['z1pt4'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -197,6 +199,7 @@ def att_curves(gmpe,
                vs30,
                z1pt0,
                z2pt5,
+               z1pt4,
                maxR,
                step,
                imt,
@@ -217,6 +220,7 @@ def att_curves(gmpe,
     props = {'vs30': vs30,
              'z1pt0': z1pt0,
              'z2pt5': z2pt5,
+             'z1pt4': z1pt4,
              'backarc': volc_back_arc,
              'vs30measured': False,
              'eshm20_region': eshm20_region}

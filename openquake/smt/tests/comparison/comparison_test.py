@@ -306,10 +306,49 @@ class ComparisonTestCase(unittest.TestCase):
             # Check number of cluster arrays matches number of imts
             self.assertEqual(len(z_matrix), len(TARGET_IMTS))
 
-            # Check number of gmpes matches number of values in each IMT's array
+            # Check the linkage matrix shape: (TARGET_EUCL - 1) merges, each
+            # with the standard 4-column scipy linkage row.
             for imt in config.imt_list:
-                for gmpe in range(0, len(z_matrix[imt])):
-                    self.assertEqual(len(z_matrix[imt][gmpe]), len(TARGET_GMPES))
+                self.assertEqual(len(z_matrix[imt]), TARGET_EUCL - 1)
+                for row in z_matrix[imt]:
+                    self.assertEqual(len(row), 4)
+
+    def test_reference_depths_real_and_sentinel(self):
+        """
+        Exercise the three reference depths (z1pt0, z2pt5, z1pt4) with both
+        real values and the -999 sentinel that triggers each GMM's own Vs30
+        based inference. GMMs picked: CY14 (uses z1pt0),
+        CampbellBozorgnia2014 (uses z2pt5), MorikawaFujiwara2013Crustal
+        (uses z1pt4).
+        """
+        base = toml.load(self.config_file)
+        base['models'] = {
+            'ChiouYoungs2014': {'lt_weight_gmc1': 0.34},
+            'CampbellBozorgnia2014': {'lt_weight_gmc1': 0.33},
+            'MorikawaFujiwara2013Crustal': {'lt_weight_gmc1': 0.33}}
+        base.pop('ratios_baseline_gmm', None)
+        base['euclidean_analysis']['gmpe_labels'] = ['CY14', 'CB14', 'MF13']
+
+        cases = [
+            ('real', {'z1pt0': 30.0, 'z2pt5': 0.57, 'z1pt4': 100.0}),
+            ('sentinel', {'z1pt0': -999, 'z2pt5': -999, 'z1pt4': -999}),
+        ]
+        for tag, depths in cases:
+            cfg = dict(base)
+            cfg['site_properties'] = {**base['site_properties'], **depths}
+            tmp_pth = os.path.join(
+                tempfile.mkdtemp(), f'ref_depths_{tag}.toml')
+            with open(tmp_pth, 'w', encoding='utf-8') as f:
+                toml.dump(cfg, f)
+
+            # Config picks up the depths as-written
+            config = comp.Configurations(tmp_pth)
+            self.assertEqual(config.z1pt0, depths['z1pt0'])
+            self.assertEqual(config.z2pt5, depths['z2pt5'])
+            self.assertEqual(config.z1pt4, depths['z1pt4'])
+
+            # Pipeline runs end-to-end for both real and sentinel inputs
+            comp.plot_trellis(tmp_pth, self.outdir)
 
     def test_distance_matrix(self):
         """
