@@ -150,6 +150,8 @@ class edge2profileTest(unittest.TestCase):
 
         reference_file = os.path.join(BASE_PATH, 'expected', 'cs_file.cs')
         cs_dir = os.path.join(BASE_PATH, 'data', 'cs')
-        outfi = os.path.join('/tmp/cs_file.cs')
-        make_cs_coords(cs_dir, outfi, 'cs.ini')
-        self.assertTrue(are_equal_ignoring_line_endings(outfi, reference_file))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            outfi = os.path.join(tmpdir, 'cs_file.cs')
+            make_cs_coords(cs_dir, outfi, 'cs.ini')
+            self.assertTrue(
+                are_equal_ignoring_line_endings(outfi, reference_file))

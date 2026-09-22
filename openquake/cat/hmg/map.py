@@ -25,12 +25,14 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
 
+import os
 import subprocess
+import tempfile
 import pandas as pd
 from openquake.cat.hmg.plot import get_agencies
 
 
-def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
+def write_gmt_file(df, agencies=[], fname_gmt=None, **kwargs):
     """
     :param df:
         A dataframe
@@ -39,6 +41,8 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
     :param fname_gmt:
         The name of the output file
     """
+    if fname_gmt is None:
+        fname_gmt = os.path.join(tempfile.gettempdir(), 'tmp.txt')
 
     if "mmin" in kwargs:
         df = df[df["value"] > float(kwargs["mmin"])]
@@ -58,7 +62,7 @@ def write_gmt_file(df, agencies=[], fname_gmt='/tmp/tmp.txt', **kwargs):
                 index=False, header=False)
 
 
-def plot_catalogue(fname, fname_fig='/tmp/tmp.pdf', **kwargs):
+def plot_catalogue(fname, fname_fig=None, **kwargs):
     """
     :param fname:
         Name of the file with the catalogue
@@ -67,6 +71,8 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp.pdf', **kwargs):
             - 'extent' - The extent of the plot as a list with
                          [minlo, maxlo, minla, maxla]
     """
+    if fname_fig is None:
+        fname_fig = os.path.join(tempfile.gettempdir(), 'tmp.pdf')
 
     try:
         import pygmt
@@ -112,7 +118,7 @@ def plot_catalogue(fname, fname_fig='/tmp/tmp.pdf', **kwargs):
     fig.savefig(fname_fig)
 
 
-def plot_catalogue_old(fname, fname_fig='/tmp/tmp.txt', **kwargs):
+def plot_catalogue_old(fname, fname_fig=None, **kwargs):
     """
     :param fname:
         Name of the file with the catalogue
@@ -121,6 +127,8 @@ def plot_catalogue_old(fname, fname_fig='/tmp/tmp.txt', **kwargs):
             - 'extent' - The extent of the plot as a list with
                          [minlo, maxlo, minla, maxla]
     """
+    if fname_fig is None:
+        fname_fig = os.path.join(tempfile.gettempdir(), 'tmp.txt')
 
     cmds = []
 

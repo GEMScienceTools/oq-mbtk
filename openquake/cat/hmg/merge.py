@@ -136,7 +136,8 @@ def geographic_selection(catalogue, shapefile_fname, buffer_dist=0.0):
     aaa = gpd.sjoin(origins, gdf, how="inner", op='intersects')
 
     # This is for checking purposes
-    aaa.to_file("/tmp/within.geojson", driver='GeoJSON')
+    aaa.to_file(os.path.join(tempfile.gettempdir(), 'within.geojson'),
+                driver='GeoJSON')
 
     return catalogue.get_catalogue_subset(list(aaa["iloc"].values))
 
