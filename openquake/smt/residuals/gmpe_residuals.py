@@ -112,12 +112,9 @@ def get_gmm_from_toml(key, config):
 
 def get_gmpe_str(gmpe):
     """
-    Return a simplified string representative of the given gmpe.
+    Return a single-line string representative of the given gmpe.
     """
-    if '_toml=' in str(gmpe):
-        return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
-    else:
-        return gmpe
+    return str(gmpe).replace('\n', '; ')
 
 
 def get_mean_stds(rup_ctx, gsim, imt):

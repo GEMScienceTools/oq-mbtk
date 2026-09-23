@@ -138,6 +138,7 @@ class Configurations(object):
         SITE_OPTIONAL = {
         "z1pt0": -999, # Compute param using each GMM's vs30 to z1pt0
         "z2pt5": -999, # Compute param using each GMM's vs30 to z2pt5
+        "z1pt4": -999, # Compute param using each GMM's vs30 to z1pt4
         "up_or_down_dip": 1, # Assume site is up-dip
         "volc_back_arc": False, # Asssume site is not in back-arc
         "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM

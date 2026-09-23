@@ -464,7 +464,9 @@ def check_gsim_list(gsim_list):
     output_gsims = {}
     for gs in gsim_list:
         if isinstance(gs, GMPE):
-            output_gsims[_get_gmpe_name(gs)] = gs # Get name of GMPE instance
+            # str(gs) is the toml block '[Name]\nkw = \"v\"' which already
+            # carries the kwargs that distinguish GSIMs sharing a base class
+            output_gsims[str(gs)] = gs
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
         else:
@@ -476,32 +478,6 @@ def check_gsim_list(gsim_list):
                 raise ValueError('%s Not supported by OpenQuake' % gs)
 
     return output_gsims
-
-
-def _get_gmpe_name(gsim):
-    """
-    Returns the name of the GMPE given an instance of the class
-    """
-    match = _GMPETABLE_REGEX.match(str(gsim)) # GMPETable ?
-    if match:
-        filepath = match.group(1).split("=")[1][1:-1]
-        return 'GMPETable(gmpe_table=%s)' % filepath
-    else:
-        gsim_name = gsim.__class__.__name__
-        additional_args = []
-        # Build the GSIM string by showing name and arguments. Keep things
-        # simple (no replacements, no case changes) as we might want to be able
-        # to get back the GSIM from its string in the future.
-        for key in gsim.__dict__:
-            if key.startswith("kwargs"):
-                continue
-            val = str(gsim.__dict__[key]) 
-            additional_args.append("{:s}={:s}".format(key, val))
-        if len(additional_args):
-            gsim_name_str = "({:s})".format(", ".join(additional_args))
-            return gsim_name + gsim_name_str
-        else:
-            return gsim_name
 
 
 def clean_gmm_label(gmpe, drop_weight_info=False):

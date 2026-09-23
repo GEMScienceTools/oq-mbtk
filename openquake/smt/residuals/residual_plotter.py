@@ -28,7 +28,6 @@ from copy import deepcopy
 from scipy.stats import norm
 
 from openquake.hazardlib.imt import from_string
-from openquake.hazardlib import valid
 from openquake.smt.utils import COLORS
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
@@ -75,7 +74,34 @@ def get_sigma_label(res_type):
         return 'Between-Event Res.'
     else:
         assert res_type == 'Intra event'
-        return 'Within-Event Res.'    
+        return 'Within-Event Res.'
+
+
+def get_gmpe_label(gmpe):
+    """
+    Distinguishing legend label for a GMPE that also encodes any toml
+    kwargs (e.g. region, saturation_region), so that aliases sharing the
+    same base class (e.g. AbrahamsonGulerce2020SInterSouthAmerica vs
+    AbrahamsonGulerce2020SInter) do not collapse to identical entries.
+    """
+    toml_content = str(gmpe)
+    match = re.search(r'\[([^\]]+)\]', toml_content)
+    if match is None:
+        return toml_content
+    class_name = match.group(1)
+
+    tail = toml_content[toml_content.find(']', match.start()) + 1:]
+    kwargs = []
+    for line in tail.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        k, v = line.split('=', 1)
+        kwargs.append(f"{k.strip()}={v.strip().strip(chr(34))}")
+
+    if kwargs:
+        return f"{class_name} ({', '.join(kwargs)})"
+    return class_name
 
 
 class BaseResidualPlot(object):
@@ -499,14 +525,15 @@ def plot_llh_with_period(residuals, filename):
         color = COLORS[i]
         y_llh = np.array(llh_with_imt[gmpe])
         ax_llh.scatter(x_llh.imt_float, y_llh, color=color)
-        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        tmp = get_gmpe_label(residuals.gmpe_list[gmpe])
         ax_llh.plot(x_llh.imt_float, y_llh, color=color, label=tmp)
     ax_llh.margins(x=0)
     ax_llh.set_xlabel('Period (s)', fontsize='12')
     ax_llh.set_ylabel('LLH', fontsize='12')
-    ax_llh.legend(loc='upper right', ncol=2, fontsize='12')
+    ax_llh.legend(loc='center left', bbox_to_anchor=(1.02, 0.5),
+                  ncol=1, fontsize='12', borderaxespad=0.)
     ax_llh.grid()
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight')
     plt.close()
     
 
@@ -533,16 +560,17 @@ def plot_edr_with_period(residuals, filename):
         color = COLORS[i]
         EDR_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_EDR = EDR_with_imt.EDR
-        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        tmp = get_gmpe_label(residuals.gmpe_list[gmpe])
         ax_EDR.scatter(x_with_imt.imt_float, y_EDR, color=color)
         ax_EDR.plot(x_with_imt.imt_float, y_EDR, color=color, label=tmp)
     ax_EDR.margins(x=0)
     ax_EDR.set_xlabel('Period (s)', fontsize='12')
     ax_EDR.set_ylabel('EDR', fontsize='12')
-    ax_EDR.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_EDR.legend(loc='center left', bbox_to_anchor=(1.02, 0.5),
+                  ncol=1, fontsize=12, borderaxespad=0.)
     ax_EDR.grid()
     parts = filename.split(".")
-    plt.savefig(parts[0] + "_value." + parts[1])
+    plt.savefig(parts[0] + "_value." + parts[1], bbox_inches='tight')
     plt.close()
 
     # Plot median pred. correction factor w.r.t. period
@@ -552,15 +580,16 @@ def plot_edr_with_period(residuals, filename):
         color = COLORS[i]
         kappa_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_kappa = kappa_with_imt["sqrt Kappa"]
-        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        tmp = get_gmpe_label(residuals.gmpe_list[gmpe])
         ax_kappa.scatter(x_with_imt.imt_float, y_kappa, color=color)
         ax_kappa.plot(x_with_imt.imt_float, y_kappa, color=color, label=tmp)
     ax_kappa.margins(x=0)
     ax_kappa.set_xlabel('Period (s)', fontsize='12')
     ax_kappa.set_ylabel('sqrt(k)', fontsize='12')
-    ax_kappa.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_kappa.legend(loc='center left', bbox_to_anchor=(1.02, 0.5),
+                    ncol=1, fontsize=12, borderaxespad=0.)
     ax_kappa.grid()
-    plt.savefig(parts[0] + "_kappa." + parts[1])
+    plt.savefig(parts[0] + "_kappa." + parts[1], bbox_inches='tight')
     plt.close()
 
     # Plot MDE w.r.t. period
@@ -570,15 +599,16 @@ def plot_edr_with_period(residuals, filename):
         color = COLORS[i]
         MDE_with_imt = pd.DataFrame(residuals.edr_values_wrt_imt[gmpe])
         y_MDE = MDE_with_imt["MDE Norm"]
-        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        tmp = get_gmpe_label(residuals.gmpe_list[gmpe])
         ax_MDE.scatter(x_with_imt.imt_float, y_MDE, color=color)
         ax_MDE.plot(x_with_imt.imt_float, y_MDE, color=color, label=tmp)
     ax_MDE.margins(x=0)
     ax_MDE.set_xlabel('Period (s)', fontsize='12')
     ax_MDE.set_ylabel('MDE Norm', fontsize='12')
-    ax_MDE.legend(loc = 'upper right', ncol=2, fontsize=12)
+    ax_MDE.legend(loc='center left', bbox_to_anchor=(1.02, 0.5),
+                  ncol=1, fontsize=12, borderaxespad=0.)
     ax_MDE.grid()
-    plt.savefig(parts[0] + "_MDE." + parts[1])
+    plt.savefig(parts[0] + "_MDE." + parts[1], bbox_inches='tight')
     plt.close()
 
 
@@ -605,15 +635,16 @@ def plot_sto_with_period(residuals, filename):
         color = COLORS[i]
         sto_with_imt = pd.Series(residuals.stoch_areas_wrt_imt[gmpe])
         y_sto = sto_with_imt.values
-        tmp = str(residuals.gmpe_list[gmpe]).split('(')[0]
+        tmp = get_gmpe_label(residuals.gmpe_list[gmpe])
         ax_sto.scatter(x_with_imt.imt_float, y_sto, color=color)
         ax_sto.plot(x_with_imt.imt_float, y_sto, color=color, label=tmp)
     ax_sto.margins(x=0)
     ax_sto.set_xlabel('Period (s)', fontsize='12')
     ax_sto.set_ylabel('Stochastic Area', fontsize='12')
-    ax_sto.legend(loc='upper right', ncol=2, fontsize=12)
+    ax_sto.legend(loc='center left', bbox_to_anchor=(1.02, 0.5),
+                  ncol=1, fontsize=12, borderaxespad=0.)
     ax_sto.grid()
-    plt.savefig(os.path.join(filename))
+    plt.savefig(os.path.join(filename), bbox_inches='tight')
     plt.close()
 
 
@@ -845,17 +876,7 @@ def plot_residual_means_and_stds(
         i = 1
 
     # Get gmpe label
-    if '_toml=' in gmpe:
-        sqs  = re.findall(r'\[[^\]]+\]', gmpe)
-        for sq in sqs:
-            try:
-                valid.gsim(sq) # Must be the gmm 
-                gmpe_label = sq
-                break
-            except Exception:
-                continue
-    else:
-        gmpe_label = gmpe # If not from toml file
+    gmpe_label = get_gmpe_label(gmpe)
 
     # Plot intra/inter if data exists (only total sigma for some GMMs)
     has_inter_intra = not res_dists[1][gmpe].loc[mean_or_std].isna().all()
@@ -922,10 +943,13 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
         for j in range(ax.shape[1]):
             ax[i, j].grid()
 
-    # Add legend
-    ax[0, 0].legend(loc='upper right', ncol=2, fontsize=8)
+    # Add legend outside the figure, vertically centred against the grid
+    handles, labels = ax[0, 0].get_legend_handles_labels()
+    ax[1, 1].legend(handles, labels, loc='center left',
+                    bbox_to_anchor=(1.02, 0.5),
+                    ncol=1, fontsize=8, borderaxespad=0.)
 
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight')
     plt.close()
 
 
