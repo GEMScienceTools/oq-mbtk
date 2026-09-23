@@ -464,9 +464,8 @@ def check_gsim_list(gsim_list):
     output_gsims = {}
     for gs in gsim_list:
         if isinstance(gs, GMPE):
-            # str(gs) is the toml block "[Name]\nkw = \"v\"" — unique, short,
-            # and already carries the kwargs that distinguish aliases sharing
-            # a base class.
+            # str(gs) is the toml block '[Name]\nkw = \"v\"' which already
+            # carries the kwargs that distinguish GSIMs sharing a base class
             output_gsims[str(gs)] = gs
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
