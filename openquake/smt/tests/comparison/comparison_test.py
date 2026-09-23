@@ -56,6 +56,50 @@ TARGET_TRT = 'active_crustal'
 TARGET_ZTOR = -999
 TARGET_EUCL = 4 # 2 GMMs (CY14, CB14), the lt made of them (gmc1) and
                 # the second lt (gmc2 - no individual GMMs considered)
+TARGET_ZMATRIX = { # Expected linkage matrix per percentile per IMT
+    '16th_perc': {
+        'PGA':     np.array([[3., 2., 0.441866, 2.],
+                             [1., 0., 1.022212, 2.],
+                             [4., 5., 1.766374, 4.]]),
+        'SA(0.1)': np.array([[3., 2., 0.857754, 2.],
+                             [1., 0., 2.220543, 2.],
+                             [4., 5., 3.515941, 4.]]),
+        'SA(0.5)': np.array([[0., 1., 0.615905, 2.],
+                             [3., 2., 0.674683, 2.],
+                             [4., 5., 1.466584, 4.]]),
+        'SA(1.0)': np.array([[0., 1., 0.296970, 2.],
+                             [3., 2., 0.314437, 2.],
+                             [4., 5., 0.667950, 4.]]),
+    },
+    'median': {
+        'PGA':     np.array([[3., 2., 0.871803, 2.],
+                             [1., 0., 1.701303, 2.],
+                             [4., 5., 3.025722, 4.]]),
+        'SA(0.1)': np.array([[3., 2., 1.831004, 2.],
+                             [1., 0., 3.894858, 2.],
+                             [4., 5., 6.436432, 4.]]),
+        'SA(0.5)': np.array([[0., 1., 1.273188, 2.],
+                             [3., 2., 1.469163, 2.],
+                             [4., 5., 2.759157, 4.]]),
+        'SA(1.0)': np.array([[0., 1., 0.556144, 2.],
+                             [3., 2., 0.712168, 2.],
+                             [4., 5., 1.289621, 4.]]),
+    },
+    '84th_perc': {
+        'PGA':     np.array([[2., 3.,  1.929552, 2.],
+                             [1., 0.,  2.799755, 2.],
+                             [4., 5.,  5.097658, 4.]]),
+        'SA(0.1)': np.array([[2., 3.,  4.429989, 2.],
+                             [1., 0.,  6.780868, 2.],
+                             [4., 5., 11.613744, 4.]]),
+        'SA(0.5)': np.array([[0., 1.,  2.676283, 2.],
+                             [3., 2.,  3.310563, 2.],
+                             [4., 5.,  5.111418, 4.]]),
+        'SA(1.0)': np.array([[0., 1.,  1.041352, 2.],
+                             [3., 2.,  1.649890, 2.],
+                             [4., 5.,  2.459217, 4.]]),
+    },
+}
 
 
 class ComparisonTestCase(unittest.TestCase):
@@ -303,15 +347,10 @@ class ComparisonTestCase(unittest.TestCase):
                                          os.path.join(self.outdir, f'{[perc]}_Clustering.png'),
                                          mtxs_type=perc)
 
-            # Check number of cluster arrays matches number of imts
-            self.assertEqual(len(z_matrix), len(TARGET_IMTS))
-
-            # Check the linkage matrix shape: (TARGET_EUCL - 1) merges, each
-            # with the standard 4-column scipy linkage row.
+            # Check linkage matrix matches expected
             for imt in config.imt_list:
-                self.assertEqual(len(z_matrix[imt]), TARGET_EUCL - 1)
-                for row in z_matrix[imt]:
-                    self.assertEqual(len(row), 4)
+                np.testing.assert_allclose(
+                    z_matrix[imt], TARGET_ZMATRIX[perc][imt], atol=1e-06)
 
     def test_reference_depths_real_and_sentinel(self):
         """
@@ -341,6 +380,7 @@ class ComparisonTestCase(unittest.TestCase):
             exp_pth = os.path.join(
                 BASE, "expected", f'exp_curves_ref_depths_{tag}.csv')
             if not os.path.exists(exp_pth):
+                # Regen if missing
                 reformat_att_curves(att_curves, exp_pth)
             exp = pd.read_csv(exp_pth)
             obs = reformat_att_curves(att_curves)
