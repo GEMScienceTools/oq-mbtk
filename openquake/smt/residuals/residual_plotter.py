@@ -86,6 +86,8 @@ def get_gmpe_label(gmpe):
     """
     toml_content = str(gmpe)
     match = re.search(r'\[([^\]]+)\]', toml_content)
+    if match is None:
+        return toml_content
     class_name = match.group(1)
 
     tail = toml_content[toml_content.find(']', match.start()) + 1:]
