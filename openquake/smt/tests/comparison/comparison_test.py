@@ -336,14 +336,15 @@ class ComparisonTestCase(unittest.TestCase):
             with open(tmp_pth, 'w', encoding='utf-8') as f:
                 toml.dump(cfg, f)
 
-            # Check config uses the right depths
-            config = comp.Configurations(tmp_pth)
-            self.assertEqual(config.z1pt0, depths['z1pt0'])
-            self.assertEqual(config.z2pt5, depths['z2pt5'])
-            self.assertEqual(config.z1pt4, depths['z1pt4'])
-
-            # Check it runs
-            comp.plot_trellis(tmp_pth, self.outdir)
+            # Check curves match the expected values
+            att_curves = comp.plot_trellis(tmp_pth, self.outdir)
+            exp_pth = os.path.join(
+                BASE, "expected", f'exp_curves_ref_depths_{tag}.csv')
+            if not os.path.exists(exp_pth):
+                reformat_att_curves(att_curves, exp_pth)
+            exp = pd.read_csv(exp_pth)
+            obs = reformat_att_curves(att_curves)
+            pd.testing.assert_frame_equal(obs, exp, atol=1e-06)
 
     def test_distance_matrix(self):
         """
