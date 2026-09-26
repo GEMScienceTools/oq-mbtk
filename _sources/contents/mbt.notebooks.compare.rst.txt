@@ -1,0 +1,29 @@
+mbt.notebooks.compare package
+=============================
+
+Submodules
+----------
+
+mbt.notebooks.compare.tools module
+----------------------------------
+
+.. automodule:: mbt.notebooks.compare.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.notebooks.compare.tools\_test module
+----------------------------------------
+
+.. automodule:: mbt.notebooks.compare.tools_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.compare
+   :members:
+   :show-inheritance:
+   :undoc-members:
