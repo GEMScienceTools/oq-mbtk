@@ -19,8 +19,10 @@
 Tool for creating visualisation of database information.
 """
 import numpy as np
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from shapely.geometry import Point
 
 from openquake.smt.utils import add_borders
 from openquake.smt.residuals.sm_database_selector import SMRecordSelector
@@ -137,13 +139,15 @@ def db_geographical_coverage(db1, filename):
     Creates a plot of the locations of event hypocenters and station
     locations for a strong motion database.
     """
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111)
     eq_lons, eq_lats, st_lons, st_lats = get_eq_and_st_coordinates(db1)
-    ax.scatter(
-        st_lons, st_lats, marker='^', color='g', label='Station locations')
-    ax.scatter(
-        eq_lons, eq_lats, marker='*', color='r', label='Event hypocenters')
+    stations = gpd.GeoDataFrame(
+        geometry=[Point(xy) for xy in zip(st_lons, st_lats)], crs="EPSG:4326")
+    events = gpd.GeoDataFrame(
+        geometry=[Point(xy) for xy in zip(eq_lons, eq_lats)], crs="EPSG:4326")
+    stations.plot(ax=ax, marker='^', color='g', label='Station locations')
+    events.plot(ax=ax, marker='*', color='r', label='Event hypocenters')
     add_borders(ax)
     lons = np.concatenate([eq_lons, st_lons])
     lats = np.concatenate([eq_lats, st_lats])
