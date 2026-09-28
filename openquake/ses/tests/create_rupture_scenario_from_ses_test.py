@@ -37,8 +37,6 @@ from openquake.calculators.base import dcache
 from openquake.ses.create_rupture_scenario_from_ses import process
 
 from openquake.calculators import base
-#from openquake.calculators.export import export
-#from openquake.baselib import general, parallel, writers
 from openquake.commonlib import readinput, logs
 
 # This file folder

@@ -113,11 +113,8 @@ FMT_GMC_LT = """<logicTree logicTreeID="lt1">
 {branches}   </logicTreeBranchSet>
 </logicTree>"""
 
-# Default configuration, used for any key missing from the config file
+# Default names
 DEFAULTS = {
-    'datastore': '/Users/mpagani/oqdata/calc_248.hdf5',
-    'rupture_id': 615649202388021,
-    'with_between_within_ratio': 1.4,
     'output_rupture_xml': 'rupture_model.xml',
     'output_gmclt_xml': 'gmclt.xml',
 }
