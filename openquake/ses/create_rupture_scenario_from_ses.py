@@ -87,16 +87,29 @@ FMT_NRML = """<?xml version="1.0" encoding="utf-8"?>
 </nrml>
 """
 
-FMT_RUP = """   <griddedRupture>
+FMT_RUP_GRID = """   <griddedRupture>
       <magnitude>{mag:.2f}</magnitude>
       <rake>{rake:.2f}</rake>
       <hypocenter depth="{dep:.2f}" lat="{lat:.6f}" lon="{lon:.6f}"/>
-      <griddedSurface surface_type="{stype}" rupture_type="{stype}">
-         <gml:posList>
+      <griddedSurface>
             {coos}
          </gml:posList>
       </griddedSurface>
    </griddedRupture>"""
+
+FMT_RUP = """   <regularRupture>
+      <magnitude>{mag:.2f}</magnitude>
+      <rake>{rake:.2f}</rake>
+      <hypocenter depth="{dep:.2f}" lat="{lat:.6f}" lon="{lon:.6f}"/>
+      <regularGridSurface
+            surface_type="{stype}"
+            rupture_type="{rtype}"
+            shape="{shape}">
+         <gml:posList>
+            {coos}
+         </gml:posList>
+      </regularGridSurface>
+   </regularRupture>"""
 
 FMT_BRANCH = """      <logicTreeBranch branchID="{bid}">
          <uncertaintyModel>
@@ -223,6 +236,7 @@ def build_rupture_xml(rups_data, idx, rup_meshes, code2cls):
         dep=rups_data[idx]['hypo'][2],
         lat=rups_data[idx]['hypo'][1],
         lon=rups_data[idx]['hypo'][0],
+        shape=' '.join(list(str(s) for s in rup_meshes[0].shape)),
         rtype=names[1],
         stype=names[0],
         coos=coos)

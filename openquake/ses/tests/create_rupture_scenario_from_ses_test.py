@@ -45,7 +45,7 @@ TFF = pathlib.Path(__file__).parent.resolve()
 
 class ScenarioCreationTestCase(unittest.TestCase):
 
-    def test_scenario01(self):
+    def test_scenario_simplefault(self):
 
         # Create a datastore with 69 ruptures
         fname_ini = TFF / 'd_test01' / 'test01.ini'
@@ -59,10 +59,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
         tmpdir = pathlib.Path(tempfile.mkdtemp())
 
         # Copy ini file
-        shutil.copyfile(
-                TFF / 'd_test01' / 'scenario' / 'job.ini',
-                tmpdir / 'job.ini'
-        )
+        shutil.copyfile(TFF / 'd_scen' / 'job.ini', tmpdir / 'job.ini')
 
         # Set the configuration dictionary
         cfg = {'datastore': df['hdf5'][idx].values[0],
@@ -88,8 +85,55 @@ class ScenarioCreationTestCase(unittest.TestCase):
         ds_res = calc.datastore
 
         # Check output
-        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(26))
+        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(205))
         expected = np.array(
                 [0.0182422, 0.03741717, 0.01683567, 0.00846185],
+                dtype=np.float32)
+        np.testing.assert_array_almost_equal(ds_res['avg_gmf'][0, 0], expected)
+
+
+    def test_scenario_area(self):
+
+        # Create a datastore with 69 ruptures
+        fname_ini = TFF / 'd_test02' / 'test02.ini'
+        dstore = dcache.get(str(fname_ini))
+
+        # Read the table to get path to the hdf5 file
+        df = pd.read_csv(dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
+        idx = np.where(df['ini'] == str(fname_ini))[0]
+
+        # Create temporary folder
+        tmpdir = pathlib.Path(tempfile.mkdtemp())
+
+        # Copy ini file
+        shutil.copyfile(TFF / 'd_scen' / 'job.ini', tmpdir / 'job.ini')
+
+        # Set the configuration dictionary
+        cfg = {'datastore': df['hdf5'][idx].values[0],
+               'rupture_id': 35,
+               'with_between_within_ratio': 1.4,
+               'output_rupture_xml': str(tmpdir / 'rupture_model.xml'),
+               'output_gmclt_xml': str(tmpdir / 'gmclt.xml')
+               }
+
+        # Create the scenario rupture and GMC logic tree
+        process(cfg)
+
+        # TODO Check the results
+        kw = {}
+        params = readinput.get_params(str(tmpdir / 'job.ini'), kw)
+        log = logs.init(params)
+        oq = log.get_oqparam()
+
+        calc = base.calculators(oq, log.calc_id)
+        calc.test_mode = True
+        with calc._monitor:
+            result = calc.run()
+        ds_res = calc.datastore
+
+        # Check output
+        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(197))
+        expected = np.array(
+                [0.02185 , 0.031522, 0.012581, 0.005371],
                 dtype=np.float32)
         np.testing.assert_array_almost_equal(ds_res['avg_gmf'][0, 0], expected)
