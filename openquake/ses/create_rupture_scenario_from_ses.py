@@ -91,7 +91,7 @@ FMT_RUP = """   <griddedRupture>
       <magnitude>{mag:.2f}</magnitude>
       <rake>{rake:.2f}</rake>
       <hypocenter depth="{dep:.2f}" lat="{lat:.6f}" lon="{lon:.6f}"/>
-      <griddedSurface>
+      <griddedSurface surface_type="{stype}" rupture_type="{stype}">
          <gml:posList>
             {coos}
          </gml:posList>
@@ -204,16 +204,18 @@ def build_gmclt(fh1, src_trt, with_betw_ratio):
     return FMT_NRML.format(content=FMT_GMC_LT.format(trt_lab=src_trt, branches=tmps))
 
 
-def build_rupture_xml(rups_data, idx, rup_meshes):
+def build_rupture_xml(rups_data, idx, rup_meshes, code2cls):
     """
     :returns: the gridded-rupture NRML (as a string) for the rupture
         at position `idx`. Note multi-fault ruptures are not supported.
     """
     coos = ''
     for lo, la, de in zip(rup_meshes[0][0].flatten(),
-                           rup_meshes[0][1].flatten(),
-                           rup_meshes[0][2].flatten()):
+                          rup_meshes[0][1].flatten(),
+                          rup_meshes[0][2].flatten()):
         coos += f"{lo:.6f} {la:.6f} {de:.6f} "
+
+    names = [cls.__name__ for cls in code2cls[rups_data[idx]['code']]]
 
     tmpa = FMT_RUP.format(
         mag=rups_data[idx]['mag'],
@@ -221,6 +223,8 @@ def build_rupture_xml(rups_data, idx, rup_meshes):
         dep=rups_data[idx]['hypo'][2],
         lat=rups_data[idx]['hypo'][1],
         lon=rups_data[idx]['hypo'][0],
+        rtype=names[1],
+        stype=names[0],
         coos=coos)
     return FMT_NRML.format(content=tmpa)
 
@@ -258,7 +262,7 @@ def process(cfg):
     tmplt = build_gmclt(fh1, src_trt, cfg['with_between_within_ratio'])
 
     # Build the rupture .xml
-    tmp = build_rupture_xml(rups_data, idx, rup_meshes)
+    tmp = build_rupture_xml(rups_data, idx, rup_meshes, code2cls)
 
     print('\nOutput files')
     print('------------')
