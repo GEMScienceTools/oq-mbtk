@@ -65,7 +65,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
         cfg = {'datastore': df['hdf5'][idx].values[0],
                'rupture_id': 1073741899,
                'with_between_within_ratio': 1.4,
-               'output_rupture_xml': str(tmpdir / 'rupture_model.xml'),
+               'output_rupture_csv': str(tmpdir / 'rupture_model.csv'),
                'output_gmclt_xml': str(tmpdir / 'gmclt.xml')
                }
 
@@ -85,9 +85,9 @@ class ScenarioCreationTestCase(unittest.TestCase):
         ds_res = calc.datastore
 
         # Check output
-        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(205))
+        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(161))
         expected = np.array(
-                [0.0182422, 0.03741717, 0.01683567, 0.00846185],
+                [0.012436, 0.024435, 0.023045, 0.009636],
                 dtype=np.float32)
         np.testing.assert_array_almost_equal(ds_res['avg_gmf'][0, 0], expected)
 
@@ -112,7 +112,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
         cfg = {'datastore': df['hdf5'][idx].values[0],
                'rupture_id': 35,
                'with_between_within_ratio': 1.4,
-               'output_rupture_xml': str(tmpdir / 'rupture_model.xml'),
+               'output_rupture_csv': str(tmpdir / 'rupture_model.csv'),
                'output_gmclt_xml': str(tmpdir / 'gmclt.xml')
                }
 
@@ -132,8 +132,8 @@ class ScenarioCreationTestCase(unittest.TestCase):
         ds_res = calc.datastore
 
         # Check output
-        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(197))
+        self.assertEqual(ds_res['ruptures'][0][4], np.uint8(153))
         expected = np.array(
-                [0.02185 , 0.031522, 0.012581, 0.005371],
+                [0.014163, 0.024379, 0.014675, 0.010099],
                 dtype=np.float32)
         np.testing.assert_array_almost_equal(ds_res['avg_gmf'][0, 0], expected)

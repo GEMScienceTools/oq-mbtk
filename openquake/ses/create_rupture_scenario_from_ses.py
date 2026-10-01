@@ -56,7 +56,7 @@ rupture_id = 615649202388021
 with_between_within_ratio = 1.4
 
 # Output files
-output_rupture_xml = "rupture_model.xml"
+output_rupture_csv = "rupture_model.csv"
 output_gmclt_xml = "gmclt.xml"
 ```
 
@@ -71,10 +71,12 @@ import numpy as np
 
 from openquake.baselib import sap
 from openquake.hazardlib import valid
+from openquake.baselib import writers
 from openquake.hazardlib.source.rupture import to_arrays
 from openquake.commonlib.datastore import read as dstore_read
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
 from openquake.hazardlib.source.rupture import BaseRupture
+from openquake.hazardlib.source.rupture import to_csv_array, get_ebr
 
 
 # -----------------------------------------------------------------------
@@ -86,30 +88,6 @@ FMT_NRML = """<?xml version="1.0" encoding="utf-8"?>
 {content}
 </nrml>
 """
-
-FMT_RUP_GRID = """   <griddedRupture>
-      <magnitude>{mag:.2f}</magnitude>
-      <rake>{rake:.2f}</rake>
-      <hypocenter depth="{dep:.2f}" lat="{lat:.6f}" lon="{lon:.6f}"/>
-      <griddedSurface>
-            {coos}
-         </gml:posList>
-      </griddedSurface>
-   </griddedRupture>"""
-
-FMT_RUP = """   <regularRupture>
-      <magnitude>{mag:.2f}</magnitude>
-      <rake>{rake:.2f}</rake>
-      <hypocenter depth="{dep:.2f}" lat="{lat:.6f}" lon="{lon:.6f}"/>
-      <regularGridSurface
-            surface_type="{stype}"
-            rupture_type="{rtype}"
-            shape="{shape}">
-         <gml:posList>
-            {coos}
-         </gml:posList>
-      </regularGridSurface>
-   </regularRupture>"""
 
 FMT_BRANCH = """      <logicTreeBranch branchID="{bid}">
          <uncertaintyModel>
@@ -128,7 +106,7 @@ FMT_GMC_LT = """<logicTree logicTreeID="lt1">
 
 # Default names
 DEFAULTS = {
-    'output_rupture_xml': 'rupture_model.xml',
+    'output_rupture_csv': 'rupture_model.csv',
     'output_gmclt_xml': 'gmclt.xml',
 }
 
@@ -163,7 +141,7 @@ def select_rupture(rups_data, rups_geom, find_rup_id):
 
     rgeom = rups_geom[rups_data[idx]['geom_id']]
     rup_meshes = to_arrays(rgeom)
-    return idx, rup_meshes
+    return idx, rup_meshes, rgeom
 
 
 def get_trt(srcs_info, srcs_grps, rups_data, idx):
@@ -217,32 +195,6 @@ def build_gmclt(fh1, src_trt, with_betw_ratio):
     return FMT_NRML.format(content=FMT_GMC_LT.format(trt_lab=src_trt, branches=tmps))
 
 
-def build_rupture_xml(rups_data, idx, rup_meshes, code2cls):
-    """
-    :returns: the gridded-rupture NRML (as a string) for the rupture
-        at position `idx`. Note multi-fault ruptures are not supported.
-    """
-    coos = ''
-    for lo, la, de in zip(rup_meshes[0][0].flatten(),
-                          rup_meshes[0][1].flatten(),
-                          rup_meshes[0][2].flatten()):
-        coos += f"{lo:.6f} {la:.6f} {de:.6f} "
-
-    names = [cls.__name__ for cls in code2cls[rups_data[idx]['code']]]
-
-    tmpa = FMT_RUP.format(
-        mag=rups_data[idx]['mag'],
-        rake=rups_data[idx]['rake'],
-        dep=rups_data[idx]['hypo'][2],
-        lat=rups_data[idx]['hypo'][1],
-        lon=rups_data[idx]['hypo'][0],
-        shape=' '.join(list(str(s) for s in rup_meshes[0].shape)),
-        rtype=names[1],
-        stype=names[0],
-        coos=coos)
-    return FMT_NRML.format(content=tmpa)
-
-
 def process(cfg):
     """
     Run the full workflow given a configuration dictionary.
@@ -267,7 +219,7 @@ def process(cfg):
     code2cls.update(BaseRupture.init())
 
     # Retrieve the rupture
-    idx, rup_meshes = select_rupture(rups_data, rups_geom, find_rup_id)
+    idx, rup_meshes, rgeo = select_rupture(rups_data, rups_geom, find_rup_id)
 
     # Get TRT from the source
     src_trt = get_trt(srcs_info, srcs_grps, rups_data, idx)
@@ -276,13 +228,14 @@ def process(cfg):
     tmplt = build_gmclt(fh1, src_trt, cfg['with_between_within_ratio'])
 
     # Build the rupture .xml
-    tmp = build_rupture_xml(rups_data, idx, rup_meshes, code2cls)
+    tmprup = get_ebr(rups_data[idx], rgeo, src_trt)
+    csrarr = to_csv_array([tmprup])
 
     print('\nOutput files')
     print('------------')
-    with open(cfg['output_rupture_xml'], 'w') as fou:
-        fou.write(tmp)
-    print(f"Wrote {cfg['output_rupture_xml']}")
+
+    comment = dict(trts=[src_trt])
+    writers.write_csv(cfg['output_rupture_csv'], csrarr, comment=comment)
 
     with open(cfg['output_gmclt_xml'], 'w') as fou:
         fou.write(tmplt)
@@ -296,7 +249,6 @@ def main(config, *, rupture_id=None, verbose=False):
         cfg['rupture_id'] = rupture_id
     if verbose:
         print(f"Configuration: {cfg}")
-    breakpoint()
     process(cfg)
 
 
