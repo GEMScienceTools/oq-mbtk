@@ -1,0 +1,45 @@
+cat.tests.completeness package
+==============================
+
+Submodules
+----------
+
+cat.tests.completeness.analysis\_rates\_test module
+---------------------------------------------------
+
+.. automodule:: cat.tests.completeness.analysis_rates_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.completeness.analysis\_test module
+--------------------------------------------
+
+.. automodule:: cat.tests.completeness.analysis_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.completeness.generate\_test module
+--------------------------------------------
+
+.. automodule:: cat.tests.completeness.generate_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.completeness.norms\_test module
+-----------------------------------------
+
+.. automodule:: cat.tests.completeness.norms_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: cat.tests.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:

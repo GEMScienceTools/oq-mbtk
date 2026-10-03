@@ -1,0 +1,61 @@
+wkf.seismicity package
+======================
+
+Submodules
+----------
+
+wkf.seismicity.baseline module
+------------------------------
+
+.. automodule:: wkf.seismicity.baseline
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.seismicity.distribute module
+--------------------------------
+
+.. automodule:: wkf.seismicity.distribute
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.seismicity.hypocentral\_depth module
+----------------------------------------
+
+.. automodule:: wkf.seismicity.hypocentral_depth
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.seismicity.mmax\_epri module
+--------------------------------
+
+.. automodule:: wkf.seismicity.mmax_epri
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.seismicity.nodal\_plane module
+----------------------------------
+
+.. automodule:: wkf.seismicity.nodal_plane
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.seismicity.smoothing module
+-------------------------------
+
+.. automodule:: wkf.seismicity.smoothing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: wkf.seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:

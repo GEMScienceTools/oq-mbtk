@@ -1,0 +1,45 @@
+smt.tests.residuals package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   smt.tests.residuals.parsers
+
+Submodules
+----------
+
+smt.tests.residuals.residual\_plotter\_test module
+--------------------------------------------------
+
+.. automodule:: smt.tests.residuals.residual_plotter_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.tests.residuals.residual\_plotter\_utils\_test module
+---------------------------------------------------------
+
+.. automodule:: smt.tests.residuals.residual_plotter_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.tests.residuals.residuals\_test module
+------------------------------------------
+
+.. automodule:: smt.tests.residuals.residuals_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.tests.residuals
+   :members:
+   :show-inheritance:
+   :undoc-members:

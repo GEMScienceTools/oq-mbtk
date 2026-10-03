@@ -1,0 +1,10 @@
+fnm.tests.data package
+======================
+
+Module contents
+---------------
+
+.. automodule:: fnm.tests.data
+   :members:
+   :show-inheritance:
+   :undoc-members:

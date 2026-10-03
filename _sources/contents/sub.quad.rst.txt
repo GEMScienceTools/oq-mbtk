@@ -1,0 +1,21 @@
+sub.quad package
+================
+
+Submodules
+----------
+
+sub.quad.msh module
+-------------------
+
+.. automodule:: sub.quad.msh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.quad
+   :members:
+   :show-inheritance:
+   :undoc-members:

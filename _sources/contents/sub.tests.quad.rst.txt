@@ -1,0 +1,21 @@
+sub.tests.quad package
+======================
+
+Submodules
+----------
+
+sub.tests.quad.trapezoidal\_cells\_surface\_test module
+-------------------------------------------------------
+
+.. automodule:: sub.tests.quad.trapezoidal_cells_surface_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.tests.quad
+   :members:
+   :show-inheritance:
+   :undoc-members:

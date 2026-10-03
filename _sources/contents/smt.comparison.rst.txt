@@ -1,0 +1,45 @@
+smt.comparison package
+======================
+
+Submodules
+----------
+
+smt.comparison.compare\_gmpes module
+------------------------------------
+
+.. automodule:: smt.comparison.compare_gmpes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.comparison.sammons module
+-----------------------------
+
+.. automodule:: smt.comparison.sammons
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.comparison.utils\_compare\_gmpes module
+-------------------------------------------
+
+.. automodule:: smt.comparison.utils_compare_gmpes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.comparison.utils\_gmpes module
+----------------------------------
+
+.. automodule:: smt.comparison.utils_gmpes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.comparison
+   :members:
+   :show-inheritance:
+   :undoc-members:
