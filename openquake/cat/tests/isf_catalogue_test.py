@@ -55,7 +55,6 @@ class MergeGenericCatalogueTest(unittest.TestCase):
 
     def test_case01(self):
         """Merging .csv formatted catalogue"""
-
         # Read the ISF formatted file
         parser = GenericCataloguetoISFParser(self.fname_csv)
         _ = parser.parse("tcsv", "Test CSV")
@@ -174,7 +173,8 @@ class MergeGenericCatalogueTest(unittest.TestCase):
                 utc_time_zone=timezone, buff_t=dt.timedelta(0), buff_ll=0,
                 use_ids=True, logfle=None)
         self.assertIn('isf_catalogue.py', cm.filename)
-        self.assertEqual(924, cm.lineno)
+        # Check warning message at line 923 in isf_catalogue.py
+        self.assertEqual(923, cm.lineno)
 
     def test_case05(self):
         """Testing the identification of doubtful events with use_kms"""
