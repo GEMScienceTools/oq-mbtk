@@ -266,9 +266,14 @@ def att_curves(gmpe,
     # Compute ground-motions
     try:
         mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
-    except KeyError as exc:
-        # KeyError raised if IMT not supported in a CoeffsTable
-        if exc.args and str(exc.args[0]) == str(imt):
+    except (KeyError, ValueError) as exc:
+        # KeyError is raised if IMT not supported in a CoeffsTable; ValueError
+        # raised when PGA-anchored interpolation fallback is unavailable
+        key_miss = (isinstance(exc, KeyError) and exc.args
+                    and str(exc.args[0]) == str(imt))
+        interp_miss = (isinstance(exc, ValueError)
+                       and 'PGA-anchored fallback' in str(exc))
+        if key_miss or interp_miss:
             # Provide nans as not plotted and skipped in interp for spectra
             mean, std, tau, phi = np.full((4, 1, 1, len(ctxs)), np.nan)
         else:
