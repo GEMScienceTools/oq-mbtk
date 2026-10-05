@@ -33,7 +33,6 @@ import numpy as np
 import pandas as pd
 import subprocess
 
-from openquake.calculators.base import dcache
 from openquake.ses.create_rupture_scenario_from_ses import process
 
 from openquake.calculators import base
@@ -49,10 +48,9 @@ class ScenarioCreationTestCase(unittest.TestCase):
 
         # Create a datastore with 69 ruptures
         fname_ini = TFF / 'd_test01' / 'test01.ini'
-        dstore = dcache.get(str(fname_ini))
 
         # Read the table to get path to the hdf5 file
-        df = pd.read_csv(dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
+        df = pd.read_csv(base.dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
         idx = np.where(df['ini'] == str(fname_ini))[0]
 
         # Create temporary folder
@@ -96,10 +94,9 @@ class ScenarioCreationTestCase(unittest.TestCase):
 
         # Create a datastore with 69 ruptures
         fname_ini = TFF / 'd_test02' / 'test02.ini'
-        dstore = dcache.get(str(fname_ini))
 
         # Read the table to get path to the hdf5 file
-        df = pd.read_csv(dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
+        df = pd.read_csv(base.dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
         idx = np.where(df['ini'] == str(fname_ini))[0]
 
         # Create temporary folder
