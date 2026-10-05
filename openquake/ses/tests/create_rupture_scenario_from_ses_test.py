@@ -48,6 +48,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
 
         # Create a datastore with 69 ruptures
         fname_ini = TFF / 'd_test01' / 'test01.ini'
+        dstore = base.dcache.get(str(fname_ini))
 
         # Read the table to get path to the hdf5 file
         df = pd.read_csv(base.dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
@@ -70,7 +71,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
         # Create the scenario rupture and GMC logic tree
         process(cfg)
 
-        # TODO Check the results
+        # Check the results
         kw = {}
         params = readinput.get_params(str(tmpdir / 'job.ini'), kw)
         log = logs.init(params)
@@ -94,6 +95,7 @@ class ScenarioCreationTestCase(unittest.TestCase):
 
         # Create a datastore with 69 ruptures
         fname_ini = TFF / 'd_test02' / 'test02.ini'
+        dstore = base.dcache.get(str(fname_ini))
 
         # Read the table to get path to the hdf5 file
         df = pd.read_csv(base.dcache.ini_hdf5_csv, names=['ini', 'hdf5'])
