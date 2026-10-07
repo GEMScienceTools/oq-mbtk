@@ -95,7 +95,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
     """
     :param cat
         A pandas geodataframe instance containing a homogenised catalogue as
-        obtained from :method:`openquake.cat.hmg.merge.hmg.process_dfs`
+        obtained from :method:`openquake.cat.hmg.hmg.process_dfs`
     :param sidx:
         Spatial index for the geodataframe as obtained by `gdf.sindex`
     :param delta_ll:
@@ -109,6 +109,7 @@ def process(cat, sidx, delta_ll, delta_t, fname_geojson, use_kms=False):
     :param use_kms:
         Specify if distance buffer should use kms (default is False, use
         degrees)
+        
     """
 
     features = []

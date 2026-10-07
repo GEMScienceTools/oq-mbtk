@@ -12,15 +12,17 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
 
+sys.path.insert(0, os.path.abspath('../'))
+
+from openquake import cat, wkf, mbt, mbi, aft, fnm, ghm, man
 
 # -- Project information -----------------------------------------------------
 
 project = 'OpenQuake Model Building Toolkit Suite'
-copyright = '2020-2022, GEM Hazard'
+copyright = '2020-2026, GEM Hazard'
 author = 'GEM Hazard'
 
 # The short X.Y version
@@ -49,6 +51,21 @@ extensions = [
     'nbsphinx',
 ]
 
+autodoc_mock_imports = ['scipy',
+			'matplotlib',
+			'pandas',
+			'rtree',
+			'geopandas', 
+			'toml',
+			'h5py', 
+			'obspy',
+			'geojson',
+			'shapely',
+			'openquake.baselib',
+			'openquake.hazardlib',
+			'openquake.hmtk', 
+			'h3', 
+			'pyproj']
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
