@@ -1,4 +1,5 @@
-import processing
+# Leaving this here for future reference, but processing is not a requirement of the mbtk
+#import processing
 
 points_file_rock = '/Users/kjohnson/GEM/oq-mbtk/openquake/ghm/rasters/mosaic_pts.shp'
 points_file_vs30 = '/Users/kjohnson/GEM/oq-mbtk/openquake/ghm/rasters/mosaic_pts_vs30.shp'
