@@ -1,0 +1,69 @@
+cat.tests package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   cat.tests.completeness
+
+Submodules
+----------
+
+cat.tests.check\_test module
+----------------------------
+
+.. automodule:: cat.tests.check_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.converter\_test module
+--------------------------------
+
+.. automodule:: cat.tests.converter_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.hmg\_test module
+--------------------------
+
+.. automodule:: cat.tests.hmg_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.isf\_catalogue\_test module
+-------------------------------------
+
+.. automodule:: cat.tests.isf_catalogue_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.merge\_test module
+----------------------------
+
+.. automodule:: cat.tests.merge_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.tests.purge\_test module
+----------------------------
+
+.. automodule:: cat.tests.purge_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: cat.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,53 @@
+sub.misc package
+================
+
+Submodules
+----------
+
+sub.misc.alpha\_shape module
+----------------------------
+
+.. automodule:: sub.misc.alpha_shape
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.misc.edge module
+--------------------
+
+.. automodule:: sub.misc.edge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.misc.profile module
+-----------------------
+
+.. automodule:: sub.misc.profile
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.misc.utils module
+---------------------
+
+.. automodule:: sub.misc.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sub.misc.utils\_plot module
+---------------------------
+
+.. automodule:: sub.misc.utils_plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sub.misc
+   :members:
+   :show-inheritance:
+   :undoc-members:

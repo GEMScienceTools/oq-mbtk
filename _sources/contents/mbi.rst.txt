@@ -1,0 +1,35 @@
+mbi package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbi.cat
+   mbi.ccl
+   mbi.plt
+   mbi.rep
+   mbi.sub
+   mbi.unc
+   mbi.wkf
+
+Submodules
+----------
+
+mbi.mbi module
+--------------
+
+.. automodule:: mbi.mbi
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbi
+   :members:
+   :show-inheritance:
+   :undoc-members:

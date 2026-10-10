@@ -1,0 +1,21 @@
+mbt.tools.mfd\_sample package
+=============================
+
+Submodules
+----------
+
+mbt.tools.mfd\_sample.make\_mfds module
+---------------------------------------
+
+.. automodule:: mbt.tools.mfd_sample.make_mfds
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tools.mfd_sample
+   :members:
+   :show-inheritance:
+   :undoc-members:

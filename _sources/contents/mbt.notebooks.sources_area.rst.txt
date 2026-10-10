@@ -1,0 +1,10 @@
+mbt.notebooks.sources\_area package
+===================================
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.sources_area
+   :members:
+   :show-inheritance:
+   :undoc-members:

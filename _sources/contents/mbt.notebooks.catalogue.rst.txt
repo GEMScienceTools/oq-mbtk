@@ -1,0 +1,10 @@
+mbt.notebooks.catalogue package
+===============================
+
+Module contents
+---------------
+
+.. automodule:: mbt.notebooks.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:

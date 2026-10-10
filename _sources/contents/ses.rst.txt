@@ -1,0 +1,29 @@
+ses package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   ses.tests
+
+Submodules
+----------
+
+ses.create\_rupture\_scenario\_from\_ses module
+-----------------------------------------------
+
+.. automodule:: ses.create_rupture_scenario_from_ses
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: ses
+   :members:
+   :show-inheritance:
+   :undoc-members:
