@@ -23,9 +23,9 @@ jobs:
         os: [windows-2025]
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Installation of GMT from standalone
@@ -47,6 +47,7 @@ jobs:
       - name: Run scripts to install on windows
         env:
           BRANCH: ${{ github.event.inputs.git-ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           Write-Host ${env:PATH}
           $Env:PATH += ";C:\programs\gmt6\bin"
@@ -56,8 +57,6 @@ jobs:
           #
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
-          Write-Host "Test python version"
-          python -V
           Write-Host $Env:GITHUB_REF
           set PIP_DEFAULT_TIMEOUT=100
           python -m pip install -U pip
@@ -70,6 +69,9 @@ jobs:
             Write-Host "python install.py devel --version ${env:BRANCH}"
             cd oq-engine
             python install.py devel --version ${env:BRANCH}
+            if ($LASTEXITCODE -ne 0) {
+              break
+            }
             cd ..
           }
           else
@@ -80,12 +82,14 @@ jobs:
             Write-Host "python install.py devel --version master"
             cd oq-engine
             python install.py devel --version master
+            if ($LASTEXITCODE -ne 0) {
+              break
+            }
             cd ..
           }
           C:\Users\runneradmin\openquake\Scripts\activate.ps1
           $pythonVersion = "${{ matrix.python-version }}"
-          $pyVer = "py" + $pythonVersion.Replace(".", "")
-          python -m pip install -r "requirements-$pyVer-win64.txt"
+          python -m pip install -r requirements-win64.txt
           python -m pip install -e .
           $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
@@ -95,6 +99,22 @@ jobs:
           dir env:
           Write-Host "Print all pypip packages"
           pip list
+      - name: Run tests
+        env:
+          BRANCH: ${{ github.event.inputs.git-ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Write-Host ${env:PATH}
+          $Env:PATH += ";C:\programs\gmt6\bin"
+          Write-Host "Set LIBRARY PATH for GMT"
+          $Env:GMT_LIBRARY_PATH="C:\programs\gmt6\bin"
+          Write-Host "Git branch for Run action "${Env:GIT_BRANCH}
+          #
+          $curDir = Get-Location
+          Write-Host "Current Working Directory: $curDir"
+          Write-Host "Test python version"
+          python -V
+          C:\Users\runneradmin\openquake\Scripts\activate.ps1
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
           cd openquake

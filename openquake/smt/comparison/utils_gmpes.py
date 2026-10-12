@@ -31,6 +31,7 @@ from openquake.hazardlib.geo import utils as geo_utils
 from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.calc.filters import magdepdist, MINMAG, MAXMAG
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
 from openquake.hazardlib.gsim.mgmpe.generic_gmpe_avgsa import (
     GmpeIndirectAvgSA, GenericGmpeAvgSA)
@@ -117,7 +118,7 @@ def get_sites_from_rupture(rup,
                                   npoints)
 
     sites = []
-    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5'])
+    keys = set(site_props.keys()) - set(['vs30', 'z1pt0', 'z2pt5', 'z1pt4'])
 
     if len(pointsn):
         lons = reversed(pointsn[0][0:])
@@ -126,7 +127,8 @@ def get_sites_from_rupture(rup,
             site = Site(Point(lon, lat, 0.0),
                         vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'],
-                        z2pt5=site_props['z2pt5'])
+                        z2pt5=site_props['z2pt5'],
+                        z1pt4=site_props['z1pt4'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -136,7 +138,8 @@ def get_sites_from_rupture(rup,
             site = Site(Point(lon, lat, 0.0),
                         vs30=site_props['vs30'],
                         z1pt0=site_props['z1pt0'],
-                        z2pt5=site_props['z2pt5'])
+                        z2pt5=site_props['z2pt5'],
+                        z1pt4=site_props['z1pt4'])
             for key in list(keys):
                 setattr(site, key, site_props[key])
             sites.append(site)
@@ -196,6 +199,7 @@ def att_curves(gmpe,
                vs30,
                z1pt0,
                z2pt5,
+               z1pt4,
                maxR,
                step,
                imt,
@@ -216,6 +220,7 @@ def att_curves(gmpe,
     props = {'vs30': vs30,
              'z1pt0': z1pt0,
              'z2pt5': z2pt5,
+             'z1pt4': z1pt4,
              'backarc': volc_back_arc,
              'vs30measured': False,
              'eshm20_region': eshm20_region}
@@ -251,13 +256,30 @@ def att_curves(gmpe,
 
     # Create context
     mag_str = [f'{mag:.2f}']
-    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str}
+    oqp = {'imtls': {k: [] for k in [str(imt)]}, 'mags': mag_str,
+           'maximum_distance': magdepdist(  # Buffer so all sites in req range
+               [(MINMAG, maxR + 100), (MAXMAG, maxR + 100)])}
     ctxm = ContextMaker(rup.tectonic_region_type, [gmpe], oqp)
-    ctxs = ctxm.get_ctxs([rup], sites)
+    ctxs = list(ctxm.get_ctxs([rup], sites))
     ctxs = ctxs[0]
-
+    
     # Compute ground-motions
-    mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    try:
+        mean, std, tau, phi = ctxm.get_mean_stds([ctxs])
+    except (KeyError, ValueError) as exc:
+        # KeyError is raised if IMT not supported in a CoeffsTable; ValueError
+        # raised when PGA-anchored interpolation fallback is unavailable
+        key_miss = (isinstance(exc, KeyError) and exc.args
+                    and str(exc.args[0]) == str(imt))
+        interp_miss = (isinstance(exc, ValueError)
+                       and 'PGA-anchored fallback' in str(exc))
+        if key_miss or interp_miss:
+            # Provide nans as not plotted and skipped in interp for spectra
+            mean, std, tau, phi = np.full((4, 1, 1, len(ctxs)), np.nan)
+        else:
+            raise
+
+    # Get distances
     if dist_type == 'repi':
         distances = ctxs.repi
     elif dist_type == 'rrup':
@@ -676,7 +698,7 @@ def reformat_att_curves(att_curves, out=None):
                         store[f"Median Plus Sigma (+ {nstd} epsilon) | {key}"
                               ] = curves[gmpe][f"median plus sigma ({unit})"]
                         store[f"Median Minus Sigma (- {nstd} epsilon) | {key}"
-                              ] = curves[gmpe][f"median plus sigma ({unit})"]
+                              ] = curves[gmpe][f"median minus sigma ({unit})"]
                         
                 # Then get the distance for given scenario
                 else:

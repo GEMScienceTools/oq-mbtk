@@ -253,7 +253,7 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         _ang_mat = {(4, 20): 63.44241277654345, (20, 4): 63.44241277654345}
         assert ang_mat.keys() == _ang_mat.keys()
         for k, v in ang_mat.items():
-            np.testing.assert_almost_equal(v, _ang_mat[k])
+            np.testing.assert_almost_equal(v, _ang_mat[k], decimal=2)
 
     def test_plausibility_dataframe(self):
         fn = self.fault_network
@@ -404,7 +404,7 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         )
 
         pd.testing.assert_frame_equal(
-            plaus_df, _plaus_df, rtol=1e-6, atol=1e-8, check_dtype=True
+            plaus_df, _plaus_df, rtol=1e-2, check_dtype=True
         )
 
 

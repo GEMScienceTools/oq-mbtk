@@ -35,6 +35,8 @@ from openquake.smt.residuals.sm_database import (GroundMotionDatabase,
                                                  Magnitude,
                                                  Rupture,
                                                  FocalMechanism,
+                                                 MECHANISM_TYPE,
+                                                 DIP_TYPE, 
                                                  GCMTNodalPlanes,
                                                  Component,
                                                  RecordSite,
@@ -80,7 +82,9 @@ HEADERS = ["event_id",
            "W_hp",
            "U_lp",
            "V_lp",
-           "W_lp"]
+           "W_lp",
+           "mainshock_aftershock_flag_from_db",
+           "CJB_dist"]
 
 
 def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):    
@@ -94,6 +98,21 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
     ngawest2['fm_type'] = pd.Series()
     ngawest2['station_id'] = pd.Series()
     ngawest2['vs30_meas'] = pd.Series()
+
+    # Wooddell & Abrahamson (2014) class -> mainshock/aftershock/foreshock label
+    def _wa_class_to_label(val):
+        if pd.isnull(val):
+            return 'undefined'
+        s = str(val).strip()
+        if s.startswith('C1f'):
+            return 'foreshock'
+        if s.startswith('C2'):
+            return 'aftershock'
+        if s.startswith('C1'):
+            return 'mainshock'
+        return 'undefined'
+    ngawest2['mainshock_aftershock_flag_from_db'] = ngawest2[
+        'TYPE(CRjb = 0)'].apply(_wa_class_to_label)
 
     for idx, rec in ngawest2.iterrows():
         
@@ -204,10 +223,13 @@ def _parse_ngawest2(ngawest2, ngawest2_vert, Initial_ngawest2_size):
 
     "U_hp":ngawest2['HP-H1 (Hz)'],
     "V_hp":ngawest2['HP-H2 (Hz)'],
-    "W_hp":ngawest2_vert['HP-V (Hz)'],  
+    "W_hp":ngawest2_vert['HP-V (Hz)'],
     "U_lp":ngawest2['LP-H1 (Hz)'],
     "V_lp":ngawest2['LP-H2 (Hz)'],
-    "W_lp":ngawest2_vert['LP-V (Hz)'], 
+    "W_lp":ngawest2_vert['LP-V (Hz)'],
+
+    "mainshock_aftershock_flag_from_db": ngawest2['mainshock_aftershock_flag_from_db'],
+    "CJB_dist": ngawest2['CRjb'],
 
     "U_pga":None,
     "V_pga":None,
@@ -445,13 +467,20 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
                      'Mo (dyne.cm)',
                      'Station Name',
                      'Strike (deg)', 'Dip (deg)', 'Rake Angle (deg)',
-                     'EpiD (km)']
+                     'EpiD (km)',
+                     'Station Latitude', 'Station Longitude']
         for col in drop_cols:
             idx_m = ngawest2.loc[ngawest2[col] == -999].index
-            ngawest2.drop(idx_m, inplace=True)
-            ngawest2_vert.drop(idx_m, inplace=True)
-            ngawest2.reset_index(drop=True, inplace=True)
-            ngawest2_vert.reset_index(drop=True, inplace=True)
+            ngawest2 = ngawest2.drop(idx_m).reset_index(drop=True)
+            ngawest2_vert = ngawest2_vert.drop(idx_m).reset_index(drop=True)
+
+        # Drop records with non-valid rake
+        idx_rake = ngawest2.loc[
+            (ngawest2['Rake Angle (deg)'] < -180.0) |
+            (ngawest2['Rake Angle (deg)'] > 180.0)
+            ].index
+        ngawest2 = ngawest2.drop(idx_rake).reset_index(drop=True)
+        ngawest2_vert = ngawest2_vert.drop(idx_rake).reset_index(drop=True)
 
         # Replace missing year/month/day/hour/minute, cast to string first
         ngawest2['YEAR'] = ngawest2['YEAR'].astype(str)
@@ -542,10 +571,18 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         eq_depth = utils.positive_float(metadata["ev_depth_km"], "ev_depth_km")
         if not eq_depth:
             raise ValueError('Depth missing an events in admitted flatfile')
-        
+
+        # Aftershock flag
+        is_aftershock = metadata['mainshock_aftershock_flag_from_db'] == 'aftershock'
+
+        # crjb (aftershock distance metric used in ASK14)
+        crjb = utils.vfloat(metadata['CJB_dist'], 'CJB_dist')
+
         eqk = Earthquake(eq_id, eq_name, eq_datetime, eq_lon, eq_lat, eq_depth,
                          magnitude=None, # Magnitude not assigned yet)
-                         tectonic_region="active_crustal")
+                         tectonic_region="active_crustal",
+                         is_aftershock=is_aftershock,
+                         crjb=crjb)
         
         # Get preferred magnitude and list
         pref_mag, magnitude_list = self._parse_magnitudes(metadata)
@@ -605,7 +642,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         if not mechanism.nodal_planes.nodal_plane_1:
             # Absolutely no information - base on stye-of-faulting
             mechanism.nodal_planes.nodal_plane_1 = {
-                "strike": 0.0, "dip": utils.DIP_TYPE[sof], "rake": utils.MECHANISM_TYPE[sof]
+                "strike": 0.0, "dip": DIP_TYPE[sof], "rake": MECHANISM_TYPE[sof]
                 }
             
         return rupture, mechanism
@@ -648,9 +685,7 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Vs30
         vs30 = utils.vfloat(metadata["vs30_m_sec"], "vs30_m_sec")
         if pd.isnull(vs30):
-            # Need a station vs30 value for residuals (not really, given
-            # some GMMs lack site terms, but good way to prevent confusing
-            # nans in the expected values which appear when computing stats)
+            # Also prevents nans appearing in residual outputs
             raise ValueError(f"A vs30 value is missing for {site_id}")
         vs30_measured_flag = metadata["vs30_meas_type"]
         if vs30_measured_flag == "measured":
@@ -672,7 +707,6 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         # Add basin params
         site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = utils.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
-        print(site.z2pt5)
 
         return site
 
@@ -680,26 +714,22 @@ class NGAWest2FlatfileParser(SMDatabaseReader):
         """
         Parse the waveform data.
         """
-        # U channel - usually east
-        xorientation = metadata["U_channel_code"].strip()
+        # U channel
         xazimuth = utils.vfloat(metadata["U_azimuth_deg"], "U_azimuth_deg")
         xfilter = {"Low-Cut": utils.vfloat(metadata["U_hp"], "U_hp"),
                    "High-Cut": utils.vfloat(metadata["U_lp"], "U_lp")}
         xcomp = Component(wfid, xazimuth, waveform_filter=xfilter, units="cm/s/s")
         
-        # V channel - usually North
-        vorientation = metadata["V_channel_code"].strip()
+        # V channel
         vazimuth = utils.vfloat(metadata["V_azimuth_deg"], "V_azimuth_deg")
         vfilter = {"Low-Cut": utils.vfloat(metadata["V_hp"], "V_hp"),
                    "High-Cut": utils.vfloat(metadata["V_lp"], "V_lp")}
         vcomp = Component(wfid, vazimuth, waveform_filter=vfilter, units="cm/s/s")
-        zorientation = metadata["W_channel_code"].strip()
-        if zorientation:
-            zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
-                       "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
-            zcomp = Component(wfid, None, waveform_filter=zfilter, units="cm/s/s")
-        else:
-            zcomp = None
+
+        # W (vertical) channel
+        zfilter = {"Low-Cut": utils.vfloat(metadata["W_hp"], "W_hp"),
+                   "High-Cut": utils.vfloat(metadata["W_lp"], "W_lp")}
+        zcomp = Component(wfid, None, waveform_filter=zfilter, units="cm/s/s")
         
         return xcomp, vcomp, zcomp
 

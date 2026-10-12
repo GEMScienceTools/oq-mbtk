@@ -1,23 +1,20 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import re
 import glob
 import numpy as np
 
 from pathlib import Path
 from scipy import interpolate
+import matplotlib.pyplot as plt
 
 from openquake.hazardlib.geo import Line, Point
-from openquake.sub.edges_set import DEFAULTS
-
 from openquake.hazardlib.geo import Line, Point
-from openquake.hazardlib.source import ComplexFaultSource
 from openquake.hazardlib.source import KiteFaultSource
-from openquake.hazardlib.tom import PoissonTOM
-from openquake.hazardlib.const import TRT
-from openquake.hazardlib.mfd import TruncatedGRMFD
-from openquake.hazardlib.scalerel.strasser2010 import StrasserInterface
+
+from openquake.sub.edges_set import DEFAULTS
 
 
 def _from_lines_to_array(lines):
@@ -94,19 +91,19 @@ class ProfileSet():
         grd = interpolate.griddata((arr[:, 0], arr[:, 1]), arr[:, 2],
                                    (xv[None, :], yv[:, None]), method=method)
 
-        if True:
-            import matplotlib.pyplot as plt
-            # MN: 'Axes3D' imported but never used
-            from mpl_toolkits.mplot3d import Axes3D
-            fig = plt.figure(figsize=(10, 8))
-            ax = fig.add_subplot(111, projection='3d')
-            for pro in self.profiles:
-                tmp = [[p.longitude, p.latitude, p.depth] for p in pro.points]
-                tmp = np.array(tmp)
-                ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2], 'x--b', markersize=2)
-            xg, yg = np.meshgrid(xv, yv)
-            ax.plot(xg.flatten(), yg.flatten(), grd.flatten(), '.r',
-                    markersize=1)
+        # MN: 'Axes3D' imported but never used
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure(figsize=(10, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        for pro in self.profiles:
+            tmp = [[p.longitude, p.latitude, p.depth] for p in pro.points]
+            tmp = np.array(tmp)
+            ax.plot(tmp[:, 0], tmp[:, 1], tmp[:, 2], 'x--b', markersize=2)
+        xg, yg = np.meshgrid(xv, yv)
+        ax.plot(xg.flatten(), yg.flatten(), grd.flatten(), '.r',
+                markersize=1)
+        if 'pytest' not in sys.modules:
+            # Don't show plot in tests
             plt.show()
 
         return grd

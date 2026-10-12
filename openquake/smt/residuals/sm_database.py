@@ -29,6 +29,7 @@ from openquake.hazardlib.site import Site, SiteCollection
 from openquake.hazardlib.geo.point import Point
 from openquake.hazardlib.geo import geodetic
 from openquake.hazardlib.contexts import ContextMaker
+from openquake.hazardlib.calc.filters import magdepdist
 from openquake.hazardlib.const import TRT
 
 from openquake.smt import utils
@@ -277,6 +278,11 @@ class Earthquake(object):
         Focal mechanism as instance of the :class: FocalMechanism
     :param tectonic_region:
         Tectonic region of the earthquake
+    :param bool is_aftershock:
+        True if the event is classified as an aftershock
+    :param float crjb:
+        Centroid Joyner-Boore distance (shortest horizontal distance from the
+        aftershock rupture centroid to the edge of the main shock rupture)
     """
     def __init__(self,
                  eq_id,
@@ -288,7 +294,9 @@ class Earthquake(object):
                  magnitude,
                  rupture=None,
                  focal_mechanism=None,
-                 tectonic_region=None):
+                 tectonic_region=None,
+                 is_aftershock=False,
+                 crjb=np.nan):
         self.id = eq_id
         assert isinstance(date_time, datetime)
         self.datetime = date_time
@@ -300,6 +308,8 @@ class Earthquake(object):
         self.rupture = rupture
         self.mechanism = focal_mechanism
         self.tectonic_region = tectonic_region
+        self.is_aftershock = is_aftershock
+        self.crjb = crjb
 
 
 class RecordDistance(object):
@@ -877,10 +887,14 @@ class GroundMotionDatabase(ContextDB):
         
         # Make the ctx for given station which contains all distances
         mag_str = [f'{rup.mag:.2f}']
-        oqp = {'imtls': {"PGA": []}, 'mags': mag_str}
+        oqp = {'imtls': {"PGA": []}, 'mags': mag_str,
+               # Use large max dist to avoid filtering out very
+               # far away sites within genctx (in the ctx maker)
+               'maximum_distance': magdepdist(
+                   [(0.0, 20000.), (10.2, 20000.)])}
         ctxm = ContextMaker(
             rup.tectonic_region_type, [utils.full_dtype_gmm()], oqp)
-        ctxs = ctxm.get_ctxs([rup], site)
+        ctxs = list(ctxm.get_ctxs([rup], site))
 
         return ctxs[0]
 
@@ -935,6 +949,10 @@ class GroundMotionDatabase(ContextDB):
         ctx.hypo_depth = record.event.depth
         ctx.hypo_lat = record.event.latitude
         ctx.hypo_lon = record.event.longitude
+
+        # Aftershock flag and crjb
+        ctx.is_aftershock = record.event.is_aftershock
+        ctx.crjb = record.event.crjb # Used in ASK14
 
         # Add TRT if available
         if record.event.tectonic_region is not None:

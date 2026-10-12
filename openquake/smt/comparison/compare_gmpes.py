@@ -138,6 +138,7 @@ class Configurations(object):
         SITE_OPTIONAL = {
         "z1pt0": -999, # Compute param using each GMM's vs30 to z1pt0
         "z2pt5": -999, # Compute param using each GMM's vs30 to z2pt5
+        "z1pt4": -999, # Compute param using each GMM's vs30 to z1pt4
         "up_or_down_dip": 1, # Assume site is up-dip
         "volc_back_arc": False, # Asssume site is not in back-arc
         "eshm20_region": 0} # Assume default region for ESHM version of K20 GMM
@@ -190,7 +191,8 @@ class Configurations(object):
         ftype = rup_data['fname'].split('.')[-1]
         if ftype == "xml":
             # Load XML
-            oqp = OqParam(calculation_mode='scenario')
+            oqp = OqParam(calculation_mode='scenario',
+                          inputs={'job_ini': '<in-memory>'})
             oqp.inputs['rupture_model'] = rup_data['fname']
             rup = get_rupture(oqp)
         else:

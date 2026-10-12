@@ -454,9 +454,9 @@ def parse_rupture_mechanism(metadata, eq_id, eq_name, mag, depth):
     if strike is None:
         strike = 0.0
     if dip is None:
-        dip = utils.DIP_TYPE[sof]
+        dip = DIP_TYPE[sof]
     if rake is None:
-        rake = utils.MECHANISM_TYPE[sof]
+        rake = MECHANISM_TYPE[sof]
         
     # if strike is not None and dip is not None and rake is not None:
     mechanism.nodal_planes.nodal_plane_1 = {"strike": strike,

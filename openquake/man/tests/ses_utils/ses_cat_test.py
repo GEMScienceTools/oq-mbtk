@@ -1,5 +1,5 @@
 # ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
+# Copyright (C) 2026 GEM Foundation and Électricité de France
 #           _______  _______        __   __  _______  _______  ___   _
 #          |       ||       |      |  |_|  ||  _    ||       ||   | | |
 #          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
@@ -20,9 +20,17 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This script is produced within the scope of Work Package 5, named Simulation 
+# platform, under SIGMA3 project. For more detailed information about 
+# the project, please visit to https://sigma-programs.com/.
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
+"""
+Testing methods and functions in the ses_cat.py
+"""
 
 import os
 import unittest
@@ -31,7 +39,7 @@ import numpy as np
 import tempfile
 import shutil
 
-from openquake.man.ses_cat import (
+from openquake.man.ses_utils.ses_cat import (
     merge_ses_event_rupture, 
     add_random_datetime, 
     convert_to_hmtk,
@@ -128,4 +136,3 @@ class TestSESCatalogue(unittest.TestCase):
         saved_df = pd.read_csv(result_path)
         self.assertEqual(len(saved_df), 10)
         self.assertEqual(saved_df.columns[0], "longitude")
-

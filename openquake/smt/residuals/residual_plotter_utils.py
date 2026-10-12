@@ -84,76 +84,49 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     return vals.astype(float), bins
 
 
-def _get_magnitudes(residuals, gmpe, imt, res_type):
+def _get_eq_vals(residuals, gmpe, imt, res_type, param):
     """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
+    Return an array of ctx[attr] values equal in length to the number of
+    residuals for given parameter (an event-specific value e.g., mag, depth).
     """
-    magnitudes = np.array([])
+    values = np.array([])
     for i, ctx in enumerate(residuals.contexts):
         keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
-            nval = np.ones(len(ctx["Ctx"].repi))
-            nval = nval[keep]
-        magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
-    
-    return magnitudes
+            nval = np.ones(len(ctx["Ctx"].repi))[keep]
+        values = np.hstack([values, getattr(ctx["Ctx"], param) * nval])
+
+    return values
 
 
-def _get_depths(residuals, gmpe, imt, res_type):
+def _get_vs30(residuals, imt):
     """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
-    """
-    depths = np.array([])
-    for i, ctx in enumerate(residuals.contexts):
-        keep = ctx["Retained"][imt]
-        if res_type == "Inter event":
-            nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
-        else:
-            nvals = np.ones(len(ctx["Ctx"].repi))
-            nvals = nvals[keep]
-        depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
-    
-    return depths
-
-
-def _get_vs30(residuals, gmpe, imt, res_type):
-    """
-    Return required vs30 values.
+    Return required vs30 values. Vs30 is a site property varying per station,
+    so it is only meaningful for total and intra-event residuals - one vs30
+    per retained record.
     """
     vs30 = np.array([])
-    for i, ctx in enumerate(residuals.contexts):
+    for ctx in residuals.contexts:
         keep = ctx["Retained"][imt]
-        if res_type == "Inter event":
-            vs30 = np.hstack([vs30, ctx["Ctx"].vs30[
-                residuals.unique_indices[gmpe][imt][i]]])
-        else:
-            vs30_vals = ctx["Ctx"].vs30[keep]
-            vs30 = np.hstack([vs30, vs30_vals])
-        
+        vs30 = np.hstack([vs30, ctx["Ctx"].vs30[keep]])
+
     return vs30
 
 
-def _get_distances(residuals, gmpe, imt, res_type, distance_type):
+def _get_distances(residuals, imt, distance_type):
     """
-    Return required distances.
+    Return required distances. Inter-event residuals are not plotted against
+    distance (tau has no distance dependence), so this is only used for total
+    and intra-event residuals - one distance per retained record.
     """
     distances = np.array([])
-    for i, ctx in enumerate(residuals.contexts):
+    for ctx in residuals.contexts:
         keep = ctx["Retained"][imt]
-        # Get the distances
-        if res_type == "Inter event":
-            dists = getattr(ctx["Ctx"], distance_type)[
-                residuals.unique_indices[gmpe][imt][i]]
-            distances = np.hstack([distances, dists])
-        else:
-            dist_vals = getattr(ctx["Ctx"], distance_type)
-            dist_vals = dist_vals[keep]
-            distances = np.hstack([distances, dist_vals])
-            
+        dist_vals = getattr(ctx["Ctx"], distance_type)[keep]
+        distances = np.hstack([distances, dist_vals])
+
     return distances
 
 
@@ -163,14 +136,18 @@ def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
     length of the given residuals.
     """
     if var == "magnitude":
-        return _get_magnitudes(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "mag")
     elif var == "depth":
-        return _get_depths(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "hypo_depth")
     elif var == "vs30":
-        return _get_vs30(residuals, gmpe, imt, res_type)
+        assert res_type != "Inter event", (
+            "Inter-event residuals are not plotted against vs30")
+        return _get_vs30(residuals, imt)
     else:
         assert var == "distance"
-        return _get_distances(residuals, gmpe, imt, res_type, distance_type)
+        assert res_type != "Inter event", (
+            "Inter-event residuals are not plotted against distance")
+        return _get_distances(residuals, imt, distance_type)
 
 
 def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
@@ -184,8 +161,12 @@ def get_scatter_data(residuals, gmpe, imt, var, distance_type=None):
     
     data = residuals.residuals[gmpe][imt]
     for res_type in data.keys():
-    
+
         if res_type in ["vals"]:
+            continue
+        # Inter-event residual (tau) is a per-event quantity, so it has no
+        # dependence on per-record explanatory variables (distance, vs30).
+        if var in ("distance", "vs30") and res_type == "Inter event":
             continue
 
         x = get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type)

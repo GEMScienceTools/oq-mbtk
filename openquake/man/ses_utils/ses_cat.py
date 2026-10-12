@@ -1,5 +1,5 @@
 # ------------------- The OpenQuake Model Building Toolkit --------------------
-# Copyright (C) 2022 GEM Foundation
+# Copyright (C) 2026 GEM Foundation and Électricité de France
 #           _______  _______        __   __  _______  _______  ___   _
 #          |       ||       |      |  |_|  ||  _    ||       ||   | | |
 #          |   _   ||   _   | ____ |       || |_|   ||_     _||   |_| |
@@ -20,9 +20,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This script is produced within the scope of Work Package 5, named Simulation 
+# platform, under SIGMA3 project. For more detailed information about 
+# the project, please visit to https://sigma-programs.com/.
 # -----------------------------------------------------------------------------
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 # coding: utf-8
+
+"""
+module :mod:`openquake.man.ses_utils.ses_cat` provides functions to build an 
+HMTK-formatted catalogue from OpenQuake SES event/rupture outputs.
+"""
 
 import os
 import numpy as np
@@ -43,7 +52,6 @@ def merge_ses_event_rupture(event_file: str, rupture_file: str) -> pd.DataFrame:
     events = pd.read_csv(event_file, comment='#', sep=None, engine='python')
     ruptures = pd.read_csv(rupture_file, comment='#', sep=None, engine='python')
     return events.merge(ruptures, on="rup_id", how="left")
-
 
 def add_random_datetime(df: pd.DataFrame, seed: int = 42) -> pd.DataFrame:
     """
@@ -84,7 +92,6 @@ def add_random_datetime(df: pd.DataFrame, seed: int = 42) -> pd.DataFrame:
     df["Date"] = df.apply(lambda r: f"{int(r['month']):02d}/{int(r['day']):02d}/{int(r['year']):04d}", axis=1)
     return df
 
-
 def convert_to_hmtk(df: pd.DataFrame) -> pd.DataFrame:
     """
     Converting SES merged catalogue to HMTK-compatible column names.
@@ -114,7 +121,6 @@ def convert_to_hmtk(df: pd.DataFrame) -> pd.DataFrame:
 
     return df.reindex(columns=cols)
 
-
 def build_hmtk_ses_catalogue(event_file: str,
                              rupture_file: str,
                              output_file: str,
@@ -143,4 +149,3 @@ def build_hmtk_ses_catalogue(event_file: str,
     df.to_csv(output_file, index=False)
 
     return output_file
-
