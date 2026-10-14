@@ -92,7 +92,7 @@ class TestSESGenerator(unittest.TestCase):
     def test_prepare_source_for_sampling(self):
         """ Tests source objects receive metadata required by BaseSeismicSource.sample_ruptures(). """
         src = make_area_source(self.mfd, polygon_fname=self.poly_file, hdd=self.hdd)
-        self.assertIsNone(src.sampling)
+        self.assertIsNone(src.ts_samples)
         prepared_src = prepare_source_for_sampling(src, samples=2)
         self.assertIs(prepared_src, src)
 
@@ -100,15 +100,15 @@ class TestSESGenerator(unittest.TestCase):
         self.assertEqual(src.offset, 0)
         self.assertEqual(src.smweight, 1.0)
 
-        self.assertIsInstance(src.sampling, dict)
-        self.assertIn("samples", src.sampling)
-        self.assertIn("trt_smr", src.sampling)
+        self.assertIsInstance(src.ts_samples, dict)
+        self.assertIn("samples", src.ts_samples)
+        self.assertIn("trt_smr", src.ts_samples)
 
-        np.testing.assert_array_equal(src.sampling["samples"], np.array([2], dtype=np.uint32))
-        np.testing.assert_array_equal(src.sampling["trt_smr"], np.array([0], dtype=np.uint32))
+        np.testing.assert_array_equal(src.ts_samples["samples"], np.array([2], dtype=np.uint32))
+        np.testing.assert_array_equal(src.ts_samples["trt_smr"], np.array([0], dtype=np.uint32))
 
-        self.assertEqual(src.sampling["samples"].dtype, np.dtype(np.uint32))
-        self.assertEqual(src.sampling["trt_smr"].dtype, np.dtype(np.uint32))
+        self.assertEqual(src.ts_samples["samples"].dtype, np.dtype(np.uint32))
+        self.assertEqual(src.ts_samples["trt_smr"].dtype, np.dtype(np.uint32))
 
     def test_ses_from_area_source_full_simulation(self):
         """ Test that the complete SES simulation pipeline executes successfully. """

@@ -57,7 +57,7 @@ def prepare_source_for_sampling(src, samples=1):
     src.id = 0
     src.offset = 0
     src.smweight = 1.0
-    src.sampling = {
+    src.ts_samples = {
         'samples': np.array([samples], dtype=np.uint32),
         'trt_smr': np.array([0], dtype=np.uint32),
     }
