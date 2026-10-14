@@ -39,7 +39,7 @@ import json
 import tempfile
 import shutil
 
-from catalogue import prepare_geometry, split_catalogue_dynamic
+from openquake.plt.catalogue import prepare_geometry, split_catalogue_dynamic
 
 
 class TestquakeTGMTMapping(unittest.TestCase):
