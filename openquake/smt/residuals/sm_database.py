@@ -989,8 +989,10 @@ class GroundMotionDatabase(ContextDB):
             else:
                 z2pt5 = int(-999)
             ctx.z2pt5.append(z2pt5)
-            if getattr(record.site, "backarc", None) is not None:
-                ctx.backarc.append(record.site.backarc)
+            for attname in ("backarc", "region"):
+                attval = getattr(record.site, attname, None)
+                if attval is not None:
+                    getattr(ctx, attname).append(attval)
         
         for attname in self.sites_context_attrs:
             attval = getattr(ctx, attname)

@@ -50,7 +50,9 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
             BASE, "gem_conversion_test_metadata")      
         # ASK14 contains an aftershock term requiring
         # is_aftershock and crjb in the rupture context 
-        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020"]
+        # K20's ESHM20 requires the region parameter which can be
+        # added to the GEM flatfile with column named "k20_eshm20_region"
+        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020ESHM20"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 

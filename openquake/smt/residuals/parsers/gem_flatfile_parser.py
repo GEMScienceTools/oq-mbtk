@@ -375,5 +375,11 @@ class GEMFlatfileParser(SMDatabaseReader):
         site.z1pt0 = utils.vfloat(metadata["z1pt0 (m)"], "z1pt0 (m)")
         site.z2pt5 = utils.vfloat(metadata["z2pt5 (km)"], "z2pt5 (km)")
 
+        # Add eshm20_region site param if present (non-default)
+        if metadata["k20_eshm20_region"]:
+            # Used in KothaEtAl2020ESHM20 GSIM
+            site.region = utils.vint(
+                metadata["k20_eshm20_region"], "k20_eshm20_region")
+
         return site
     
