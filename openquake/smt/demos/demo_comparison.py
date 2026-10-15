@@ -17,10 +17,10 @@ warnings.filterwarnings("ignore")
 BASE = os.path.abspath('')
 
 # Inputs
-demo_input = os.path.join(BASE, 'demo_input_files', 'demo_comparison.toml')
+INPUT = os.path.join(BASE, 'demo_input_files', 'demo_comparison.toml')
 
 # Out dir
-demo_out = os.path.join(BASE, 'outputs_demo_comparison')
+OUT = os.path.join(BASE, 'outputs_demo_comparison')
 
 
 def run_comparison(file, out_dir):
@@ -45,7 +45,7 @@ def run_comparison(file, out_dir):
     return att_curves, spectra
 
 
-def main(input_toml=demo_input, out_dir=demo_out):
+def main(input_toml=INPUT, out_dir=OUT):
     """
     Run the demo GMM comparison workflow.
     """

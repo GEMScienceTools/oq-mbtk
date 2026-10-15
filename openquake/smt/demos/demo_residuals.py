@@ -21,16 +21,16 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
+INPUTS = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify dataset
-demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
+FLATFILE = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify horizontal component definition to use for observations
-demo_comp = 'Geometric'
+COMP = 'Geometric'
 
 # Specify output folder
-demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
+OUT = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 
 def parse_into_metadata(flatfile, out_dir):
@@ -147,10 +147,10 @@ def calc_ranking_metrics(residuals, out_dir):
     rspl.sto_weights(residuals, fi_sto_weights)
 
 
-def main(flatfile=demo_flatfile,
-         gmms_imts=demo_inputs,
-         comp=demo_comp,
-         out_dir=demo_out):
+def main(flatfile=FLATFILE,
+         gmms_imts=INPUTS,
+         comp=COMP,
+         out_dir=OUT):
     """
     Run the demo residual analysis workflow.
     """
