@@ -20,16 +20,16 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Flatfile to use 
-demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
+FLATFILE = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify .toml file with GMPEs and imts to use
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
+INPUTS = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify results folder name
-demo_out = os.path.join(BASE, 'outputs_demo_station_analysis')
+OUT = os.path.join(BASE, 'outputs_demo_station_analysis')
 
 # Minimum number of records for a site to be considered in the SSA
-demo_threshold = 20
+THRESHOLD = 20
 
 
 def make_database(flatfile, out_dir):
@@ -109,10 +109,10 @@ def single_station_analysis(sm_database, gmms_imts, out_dir, threshold):
     print("Single station residual analysis workflow successfully completed.")
 
 
-def main(flatfile=demo_flatfile,
-         gmms_imts=demo_inputs,
-         out_dir=demo_out,
-         threshold=demo_threshold):
+def main(flatfile=FLATFILE,
+         gmms_imts=INPUTS,
+         out_dir=OUT,
+         threshold=THRESHOLD):
     """
     Run the demo single station residual analysis.
     """
