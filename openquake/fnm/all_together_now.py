@@ -282,7 +282,7 @@ def build_fault_network(
         )
 
     n_connections = fault_network['bin_dist_mat'].sum()
-    n_possible_connections = len(fault_network['dist_mat']) ** 2
+    n_possible_connections = fault_network['dist_mat'].shape[0] ** 2
 
     logging.info(
         f"\t{'{:,}'.format(n_connections)} "
