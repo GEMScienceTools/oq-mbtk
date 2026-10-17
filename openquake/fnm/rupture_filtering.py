@@ -71,7 +71,7 @@ def compact_cosine_sigmoid(angle, midpoint):
 def connection_angle_plausibility(
     connection_angles,
     function_type="cosine",
-    no_connection_val=1,
+    no_connection_val=-1,
     midpoint=90.0,
 ):
     conns = np.array(connection_angles)
