@@ -1,0 +1,10 @@
+man.notebooks package
+=====================
+
+Module contents
+---------------
+
+.. automodule:: man.notebooks
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,86 @@
+mbt.tests.tools package
+=======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mbt.tests.tools.fault_modeler
+   mbt.tests.tools.tr
+
+Submodules
+----------
+
+mbt.tests.tools.area\_test module
+---------------------------------
+
+.. automodule:: mbt.tests.tools.area_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.faults\_test module
+-----------------------------------
+
+.. automodule:: mbt.tests.tools.faults_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.mfd\_test module
+--------------------------------
+
+.. automodule:: mbt.tests.tools.mfd_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.model\_test module
+----------------------------------
+
+.. automodule:: mbt.tests.tools.model_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.smooth3d\_test module
+-------------------------------------
+
+.. automodule:: mbt.tests.tools.smooth3d_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.smooth\_test module
+-----------------------------------
+
+.. automodule:: mbt.tests.tools.smooth_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.strain\_test module
+-----------------------------------
+
+.. automodule:: mbt.tests.tools.strain_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tests.tools.tools module
+----------------------------
+
+.. automodule:: mbt.tests.tools.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tests.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:

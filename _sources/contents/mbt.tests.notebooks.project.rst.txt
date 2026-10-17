@@ -1,0 +1,21 @@
+mbt.tests.notebooks.project package
+===================================
+
+Submodules
+----------
+
+mbt.tests.notebooks.project.create\_project\_test module
+--------------------------------------------------------
+
+.. automodule:: mbt.tests.notebooks.project.create_project_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tests.notebooks.project
+   :members:
+   :show-inheritance:
+   :undoc-members:

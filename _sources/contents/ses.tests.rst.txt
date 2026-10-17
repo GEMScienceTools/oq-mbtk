@@ -1,0 +1,21 @@
+ses.tests package
+=================
+
+Submodules
+----------
+
+ses.tests.create\_rupture\_scenario\_from\_ses\_test module
+-----------------------------------------------------------
+
+.. automodule:: ses.tests.create_rupture_scenario_from_ses_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: ses.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:
