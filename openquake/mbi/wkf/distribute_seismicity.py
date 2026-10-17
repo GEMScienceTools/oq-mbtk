@@ -34,9 +34,10 @@ def main(
         smooth_folder,
         config,
         folder_out,
-        eps_b=0.0,
-        eps_rate=0.0,
-        fraction_flat=0.0
+        *,
+        eps_b: float=0.0,
+        eps_rate: float=0.0,
+        fraction_flat: float=0.0
     ):
     """
     Distributes the rates using the output of a seismicity smoothing function.
@@ -49,9 +50,9 @@ def main(
         smooth_folder,
         config,
         folder_out,
-        eps_b,
-        eps_rate,
-        fraction_flat
+        eps_b=eps_b,
+        eps_rate=eps_rate,
+        fraction_flat=fraction_flat
     )
 
 main.smooth_folder = "Folder containing CSV files from smoothing algorithm"
