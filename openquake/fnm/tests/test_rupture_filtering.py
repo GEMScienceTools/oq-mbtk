@@ -104,6 +104,29 @@ class TestRupturePlausibilities(unittest.TestCase):
         )
 
 
+class TestPlausibilityRegressions(unittest.TestCase):
+    def test_distance_plausibility_counts_every_jump(self):
+        # path 2 - 9 - 5 with two 8 km jumps; the rupture list order puts
+        # the unconnected ruptures 2 and 5 next to each other
+        dist = dok_array((10, 10), dtype=np.float32)
+        for a, b in [(2, 9), (9, 5)]:
+            dist[a, b] = dist[b, a] = 8.0
+        rup_df = pd.DataFrame(
+            {"ruptures": [[2, 5, 9], [2, 9]], "slip_azimuth": [[0.0] * 3, [0.0] * 2]}
+        )
+        plaus = get_rupture_plausibilities(
+            rup_df,
+            distance_matrix=dist,
+            connection_distance_midpoint=5.0,
+            connection_angle_midpoint=None,
+            slip_azimuth_midpoint=None,
+        )
+        one_jump = np.exp(-np.log(2.0) / 5.0 * 8.0)
+        np.testing.assert_allclose(
+            plaus["connection_distance"].values, [one_jump**2, one_jump]
+        )
+
+
 class TestHelperComputations(unittest.TestCase):
     def setUp(self):
         self.rupture_df = pd.DataFrame(

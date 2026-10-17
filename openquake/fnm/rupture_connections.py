@@ -1653,9 +1653,103 @@ def rdist_to_dist_matrix(
     return dist_matrix
 
 
+def adj_matrix_to_nbr_dict(adj_matrix) -> Dict[int, Dict[int, float]]:
+    """
+    Converts a (dense or sparse) adjacency matrix into a nested dictionary
+    `{i: {j: value}}` holding only the non-zero entries.
+    """
+    nbr_dict = {}
+    if issparse(adj_matrix):
+        mat = adj_matrix.tocsr()
+        indptr, indices, data = mat.indptr, mat.indices, mat.data
+        for i in range(mat.shape[0]):
+            row = {
+                int(j): float(v)
+                for j, v in zip(
+                    indices[indptr[i] : indptr[i + 1]],
+                    data[indptr[i] : indptr[i + 1]],
+                )
+                if v != 0.0
+            }
+            if row:
+                nbr_dict[i] = row
+    else:
+        arr = np.asarray(adj_matrix)
+        for i, j in zip(*np.nonzero(arr)):
+            nbr_dict.setdefault(int(i), {})[int(j)] = float(arr[i, j])
+    return nbr_dict
+
+
+def get_mf_connection_pairs(mf, nbr_dict) -> list[tuple[int, int]]:
+    """
+    Get the connections (pairs of single-fault ruptures) that join the
+    ruptures of a multifault rupture. The rupture indices in `mf` are not
+    in any particular order, so the connections are taken from the
+    adjacency structure: they are the edges of the minimum spanning tree
+    (by adjacency value, i.e. distance) of the subgraph induced by `mf`.
+
+    Parameters
+    ----------
+    mf : list of int
+        List of rupture indices.
+    nbr_dict : dict
+        Nested dictionary `{i: {j: value}}`, see `adj_matrix_to_nbr_dict`.
+
+    Returns
+    -------
+    list of tuples
+        The `len(mf) - 1` connections for a connected rupture.
+    """
+    if len(mf) < 2:
+        return []
+    members = set(int(r) for r in mf)
+    in_tree = [int(mf[0])]
+    in_tree_set = set(in_tree)
+    pairs = []
+    while len(in_tree) < len(members):
+        best = None
+        for u in in_tree:
+            for w, val in nbr_dict.get(u, {}).items():
+                if w in members and w not in in_tree_set:
+                    if best is None or val < best[2]:
+                        best = (u, w, val)
+        if best is None:
+            logging.warning("Multifault rupture %s is not connected", mf)
+            break
+        pairs.append((best[0], best[1]))
+        in_tree.append(best[1])
+        in_tree_set.add(best[1])
+    return pairs
+
+
+def get_multifault_connection_pairs(rupture_df, adj_matrix) -> pd.Series:
+    """
+    Get the connections for every rupture in `rupture_df` (see
+    `get_mf_connection_pairs`) as a Pandas Series indexed like `rupture_df`.
+    """
+    nbr_dict = adj_matrix_to_nbr_dict(adj_matrix)
+    return pd.Series(
+        data=[
+            get_mf_connection_pairs(row.ruptures, nbr_dict)
+            for row in rupture_df.itertuples()
+        ],
+        index=rupture_df.index,
+        dtype=object,
+    )
+
+
+def _distances_from_pairs(pairs, nbr_dict) -> np.ndarray:
+    if len(pairs) == 0:
+        return np.zeros(1)
+    return np.array(
+        [nbr_dict.get(i, {}).get(j, 0.0) for i, j in pairs], dtype=float
+    )
+
+
 def get_mf_distances_from_adj_matrix(mf, dist_adj_matrix) -> np.ndarray:
     """
-    Get the distances between the ruptures in a multifault rupture.
+    Get the distances between the ruptures in a multifault rupture, i.e.
+    the distances of the connections returned by `get_mf_connection_pairs`.
 
     Parameters
     ----------
@@ -1671,13 +1765,19 @@ def get_mf_distances_from_adj_matrix(mf, dist_adj_matrix) -> np.ndarray:
     """
     if len(mf) == 1:
         return np.zeros(1)
-    distances = np.empty(len(mf) - 1)
-    for i in range(len(distances)):
-        distances[i] = dist_adj_matrix[mf[i], mf[i + 1]]
-    return distances
+    idx = np.asarray(mf, dtype=int)
+    if issparse(dist_adj_matrix):
+        sub = dist_adj_matrix.tocsr()[idx][:, idx].toarray()
+    else:
+        sub = np.asarray(dist_adj_matrix)[np.ix_(idx, idx)]
+    local = adj_matrix_to_nbr_dict(sub)
+    local_pairs = get_mf_connection_pairs(list(range(len(idx))), local)
+    return _distances_from_pairs(local_pairs, local)
 
 
-def get_multifault_rupture_distances(rupture_df, distance_matrix) -> pd.Series:
+def get_multifault_rupture_distances(
+    rupture_df, distance_matrix, pairs: Optional[pd.Series] = None
+) -> pd.Series:
     """
     Get the distances between the ruptures in a multifault rupture.
     The distances are given as a Pandas Series, where the index is the rupture
@@ -1693,17 +1793,28 @@ def get_multifault_rupture_distances(rupture_df, distance_matrix) -> pd.Series:
             fault: fault identifier
     distance_matrix : np.ndarray
         Rupture adjacency matrix.
+    pairs : pd.Series, optional
+        Connections for each rupture, as returned by
+        `get_multifault_connection_pairs`. Computed from `distance_matrix`
+        if not given.
 
     Returns
     -------
     pd.Series
         Series of distances between the ruptures in the multifault rupture.
     """
+    nbr_dict = adj_matrix_to_nbr_dict(distance_matrix)
+    if pairs is None:
+        pairs = pd.Series(
+            data=[
+                get_mf_connection_pairs(row.ruptures, nbr_dict)
+                for row in rupture_df.itertuples()
+            ],
+            index=rupture_df.index,
+            dtype=object,
+        )
     distances = pd.Series(
-        data=[
-            get_mf_distances_from_adj_matrix(row.ruptures, distance_matrix)
-            for row in rupture_df.itertuples()
-        ],
+        data=[_distances_from_pairs(p, nbr_dict) for p in pairs.values],
         index=rupture_df.index,
     )
 
