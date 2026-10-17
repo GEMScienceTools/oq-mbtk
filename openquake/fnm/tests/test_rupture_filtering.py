@@ -47,6 +47,7 @@ from openquake.fnm.rupture_filtering import (
     _compute_angle_plausibility,
     _compute_slip_az_plausibility,
     _build_angle_matrix_from_pairs,
+    slip_azimith_plausibility,
 )
 from openquake.fnm.all_together_now import build_fault_network
 
@@ -101,6 +102,23 @@ class TestRupturePlausibilities(unittest.TestCase):
         np.testing.assert_allclose(
             plausibilities.loc[2, "total"],
             expected_angle_plaus * expected_distance_plaus,
+        )
+
+
+class TestPlausibilityRegressions(unittest.TestCase):
+    def test_slip_azimuth_wraps_around_north(self):
+        self.assertAlmostEqual(
+            slip_azimith_plausibility([5.0, 355.0]),
+            slip_azimith_plausibility([5.0, 15.0]),
+        )
+        self.assertAlmostEqual(
+            slip_azimith_plausibility([350.0, 10.0, 20.0]),
+            slip_azimith_plausibility([0.0, 20.0, 30.0]),
+        )
+        # unchanged when the azimuths do not straddle north
+        self.assertAlmostEqual(
+            slip_azimith_plausibility([10.0, 100.0]),
+            compact_cosine_sigmoid(90.0, 90.0),
         )
 
 

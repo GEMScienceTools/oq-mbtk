@@ -154,8 +154,15 @@ def slip_azimith_plausibility(
     if len(slip_azimuths) == 1:
         return 1.0
 
-    slip_azimuths = np.array(sorted(slip_azimuths))
-    slip_azimuth_diffs = np.diff(slip_azimuths)
+    # Azimuths are circular: sort them, take the gaps between neighbours
+    # (including the gap across 0/360) and drop the largest gap, so that the
+    # remaining gaps chain the azimuths along the shortest arc covering all
+    # of them (e.g. 355 and 5 degrees differ by 10, not 350).
+    slip_azimuths = np.sort(np.mod(np.asarray(slip_azimuths, float), 360.0))
+    gaps = np.append(
+        np.diff(slip_azimuths), slip_azimuths[0] + 360.0 - slip_azimuths[-1]
+    )
+    slip_azimuth_diffs = np.delete(gaps, np.argmax(gaps))
 
     if function_type == "cosine":
         plausibilities = compact_cosine_sigmoid(
