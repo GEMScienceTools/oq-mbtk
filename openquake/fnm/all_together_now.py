@@ -423,6 +423,12 @@ def build_fault_network(
             rup_df_key = 'rupture_df_keep'
         elif settings['rupture_set_for_rates_from_slip_rates'] == 'all':
             rup_df_key = 'rupture_df'
+        else:
+            raise ValueError(
+                "rupture_set_for_rates_from_slip_rates must be 'all' or "
+                "'filtered', not "
+                f"{settings['rupture_set_for_rates_from_slip_rates']!r}"
+            )
 
         rupture_rates = get_rup_rates_from_fault_slip_rates(
             fault_network,
