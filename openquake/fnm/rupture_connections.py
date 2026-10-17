@@ -1304,60 +1304,72 @@ def sparse_to_adj_dict(sparse_matrix: csr_matrix):
 #    return vertex_sets
 
 
-def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+def _enumerate_connected_subsets(adj_dict, max_vertices=10, group_of=None):
+    """
+    Enumerate every connected vertex set of size 2 to `max_vertices`
+    exactly once, using the ESU algorithm (Wernicke, 2006). Unlike a
+    path-based search, this also finds branched sets (e.g. a fault junction
+    with three or more branches).
+
+    If `group_of` (vertex -> group id) is given, only sets in which no two
+    vertices share a group are returned. The constraint is hereditary, so
+    branches that violate it can be pruned without losing valid sets.
+    """
     all_subsets = set()
+    nbrs = {v: set(int(n) for n in ns) for v, ns in adj_dict.items()}
 
-    def explore(vertex, current_set):
-        if 1 < len(current_set) <= max_vertices:
-            # Add the current set as an immutable set to avoid duplicates
-            all_subsets.add(frozenset(current_set))
-
-        if len(current_set) == max_vertices:
+    def extend(sub, ext, v, used_groups):
+        if len(sub) > 1:
+            all_subsets.add(frozenset(sub))
+        if len(sub) == max_vertices:
             return
 
-        for neighbor in adj_dict[vertex]:
-            if neighbor not in current_set:
-                # Explore further only if the neighbor is not already in the current set
-                explore(neighbor, current_set | {neighbor})
+        closed_nbhd = set(sub)
+        for u in sub:
+            closed_nbhd |= nbrs.get(u, set())
 
-    for vertex in adj_dict.keys():
-        explore(vertex, {vertex})
+        ext = list(ext)
+        while ext:
+            w = ext.pop()
+            if group_of is not None:
+                g = group_of[w]
+                if g in used_groups:
+                    continue
+                new_used = used_groups | {g}
+            else:
+                new_used = used_groups
+            new_ext = ext + [
+                u
+                for u in nbrs.get(w, ())
+                if u > v and u not in closed_nbhd
+            ]
+            extend(sub | {w}, new_ext, v, new_used)
 
+    for v in adj_dict:
+        v = int(v)
+        used = {group_of[v]} if group_of is not None else set()
+        extend({v}, [u for u in nbrs[v] if u > v], v, used)
+
+    return all_subsets
+
+
+def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+    all_subsets = _enumerate_connected_subsets(adj_dict, max_vertices)
     return [list(subset) for subset in all_subsets]
 
 
 def find_connected_subsets_bfs(adj_dict, max_vertices=10):
     """
-    Find all connected subsets of vertices up to a specified size using BFS.
+    Find all connected subsets of vertices up to a specified size.
 
     Parameters:
     - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
-    - cutoff: The maximum size of vertex subsets to find.
+    - max_vertices: The maximum size of vertex subsets to find.
 
     Returns:
     - A list of sets, each representing a connected subset of vertices up to the cutoff size.
     """
-    all_subsets = set()  # Use a set to store unique subsets
-
-    for start_vertex in adj_dict.keys():
-        # Queue items are tuples (vertex, subset) where 'subset' includes 'vertex'
-        queue = deque([(start_vertex, frozenset([start_vertex]))])
-
-        while queue:
-            vertex, current_set = queue.popleft()
-
-            # Add the current subset to the collection if it's within the size limit
-            if 1 < len(current_set) <= max_vertices:
-                all_subsets.add(current_set)
-
-            if len(current_set) < max_vertices:
-                # Only consider neighbors not already in the current subset
-                for neighbor in adj_dict[vertex]:
-                    if neighbor not in current_set:
-                        new_set = current_set | frozenset([neighbor])
-                        queue.append((neighbor, new_set))
-
-    # Convert frozensets back to lists or regular sets if necessary
+    all_subsets = _enumerate_connected_subsets(adj_dict, max_vertices)
     return [set(subset) for subset in all_subsets]
 
 
@@ -1438,34 +1450,10 @@ def find_connected_subsets_dfs_serial(
     list[list[int]]
         Each inner list is a connected, group‑unique vertex set.
     """
-    all_subsets: Set[frozenset[int]] = set()
+    all_subsets = _enumerate_connected_subsets(
+        adj_dict, max_vertices, group_of=group_of
+    )
 
-    def explore(
-        vertex: int, current_set: Set[int], used_groups: Set[int]
-    ) -> None:
-
-        if 1 < len(current_set) <= max_vertices:
-            all_subsets.add(frozenset(current_set))
-
-        if len(current_set) == max_vertices:
-            return
-
-        for nbr in adj_dict[vertex]:
-            if nbr in current_set:  # already inside
-                continue
-            g = group_of[nbr]
-            if g in used_groups:  # would repeat a group
-                continue
-            explore(
-                nbr,
-                current_set | {nbr},
-                used_groups | {g},
-            )
-
-    for v in adj_dict:
-        explore(v, {v}, {group_of[v]})
-
-    # convert back to mutable containers if that is what the caller wants
     return [list(s) for s in all_subsets]
 
 

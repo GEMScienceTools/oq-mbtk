@@ -93,6 +93,7 @@ from openquake.fnm.rupture_connections import (
     get_multifault_rupture_distances,
     subgraphs_from_connected_components,
     get_rupture_grouping,
+    find_connected_subsets_dfs_serial,
 )
 
 HERE = pathlib.Path(__file__).parent.absolute()
@@ -1959,3 +1960,32 @@ def test__lonlat_to_xyz_roundtrip():
 
 def test__geog_vec_to_xyz():
     pass
+
+
+class TestConnectedSubsetEnumeration(unittest.TestCase):
+    def test_branched_sets_are_found(self):
+        # star graph: vertex 0 is a junction joining three branches
+        adj = {0: [1, 2, 3], 1: [0], 2: [0], 3: [0]}
+        groups = {i: i for i in range(4)}
+        sets = find_connected_subsets_dfs_serial(adj, groups, 10)
+        sets = {frozenset(s) for s in sets}
+        self.assertIn(frozenset({0, 1, 2, 3}), sets)
+        self.assertEqual(len(sets), 7)  # 3 pairs, 3 triples, 1 quadruple
+
+        sets = {frozenset(s) for s in find_connected_subsets_dfs(adj, 10)}
+        self.assertIn(frozenset({0, 1, 2, 3}), sets)
+
+    def test_groups_and_max_vertices(self):
+        adj = {0: [1, 2, 3], 1: [0], 2: [0], 3: [0]}
+        groups = {0: 0, 1: 1, 2: 1, 3: 2}  # 1 and 2 are on the same fault
+        sets = {
+            frozenset(s)
+            for s in find_connected_subsets_dfs_serial(adj, groups, 3)
+        }
+        self.assertEqual(
+            sets,
+            {
+                frozenset(s)
+                for s in [{0, 1}, {0, 2}, {0, 3}, {0, 1, 3}, {0, 2, 3}]
+            },
+        )
