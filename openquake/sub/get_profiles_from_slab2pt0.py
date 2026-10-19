@@ -300,12 +300,12 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     
     # Reading file with depth values
     f_dep = netCDF4.Dataset(fname_dep)
-    depths = np.array(f_dep.variables['z'])
+    depths = np.asarray(f_dep.variables['z'])
     mask = np.where(np.isfinite(depths))
     
     # Mesh
-    x = np.array(f_dep.variables['x'])
-    y = np.array(f_dep.variables['y'])
+    x = np.asarray(f_dep.variables['x'])
+    y = np.asarray(f_dep.variables['y'])
     xx, yy = np.meshgrid(x, y)
     
     css = []
