@@ -13,7 +13,6 @@ HERE = pathlib.Path(__file__).parent.resolve()
 
 
 def test_geojson_classification_workflow():
-    #raise unittest.SkipTest
     fname_geojson = HERE / "data" / "izu_slab2_css.geojson"
     fname_slab = HERE / "data" / "izu_slab2_dep_02.24.18.grd"
     classification_ini = HERE / "data" / "mariana_classification.ini"
@@ -43,13 +42,15 @@ def test_geojson_classification_workflow():
     with open(classification_ini, "w") as configfile:
         config.write(configfile)
 
-    max_sampl_dist = 25
-    upper_depth_int = 0
-    lower_depth_int = 50
-    lower_depth_slab = 300
+    max_sampl_dist = 25.0
+    upper_depth_int = 0.0
+    lower_depth_int = 50.0
+    lower_depth_slab = 300.0
 
     slb = get_profiles_geojson(fname_geojson, fname_slab, spacing=10.0)
     slb.write_profiles(profiles)
+    
+    # Compare slab profiles
 
     create_2pt5_model(profiles, sfc_out, max_sampl_dist)
 
