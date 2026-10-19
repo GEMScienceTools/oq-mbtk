@@ -306,7 +306,7 @@ def _check_edges(edges):
     # Fit the plane
     tmp = np.vstack((x.flatten(), y.flatten(), pnts[:, 2].flatten())).T
     _, ppar = plane_fit(tmp)
-    #pparray = np.array([ppar[0], ppar[1], 0])  
+    pparray = np.array([ppar[0], ppar[1], 0])  
 
     # Analyse the edges
     chks = []
@@ -321,8 +321,8 @@ def _check_edges(edges):
         # Check the edge direction Vs the perpendicular to the plane
         idx = [0, -1]
         edgv = np.array([np.diff(ex[idx])[0], np.diff(ey[idx])[0], 0])
-        #chks.append(np.sign(np.cross(pparray, edgv)))
-        chks.append(np.sign(np.cross(ppar[:2], edgv)))
+        chks.append(np.sign(np.cross(pparray, edgv)[2]))
+
 
     return np.array(chks)
 
