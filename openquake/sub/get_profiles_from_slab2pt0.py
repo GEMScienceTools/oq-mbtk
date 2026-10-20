@@ -113,7 +113,7 @@ def get_initial_traces(box, boy, dip_dir, spacing):
     # reverse profiles to satisfy right hand rule
     profiles.reverse()
 
-    return np.array(profiles), max_length
+    return np.asarray(profiles), max_length
 
 
 def aa_get_initial_traces(bb, dip_dir, spacing):
@@ -145,24 +145,24 @@ def aa_get_initial_traces(bb, dip_dir, spacing):
 
     points = g.fwd_intermediate(bb[0], bb[2], az12_low, num_samples_low + 1,
                                 spacing_hor, initial_idx=0, terminus_idx=0)
-    profiles = _get_profiles(np.array(points.lons), np.array(points.lats),
+    profiles = _get_profiles(np.asarray(points.lons), np.asarray(points.lats),
                              dip_dir, max_length)
 
     points = g.fwd_intermediate(bb[1], bb[3], az21_right,
                                 num_samples_right + 1, spacing_ver,
                                 initial_idx=0, terminus_idx=0)
-    tmp_profiles = _get_profiles(np.array(points.lons), np.array(points.lats),
+    tmp_profiles = _get_profiles(np.asarray(points.lons), np.asarray(points.lats),
                                  dip_dir, max_length)
     profiles.extend(tmp_profiles)
 
-    return np.array(profiles), max_length
+    return np.asarray(profiles), max_length
 
 
 def _get_profiles(lons, lats, dip_dir, max_length):
     tmp_profiles = []
     for xco, yco in zip(lons, lats):
         tmp = point_at(xco, yco, dip_dir, max_length)
-        arr = np.array([[xco, yco], [tmp[0], tmp[1]]])
+        arr = np.asarray([[xco, yco], [tmp[0], tmp[1]]])
         tmp_profiles.append(arr)
     return tmp_profiles
 
@@ -244,7 +244,7 @@ def tmp_get_initial_traces(bb, dip_dir, spacing):
 
         # Update the profile list
         profiles.extend(tmp_profiles)
-        profiles = np.array(profiles)
+        profiles = np.asarray(profiles)
         mask = profiles[:, :, 0] > 180
         profiles[mask, 0] = profiles[mask, 0] - 360
         return profiles, distance
@@ -318,7 +318,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     max_lo = -180.0
     max_la = -90.0
     for index, row in gdf.iterrows():
-        coo = np.array(row.coords)
+        coo = np.asarray(row.coords)
         min_lo = np.min([min_lo, np.min(coo[:, 0])])
         min_la = np.min([min_la, np.min(coo[:, 1])])
         max_lo = np.max([max_lo, np.max(coo[:, 0])])
@@ -348,7 +348,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     # Coords
     tmp = zip(xx.flatten(), yy.flatten(), depths.flatten())
     depths = [[x, y, z] for x, y, z in tmp]
-    depths = np.array(depths)
+    depths = np.asarray(depths)
     mask = depths[:, 0] > 180
     depths[mask, 0] = depths[mask, 0] - 360
     milo = np.min(depths[:, 0])
@@ -362,7 +362,7 @@ def get_profiles_geojson(geojson: str, fname_dep: str, spacing: float,
     
     
     if len(str(fname_fig)) > 0:
-        bb = np.array([min_lo, min_la, max_lo, max_la])
+        bb = np.asarray([min_lo, min_la, max_lo, max_la])
         dlt = 5.0
         reg = [bb[0] - dlt, bb[2] + dlt, bb[1] - dlt, bb[3] + dlt]
         clo = np.mean([bb[0], bb[1]])
@@ -428,7 +428,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
 
     # Reading file with strike values
     f_strike = netCDF4.Dataset(fname_str)
-    strikes = np.array(f_strike.variables['z'])
+    strikes = np.asarray(f_strike.variables['z'])
     mask = np.where(np.isfinite(strikes))
     strikes = strikes[mask]
 
@@ -437,8 +437,8 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
     dip_dir = (strike_dir + 90) % 360
 
     # Mesh
-    x = np.array(f_strike.variables['x'])
-    y = np.array(f_strike.variables['y'])
+    x = np.asarray(f_strike.variables['x'])
+    y = np.asarray(f_strike.variables['y'])
     xx, yy = np.meshgrid(x, y)
 
     # Compute the initial bounding box
@@ -471,7 +471,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
 
     # Reading file with depth values
     f_dep = netCDF4.Dataset(fname_dep)
-    depths = np.array(f_dep.variables['z'])
+    depths = np.asarray(f_dep.variables['z'])
     mask = np.where(np.isfinite(depths))
 
     # Filter
@@ -482,7 +482,7 @@ def get_profiles(fname_str: str, fname_dep: str, spacing: float, fname_fig:
     # Coords
     tmp = zip(xx.flatten(), yy.flatten(), depths.flatten())
     depths = [[x, y, z] for x, y, z in tmp]
-    depths = np.array(depths)
+    depths = np.asarray(depths)
     mask = depths[:, 0] > 180
     depths[mask, 0] = depths[mask, 0] - 360
 

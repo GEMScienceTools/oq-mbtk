@@ -27,6 +27,9 @@
 import pathlib
 import unittest
 import numpy as np
+import pandas as pd
+import tempfile
+import os
 from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       get_bounding_box,
                                                       get_initial_traces,
@@ -200,4 +203,16 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         fname = HERE / 'data' / 'izu_slab2_css.geojson'
         fname_slab = HERE / 'data' / 'izu_slab2_dep_02.24.18.grd'
 
-        get_profiles_geojson(fname, fname_slab, spacing=10.)
+        test = get_profiles_geojson(fname, fname_slab, spacing=10.)
+        
+        top_level = tempfile.mkdtemp()
+        profiles = tempfile.mkdtemp(dir=top_level)
+
+        test.write_profiles(profiles)
+        
+        df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'))
+        df2 = pd.read_csv(HERE / "data" / "mar_cs_000.csv")
+        res = df1.compare(df2)
+        assert len(res) == 0
+
+
