@@ -18,6 +18,9 @@ def test_geojson_classification_workflow():
     classification_ini = HERE / "data" / "mariana_classification.ini"
 
     ## these go in a tmp folder...
+    #top_level =  HERE / "data" / "test_folder"
+    #profiles = HERE / "data" / "test_folder" / "profiles"
+    #sfc_out = HERE / "data" / "test_folder" / "sfc_out"
     top_level = tempfile.mkdtemp()
     profiles = tempfile.mkdtemp(dir=top_level)
     sfc_out = tempfile.mkdtemp(dir=top_level)
@@ -51,6 +54,14 @@ def test_geojson_classification_workflow():
     slb.write_profiles(profiles)
     
     # Compare slab profiles
+    import pandas as pd
+
+    df1 = pd.read_csv(os.path.join(profiles, "cs_000.csv"))
+    df2 = pd.read_csv(HERE / "data" / "cs_000.csv")
+
+    # Compare DataFrames
+    res = df1.compare(df2)
+    assert len(res) == 0
 
     create_2pt5_model(profiles, sfc_out, max_sampl_dist)
 
@@ -69,6 +80,13 @@ def test_geojson_classification_workflow():
     )
 
     classify.classify(classification_ini, True)
+    
+    # Test the distances are the same 
+    dists = pd.read_pickle(os.path.join(top_level, "distances", "vert_dist_to_slab_slab.pkl"))
+    test_dists = pd.read_pickle(HERE / "data" / "vert_dist_to_slab_slab.pkl")
+    assert len(dists) == len(test_dists)
+    for a, b in zip(dists, test_dists):
+        assert a == b
 
     # Test the resulting classification is as expected
     classified = pd.read_csv(os.path.join(top_level, "classified_earthquakes.csv"))
