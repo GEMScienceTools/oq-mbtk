@@ -84,6 +84,14 @@ def test_geojson_classification_workflow():
     assert len(dists) == len(test_dists)
     for a, b in zip(dists, test_dists):
         assert a == b
+        
+    # Test the slab depths are the same 
+    depths = pd.read_pickle(os.path.join(top_level, "distances", "sub_depths_slab.pkl"))
+    test_depths = pd.read_pickle(HERE / "data" / "sub_depths_slab.pkl")
+    assert len(depths) == len(test_depths)
+    for a, b in zip(depths, test_depths):
+        assert a == b
+
 
     # Test the resulting classification is as expected
     classified = pd.read_csv(os.path.join(top_level, "classified_earthquakes.csv"))

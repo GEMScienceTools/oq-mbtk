@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import logging
-from decimal import Decimal, getcontext
+
 
 from scipy.interpolate import RBFInterpolator
 from openquake.mbt.tools.tr.catalogue import get_catalogue
@@ -43,7 +43,6 @@ from openquake.sub.utils import (_read_edges,
                                  plot_complex_surface)
 from openquake.hmtk.seismicity.selector import CatalogueSelector
 
-getcontext().prec = 4 
 # Buffer around the brounding box
 #DELTA = 0.3
 DELTA = 1
@@ -87,16 +86,16 @@ class SetSubductionEarthquakes:
         self.treg_filename = treg_filename
         self.distance_folder = distance_folder
         self.edges_folder = edges_folder
-        self.distance_buffer_below = Decimal(distance_buffer_below)
-        self.distance_buffer_above = Decimal(distance_buffer_above)
+        self.distance_buffer_below = distance_buffer_below
+        self.distance_buffer_above = distance_buffer_above
         self.catalogue_filename = catalogue_filename
         self.lower_depth = lower_depth
         self.upper_depth = upper_depth
         self.log_fname = log_fname
         self.low_year = low_year
         self.upp_year = upp_year
-        self.low_mag = Decimal(low_mag)
-        self.upp_mag = Decimal(upp_mag)
+        self.low_mag = low_mag
+        self.upp_mag = upp_mag
 
     def classify(self, compute_distances, remove_from, surftype='ComplexFault'):
         """
@@ -113,8 +112,8 @@ class SetSubductionEarthquakes:
         treg_filename = self.treg_filename
         distance_folder = self.distance_folder
         edges_folder = self.edges_folder
-        distance_buffer_below = self.distance_buffer_below
-        distance_buffer_above = self.distance_buffer_above
+        distance_buffer_below = np.float64(self.distance_buffer_below)
+        distance_buffer_above = np.float64(self.distance_buffer_above)
         catalogue_filename = self.catalogue_filename
         lower_depth = self.lower_depth
         if lower_depth is None:
@@ -287,14 +286,22 @@ class SetSubductionEarthquakes:
 #        dat_red_fi = dat_red.reshape(len(val_red), 2)
 
         rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
-                               epsilon=1, neighbors=100)
+                               epsilon=1, smoothing=1e-5, neighbors=100)
         sub_depths = rbfi(points[:, 0:2])
 
         # Save the distances to a file
         tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
         out_filename = os.path.join(distance_folder, tmps)
+        
         if not os.path.exists(out_filename):
             pickle.dump(surf_dist, open(out_filename, 'wb'))
+            
+        # write sub depths to check if interpolator is the issue...
+        tmps = 'sub_depths_{:s}.pkl'.format(self.label)
+        depth_filename = os.path.join(distance_folder, tmps)
+        
+        if not os.path.exists(depth_filename):
+            pickle.dump(sub_depths, open(depth_filename, 'wb'))
 
         # Let's find earthquakes close to the top of the slab
         idxa = np.nonzero((np.isfinite(surf_dist) &
@@ -308,14 +315,14 @@ class SetSubductionEarthquakes:
         idxa = []
         for srfd, subd, dept in zip(surf_dist, sub_depths, cat.data['depth']):
             if np.isfinite(srfd) & np.isfinite(subd) & np.isfinite(dept):
-                if (Decimal(srfd) < min(distance_buffer_below,
-                                      distance_buffer_above) * Decimal(0.90)):
+                if (srfd < min(distance_buffer_below,
+                                      distance_buffer_above) *0.90):
                     idxa.append(True)
-                elif ((Decimal(srfd) < distance_buffer_below) &
-                      (Decimal(subd) < Decimal(dept))):
+                elif ((srfd < distance_buffer_below) &
+                      (subd < dept)):
                     idxa.append(True)
-                elif ((Decimal(srfd) < distance_buffer_above) &
-                      (Decimal(subd) >= Decimal(dept))):
+                elif ((srfd < distance_buffer_above) &
+                      (subd >= dept)):
                     idxa.append(True)
                 else:
                     idxa.append(False)
