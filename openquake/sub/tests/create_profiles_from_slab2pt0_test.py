@@ -196,7 +196,17 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         # get_profiles call
         # tmp_dir = tempfile.mkdtemp()
         # fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
-        _ = get_profiles(strike_fname, depth_fname, spacing)
+        test = get_profiles(strike_fname, depth_fname, spacing)
+        
+        top_level = tempfile.mkdtemp()
+        profiles = tempfile.mkdtemp(dir=top_level)
+       
+        test.write_profiles(profiles)
+        
+        df1 = pd.read_csv(os.path.join(profiles,'cs_009.csv'))
+        df2 = pd.read_csv(HERE / "data" / "cam_cs_009.csv")
+        res = df1.compare(df2)
+        assert len(res) == 0
 
     def test_geojson_mariana(self):
 
