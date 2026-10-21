@@ -18,9 +18,6 @@ def test_geojson_classification_workflow():
     classification_ini = HERE / "data" / "mariana_classification.ini"
 
     ## these go in a tmp folder...
-    #top_level =  HERE / "data" / "test_folder"
-    #profiles = HERE / "data" / "test_folder" / "profiles"
-    #sfc_out = HERE / "data" / "test_folder" / "sfc_out"
     top_level = tempfile.mkdtemp()
     profiles = tempfile.mkdtemp(dir=top_level)
     sfc_out = tempfile.mkdtemp(dir=top_level)

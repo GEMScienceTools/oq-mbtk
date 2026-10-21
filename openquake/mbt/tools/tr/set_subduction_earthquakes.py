@@ -176,13 +176,11 @@ class SetSubductionEarthquakes:
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
-        depths_dec = [Decimal(x) for x in values] 
-        depths = np.array(depths_dec)
         
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
-                        depths]).T
-        if self.label not in flog.keys():
+                        values]).T
+        if 'mesh' not in grp.keys():
             grp.create_dataset('mesh', data=ddd)
 
         # Set the bounding box of the subduction surface
@@ -281,9 +279,11 @@ class SetSubductionEarthquakes:
         # Compute the depth of the top of the slab at every epicenter using
         # interpolation
         # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
-        #                      method='cubic')
-        val_red = values[~np.isnan(values)]
-        dat_red = data[~np.isnan(data)].reshape(-1, 2)
+        #  method='cubic')
+        ok = np.isfinite(values) & np.all(np.isfinite(data), axis=1)
+                    
+        val_red = values[ok]
+        dat_red = data[ok]
 #        dat_red_fi = dat_red.reshape(len(val_red), 2)
 
         rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',

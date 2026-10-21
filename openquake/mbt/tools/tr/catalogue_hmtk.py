@@ -56,12 +56,12 @@ def get_distances_from_surface(catalogue, surface):
     else:
         i = 0
         upp = 0
-        while upp < nel-1:
+        while upp < nel:
             upp = min([i+delta, nel])
             mesh = Mesh(catalogue.data['longitude'][i:upp],
                         catalogue.data['latitude'][i:upp],
                         catalogue.data['depth'][i:upp])
-            tmp = np.float64(surface.get_min_distance(mesh), 5)
+            tmp = surface.get_min_distance(mesh)
             dsts[i:upp] = tmp
             i = upp 
     dsts = dsts.round(5)
