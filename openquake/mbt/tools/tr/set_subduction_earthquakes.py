@@ -288,6 +288,7 @@ class SetSubductionEarthquakes:
         rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
                                epsilon=1, smoothing=1e-5, neighbors=100)
         sub_depths = rbfi(points[:, 0:2])
+        sub_depths = sub_depths.round(5)
 
         # Save the distances to a file
         tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
@@ -296,7 +297,7 @@ class SetSubductionEarthquakes:
         if not os.path.exists(out_filename):
             pickle.dump(surf_dist, open(out_filename, 'wb'))
             
-        # write sub depths to check if interpolator is the issue...
+        # write sub depths to check if interpolator is the issue
         tmps = 'sub_depths_{:s}.pkl'.format(self.label)
         depth_filename = os.path.join(distance_folder, tmps)
         
