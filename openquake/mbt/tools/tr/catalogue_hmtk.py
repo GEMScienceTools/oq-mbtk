@@ -56,7 +56,7 @@ def get_distances_from_surface(catalogue, surface):
     else:
         i = 0
         upp = 0
-        while upp < nel-1:
+        while upp < nel:
             upp = min([i+delta, nel])
             mesh = Mesh(catalogue.data['longitude'][i:upp],
                         catalogue.data['latitude'][i:upp],

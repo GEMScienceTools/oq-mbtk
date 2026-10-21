@@ -134,11 +134,14 @@ class SetSubductionEarthquakes:
         # Read the catalogue
         catalogue = get_catalogue(catalogue_filename)
         neq = len(catalogue.data['longitude'])
-        f = h5py.File(treg_filename, "a")
-        if self.label in f.keys():
-            treg = f[self.label]
-        else:
-            treg = np.full((neq), False, dtype=bool)
+
+        # Read the current classification. We take a copy since the dataset
+        # is replaced when the results are stored
+        with h5py.File(treg_filename, "a") as f:
+            if self.label in f.keys():
+                treg = f[self.label][:]
+            else:
+                treg = np.full((neq), False, dtype=bool)
 
         # Create the spatial index
         sidx = get_rtree_index(catalogue)
@@ -176,13 +179,11 @@ class SetSubductionEarthquakes:
         # Set variables used in griddata
         data = np.array([mesh.lons.flatten().T, mesh.lats.flatten().T]).T
         values = mesh.depths.flatten().T
-        depths_dec = [Decimal(x) for x in values] 
-        depths = np.array(depths_dec)
-        
+
         ddd = np.array([mesh.lons.flatten().T,
                         mesh.lats.flatten().T,
-                        depths]).T
-        if self.label not in flog.keys():
+                        values]).T
+        if 'mesh' not in grp.keys():
             grp.create_dataset('mesh', data=ddd)
 
         # Set the bounding box of the subduction surface
@@ -223,7 +224,7 @@ class SetSubductionEarthquakes:
                             catalogue.data['latitude'][idx],
                             catalogue.data['depth'][idx]])
 
-        if self.label not in flog.keys():
+        if 'cat' not in grp.keys():
             grp.create_dataset('cat', data=np.array(ccc))
 
         # Prepare array for the selection of the catalogue
@@ -239,34 +240,36 @@ class SetSubductionEarthquakes:
         # If none of the earthquakes in the catalogue is in the bounding box
         # used for the selection we stop the processing
         if len(cat.data['longitude']) < 1:
-            f = h5py.File(treg_filename, "a")
-            if self.label in f.keys():
-                del f[self.label]
-            f[self.label] = treg
-            f.close()
+            with h5py.File(treg_filename, "a") as f:
+                if self.label in f.keys():
+                    del f[self.label]
+                f[self.label] = treg
+            flog.close()
             return
 
         # compute distances between the earthquakes in the catalogue and
         # the surface of the fault
         out_filename = os.path.join(distance_folder,
                                     'dist_{:s}.pkl'.format(self.label))
-        surf_dist = get_distances_from_surface(cat, surface)
-
-        """
         if compute_distances:
-            tmps = 'Computing distances'
-            logging.info(tmps.format(out_filename))
+            logging.info('Computing distances')
             surf_dist = get_distances_from_surface(cat, surface)
-            pickle.dump(surf_dist, open(out_filename, 'wb'))
+            with open(out_filename, 'wb') as fou:
+                pickle.dump(surf_dist, fou)
         else:
             if not os.path.exists(out_filename):
-                raise IOError('Distance file does not exist')
-            surf_dist = pickle.load(open(out_filename, 'rb'))
+                raise IOError(f'Distance file {out_filename} does not exist')
+            with open(out_filename, 'rb') as fin:
+                surf_dist = pickle.load(fin)
             tmps = 'Loading distances from file: {:s}'
             logging.info(tmps.format(out_filename))
             tmps = '    number of values loaded: {:d}'
             logging.info(tmps.format(len(surf_dist)))
-        """
+            if len(surf_dist) != len(cat.data['longitude']):
+                msg = (f'{out_filename} contains {len(surf_dist)} distances '
+                       f'but {len(cat.data["longitude"])} earthquakes were '
+                       'selected. Recompute the distances.')
+                raise ValueError(msg)
 
         # info
         neqks = len(cat.data['longitude'])
@@ -282,19 +285,14 @@ class SetSubductionEarthquakes:
         # interpolation
         # sub_depths = griddata(data, values, (points[:, 0], points[:, 1]),
         #                      method='cubic')
-        val_red = values[~np.isnan(values)]
-        dat_red = data[~np.isnan(data)].reshape(-1, 2)
-#        dat_red_fi = dat_red.reshape(len(val_red), 2)
+        # Use the same mask for coordinates and depths so they stay paired
+        ok = np.isfinite(values) & np.all(np.isfinite(data), axis=1)
+        val_red = values[ok]
+        dat_red = data[ok]
 
         rbfi = RBFInterpolator(dat_red[:, 0:2], val_red, kernel='multiquadric',
                                epsilon=1, neighbors=100)
         sub_depths = rbfi(points[:, 0:2])
-
-        # Save the distances to a file
-        tmps = 'vert_dist_to_slab_{:s}.pkl'.format(self.label)
-        out_filename = os.path.join(distance_folder, tmps)
-        if not os.path.exists(out_filename):
-            pickle.dump(surf_dist, open(out_filename, 'wb'))
 
         # Let's find earthquakes close to the top of the slab
         idxa = np.nonzero((np.isfinite(surf_dist) &
