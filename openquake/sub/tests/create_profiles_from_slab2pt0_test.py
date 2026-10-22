@@ -204,6 +204,7 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         test.write_profiles(profiles)
         
         df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'))
+        print(len(df1))
         assert len(df1) == 15
         df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv')
         res = df1.reindex_like(df2).compare(df2)
