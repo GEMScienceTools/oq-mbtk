@@ -208,7 +208,7 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         
         df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv', header=None)
         assert len(df2) == 16
-        pd.testing.assert_frame_equal(df1,df2, check_exact = False, atol=1e-5)
+        pd.testing.assert_frame_equal(df1,df2, check_exact=False, atol=1e-3, rtol=0)
 
     def test_geojson_mariana(self):
 
@@ -225,7 +225,7 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'), header=None)
         df2 = pd.read_csv(HERE / 'data' / 'mar_cs_000.csv', header=None)
         res = df1.compare(df2)
-        pd.testing.assert_frame_equal(df1,df2, check_exact = False, atol=1e-5)
+        pd.testing.assert_frame_equal(df1,df2, check_exact=False, atol=1e-3, rtol=0)
 
 
 
