@@ -204,7 +204,8 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         test.write_profiles(profiles)
         
         df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'))
-        df2 = pd.read_csv(HERE / "data" / "cam_cs_010.csv")
+        breakpoint()
+        df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv')
         res = df1.compare(df2)
         assert len(res) == 0
 
@@ -221,7 +222,7 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         test.write_profiles(profiles)
         
         df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'))
-        df2 = pd.read_csv(HERE / "data" / "mar_cs_000.csv")
+        df2 = pd.read_csv(HERE / 'data' / 'mar_cs_000.csv')
         res = df1.compare(df2)
         assert len(res) == 0
 
