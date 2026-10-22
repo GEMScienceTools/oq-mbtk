@@ -200,15 +200,15 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         
         top_level = tempfile.mkdtemp()
         profiles = tempfile.mkdtemp(dir=top_level)
-       
+        
         test.write_profiles(profiles)
         
-        df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'))
-        print(len(df1))
-        assert len(df1) == 15
-        df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv')
-        res = df1.reindex_like(df2).compare(df2)
-        assert len(res) == 0
+        df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'), header=None)
+        assert len(df1) == 16
+        
+        df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv', header=None)
+        assert len(df2) == 16
+        pd.testing.assert_frame_equal(df1,df2, check_exact = False, atol=1e-5)
 
     def test_geojson_mariana(self):
 
@@ -222,9 +222,10 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
 
         test.write_profiles(profiles)
         
-        df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'))
-        df2 = pd.read_csv(HERE / 'data' / 'mar_cs_000.csv')
+        df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'), header=None)
+        df2 = pd.read_csv(HERE / 'data' / 'mar_cs_000.csv', header=None)
         res = df1.compare(df2)
-        assert len(res) == 0
+        pd.testing.assert_frame_equal(df1,df2, check_exact = False, atol=1e-5)
+
 
 
