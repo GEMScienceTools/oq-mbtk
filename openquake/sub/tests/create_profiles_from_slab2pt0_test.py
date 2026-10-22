@@ -203,8 +203,8 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
        
         test.write_profiles(profiles)
         
-        df1 = pd.read_csv(os.path.join(profiles,'cs_009.csv'))
-        df2 = pd.read_csv(HERE / "data" / "cam_cs_009.csv")
+        df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'))
+        df2 = pd.read_csv(HERE / "data" / "cam_cs_010.csv")
         res = df1.compare(df2)
         assert len(res) == 0
 
