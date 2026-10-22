@@ -206,7 +206,7 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'))
         assert len(df1) == 15
         df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv')
-        res = df1.compare(df2)
+        res = df1.reindex_like(df2).compare(df2)
         assert len(res) == 0
 
     def test_geojson_mariana(self):
