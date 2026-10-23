@@ -144,32 +144,39 @@ def connection_distance_plausibility(
     return total_plaus
 
 
-def slip_azimith_plausibility(
+def slip_azimuth_plausibility(
     slip_azimuths,
     function_type="cosine",
     midpoint=90.0,
 ):
+    """Score average directional agreement with equal weights per azimuth.
+
+    At the default midpoint, the score is the squared mean resultant length.
+    Other midpoints adjust its exponent so a pair separated by ``midpoint``
+    degrees scores 0.5. ``None`` disables this plausibility factor.
+    """
     if midpoint is None:
         return 1.0
+
+    if function_type != "cosine":
+        raise NotImplementedError(
+            f"Function type {function_type} not implemented."
+        )
+    if not 0.0 < midpoint < 180.0:
+        raise ValueError("midpoint must be between 0 and 180 degrees")
 
     if len(slip_azimuths) == 1:
         return 1.0
 
-    slip_azimuths = np.array(sorted(slip_azimuths))
-    slip_azimuth_diffs = np.diff(slip_azimuths)
-
-    if function_type == "cosine":
-        plausibilities = compact_cosine_sigmoid(
-            np.abs(slip_azimuth_diffs), midpoint
-        )
-
-    else:
-        raise NotImplementedError(
-            f"Function type {function_type} not implemented."
-        )
-
-    total_prob = np.prod(plausibilities)
-    return total_prob
+    angles = np.radians(np.asarray(slip_azimuths, dtype=float))
+    resultant_squared = np.clip(
+        np.mean(np.cos(angles)) ** 2 + np.mean(np.sin(angles)) ** 2,
+        0.0, 1.0,
+    )
+    exponent = np.log(0.5) / (
+        2.0 * np.log(np.cos(np.radians(midpoint) / 2.0))
+    )
+    return float(resultant_squared ** exponent)
 
 
 def _padded_array_from_sequences(
@@ -347,7 +354,7 @@ def _compute_slip_az_plausibility(
     if slip_azimuth_midpoint is None:
         return 1.0
     return rupture_df["slip_azimuth"].apply(
-        slip_azimith_plausibility,
+        slip_azimuth_plausibility,
         function_type=slip_azimuth_function,
         midpoint=slip_azimuth_midpoint,
     )
@@ -408,7 +415,7 @@ def get_single_rupture_plausibilities(
         plausibilities["connection_distance"] = 1.0
 
     if slip_azimuth_midpoint is not None:
-        plausibilities["slip_azimuth"] = slip_azimith_plausibility(
+        plausibilities["slip_azimuth"] = slip_azimuth_plausibility(
             rupture["slip_azimuths"],
             function_type=slip_azimuth_function,
             midpoint=slip_azimuth_midpoint,

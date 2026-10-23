@@ -53,6 +53,7 @@ from openquake.fnm.rupture_filtering import (
     _compute_angle_plausibility,
     _compute_slip_az_plausibility,
     _build_angle_matrix_from_pairs,
+    slip_azimuth_plausibility,
 )
 from openquake.fnm.all_together_now import build_fault_network
 
@@ -111,6 +112,54 @@ class TestRupturePlausibilities(unittest.TestCase):
 
 
 class TestPlausibilityRegressions(unittest.TestCase):
+    def test_slip_azimuth_average_agreement(self):
+        for angles, expected in (
+            ([15.0], 1.0),
+            ([15.0, 15.0, 15.0], 1.0),
+            ([0.0, 90.0], 0.5),
+            ([0.0, 180.0], 0.0),
+            ([0.0, 120.0, 240.0], 0.0),
+            ([0.0, 0.0, 180.0], 1.0 / 9.0),
+        ):
+            with self.subTest(angles=angles):
+                self.assertAlmostEqual(
+                    slip_azimuth_plausibility(angles), expected
+                )
+
+    def test_slip_azimuth_order_and_repetition(self):
+        angles = [0.0, 40.0, 80.0]
+        expected = ((1.0 + 2.0 * np.cos(np.radians(40.0))) / 3.0) ** 2
+        for values in (angles, angles[::-1], angles * 2):
+            self.assertAlmostEqual(slip_azimuth_plausibility(values), expected)
+
+    def test_slip_azimuth_midpoint(self):
+        for midpoint in (30.0, 60.0, 90.0, 120.0):
+            self.assertAlmostEqual(
+                slip_azimuth_plausibility([0.0, midpoint], midpoint=midpoint),
+                0.5,
+            )
+        self.assertEqual(
+            slip_azimuth_plausibility([0.0, 180.0], midpoint=None), 1.0
+        )
+        for midpoint in (0.0, 180.0, -1.0):
+            with self.assertRaises(ValueError):
+                slip_azimuth_plausibility([0.0, 90.0], midpoint=midpoint)
+
+    def test_slip_azimuth_wraps_around_north(self):
+        self.assertAlmostEqual(
+            slip_azimuth_plausibility([5.0, 355.0]),
+            slip_azimuth_plausibility([5.0, 15.0]),
+        )
+        self.assertAlmostEqual(
+            slip_azimuth_plausibility([350.0, 10.0, 20.0]),
+            slip_azimuth_plausibility([0.0, 20.0, 30.0]),
+        )
+        # unchanged when the azimuths do not straddle north
+        self.assertAlmostEqual(
+            slip_azimuth_plausibility([10.0, 100.0]),
+            compact_cosine_sigmoid(90.0, 90.0),
+        )
+
     def test_one_degree_connection_is_not_missing(self):
         expected = 0.5 * (1.0 + np.cos(np.deg2rad(1.0)))
         np.testing.assert_allclose(
@@ -571,6 +620,7 @@ class TestFaultNetworkPlausibilityFullRup(unittest.TestCase):
         # The three-fault rupture forms a cycle. Its shortest connections
         # are 4--23 (3.1238 km) and 23--20 (1.4302 km), rather than the
         # consecutive-list connection 4--20 (19.4328 km).
+        # Slip azimuths [1.3, 68.2, -109.9] give R**2 = 0.1180582957.
         three_fault = fn["rupture_df"][
             fn["rupture_df"].ruptures.apply(lambda r: set(r) == {4, 20, 23})
         ]
@@ -578,9 +628,9 @@ class TestFaultNetworkPlausibilityFullRup(unittest.TestCase):
         np.testing.assert_allclose(
             plaus_df.loc[
                 three_fault.index[0],
-                ["connection_distance", "connection_angle", "total"],
+                ["connection_distance", "connection_angle", "slip_azimuth", "total"],
             ].to_numpy(dtype=float),
-            [0.8102295084, 0.0265688313, 0.0047834483],
+            [0.8102295084, 0.0265688313, 0.1180582957, 0.0025414234],
             rtol=1e-4,
         )
 
