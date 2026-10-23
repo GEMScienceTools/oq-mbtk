@@ -49,6 +49,7 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.rupture_connections import (
     get_multifault_rupture_distances,
+    get_multifault_connection_pairs,
     get_proximal_rup_angles,
 )
 
@@ -71,7 +72,7 @@ def compact_cosine_sigmoid(angle, midpoint):
 def connection_angle_plausibility(
     connection_angles,
     function_type="cosine",
-    no_connection_val=1,
+    no_connection_val=-1,
     midpoint=90.0,
 ):
     conns = np.array(connection_angles)
@@ -143,32 +144,39 @@ def connection_distance_plausibility(
     return total_plaus
 
 
-def slip_azimith_plausibility(
+def slip_azimuth_plausibility(
     slip_azimuths,
     function_type="cosine",
     midpoint=90.0,
 ):
+    """Score average directional agreement with equal weights per azimuth.
+
+    At the default midpoint, the score is the squared mean resultant length.
+    Other midpoints adjust its exponent so a pair separated by ``midpoint``
+    degrees scores 0.5. ``None`` disables this plausibility factor.
+    """
     if midpoint is None:
         return 1.0
+
+    if function_type != "cosine":
+        raise NotImplementedError(
+            f"Function type {function_type} not implemented."
+        )
+    if not 0.0 < midpoint < 180.0:
+        raise ValueError("midpoint must be between 0 and 180 degrees")
 
     if len(slip_azimuths) == 1:
         return 1.0
 
-    slip_azimuths = np.array(sorted(slip_azimuths))
-    slip_azimuth_diffs = np.diff(slip_azimuths)
-
-    if function_type == "cosine":
-        plausibilities = compact_cosine_sigmoid(
-            np.abs(slip_azimuth_diffs), midpoint
-        )
-
-    else:
-        raise NotImplementedError(
-            f"Function type {function_type} not implemented."
-        )
-
-    total_prob = np.prod(plausibilities)
-    return total_prob
+    angles = np.radians(np.asarray(slip_azimuths, dtype=float))
+    resultant_squared = np.clip(
+        np.mean(np.cos(angles)) ** 2 + np.mean(np.sin(angles)) ** 2,
+        0.0, 1.0,
+    )
+    exponent = np.log(0.5) / (
+        2.0 * np.log(np.cos(np.radians(midpoint) / 2.0))
+    )
+    return float(resultant_squared ** exponent)
 
 
 def _padded_array_from_sequences(
@@ -206,23 +214,29 @@ def _padded_array_from_sequences(
     return arr
 
 
-def _matrix_to_rupture_series(rupture_df, matrix):
+def _matrix_to_rupture_series(rupture_df, matrix, pairs=None):
+    """
+    Reads the values of `matrix` at the connections of each rupture.
+    `pairs` holds the connections of each rupture (see
+    `get_multifault_connection_pairs`); if not given they are derived from
+    the non-zero structure of `matrix` itself.
+    """
     if matrix is None:
         return None
+
+    if pairs is None:
+        pairs = get_multifault_connection_pairs(rupture_df, matrix)
 
     mat = matrix.todok() if issparse(matrix) else np.asarray(matrix)
     is_sparse = issparse(mat)
     seqs = []
-    for row in rupture_df.itertuples():
-        rup_indices = getattr(row, "ruptures")
-        if len(rup_indices) == 1:
+    for rup_pairs in pairs.values:
+        if len(rup_pairs) == 0:
             seqs.append(np.zeros(1, dtype=np.float64))
             continue
-
-        vals = []
-        for idx in range(len(rup_indices) - 1):
-            i, j = rup_indices[idx], rup_indices[idx + 1]
-            vals.append(float(mat[i, j] if is_sparse else mat[i][j]))
+        vals = [
+            float(mat[i, j] if is_sparse else mat[i][j]) for i, j in rup_pairs
+        ]
         seqs.append(np.asarray(vals, dtype=np.float64))
 
     return pd.Series(seqs, index=rupture_df.index)
@@ -278,6 +292,7 @@ def _compute_angle_plausibility(
     connection_angle_function,
     connection_angle_midpoint,
     no_connection_val=-1.0,
+    pairs=None,
 ):
     n_rups = rupture_df.shape[0]
     if connection_angle_midpoint is None:
@@ -306,7 +321,7 @@ def _compute_angle_plausibility(
                 np.asarray(angle_matrix_input), dtype=np.float64
             )
         angle_series = _matrix_to_rupture_series(
-            rupture_df, angle_matrix_input
+            rupture_df, angle_matrix_input, pairs=pairs
         )
 
     if angle_series is None:
@@ -339,7 +354,7 @@ def _compute_slip_az_plausibility(
     if slip_azimuth_midpoint is None:
         return 1.0
     return rupture_df["slip_azimuth"].apply(
-        slip_azimith_plausibility,
+        slip_azimuth_plausibility,
         function_type=slip_azimuth_function,
         midpoint=slip_azimuth_midpoint,
     )
@@ -400,7 +415,7 @@ def get_single_rupture_plausibilities(
         plausibilities["connection_distance"] = 1.0
 
     if slip_azimuth_midpoint is not None:
-        plausibilities["slip_azimuth"] = slip_azimith_plausibility(
+        plausibilities["slip_azimuth"] = slip_azimuth_plausibility(
             rupture["slip_azimuths"],
             function_type=slip_azimuth_function,
             midpoint=slip_azimuth_midpoint,
@@ -440,13 +455,22 @@ def get_rupture_plausibilities(
     if rupture_df.shape[0] == 0:
         return pd.DataFrame(index=rupture_df.index, columns=columns)
 
+    # The connections of each multifault rupture, shared by the distance
+    # and angle plausibilities so both are evaluated on the same jumps.
+    pair_matrix = distance_matrix if distance_matrix is not None else bin_adj_mat
+    pairs = (
+        get_multifault_connection_pairs(rupture_df, pair_matrix)
+        if pair_matrix is not None
+        else None
+    )
+
     if distances is None:
         if distance_matrix is None:
             raise ValueError(
                 "Either distances or distance_matrix must be provided."
             )
         distances = get_multifault_rupture_distances(
-            rupture_df, distance_matrix
+            rupture_df, distance_matrix, pairs=pairs
         )
 
     conn_total = _compute_distance_plausibility(
@@ -466,6 +490,7 @@ def get_rupture_plausibilities(
         subfaults,
         connection_angle_function,
         connection_angle_midpoint,
+        pairs=pairs,
     )
 
     slip_plaus = _compute_slip_az_plausibility(
