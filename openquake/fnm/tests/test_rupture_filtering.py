@@ -585,6 +585,85 @@ class TestFaultNetworkPlausibilityFullRup(unittest.TestCase):
         )
 
 
+class TestMotaguaBranchedRuptures(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.fault_network = build_fault_network(
+            fault_geojson=HERE / "data" / "motagua_faults.geojson",
+            settings={
+                "subsection_size": [10.0, 10.0],
+                "max_jump_distance": 10.0,
+                "max_sf_rups_per_mf_rup": 7,
+                "full_fault_only_mf_ruptures": True,
+                "always_return_full_rup": True,
+                "parallel_subfault_build": False,
+                "parallel_multifault_search": False,
+                "filter_by_overlap": True,
+                "filter_by_plausibility": True,
+                "rupture_filtering_connection_distance_midpoint": 5.0,
+                "rupture_filtering_connection_angle_midpoint": 90.0,
+                "rupture_filtering_slip_azimuth_midpoint": None,
+            },
+        )
+
+    def test_multifault_count_includes_branched_ruptures(self):
+        multifaults = self.fault_network["multifault_inds"]
+        # The path-only search returned 267. Connected-set enumeration
+        # adds 28 branched ruptures with four to seven constituent faults.
+        self.assertEqual(len(multifaults), 295)
+        self.assertEqual(len({frozenset(r) for r in multifaults}), 295)
+        self.assertLessEqual(max(map(len, multifaults)), 7)
+
+    def test_generated_junction_uses_all_three_jumps(self):
+        fn = self.fault_network
+        fault_ids = {"ccaf015", "ccaf017", "ccaf018", "ccaf135"}
+        junction = fn["rupture_df"][
+            fn["rupture_df"].faults.apply(lambda faults: set(faults) == fault_ids)
+        ]
+        self.assertEqual(len(junction), 1)
+        members = junction.iloc[0].ruptures
+        fault_of = fn["single_rup_df"].fault.to_dict()
+        expected_edges = {
+            frozenset({"ccaf017", branch})
+            for branch in ["ccaf015", "ccaf018", "ccaf135"]
+        }
+        # Verify that the actual GeoJSON-derived adjacency is a star:
+        # ccaf017 is the junction, and its three branches are unconnected.
+        actual_edges = {
+            frozenset({fault_of[i], fault_of[j]})
+            for i in members for j in members
+            if i < j and fn["bin_dist_mat"][i, j]
+        }
+        self.assertEqual(actual_edges, expected_edges)
+        pairs = get_multifault_connection_pairs(junction, fn["dist_mat"]).iloc[0]
+        self.assertEqual(len(pairs), 3)
+        self.assertEqual(
+            {frozenset({fault_of[i], fault_of[j]}) for i, j in pairs},
+            expected_edges,
+        )
+
+        # Fixed geometry expectations ensure the plausibility calculation
+        # cannot silently omit a branch or evaluate an unconnected pair.
+        expected_distances = np.array([8.5789394, 1.0479547, 6.5510311])
+        expected_angles = np.array([173.1412509, 167.9430927, 54.9377230])
+        distances = get_multifault_rupture_distances(junction, fn["dist_mat"])
+        np.testing.assert_allclose(
+            np.sort(distances.iloc[0]), np.sort(expected_distances), rtol=1e-4
+        )
+        expected_distance = np.exp(-np.log(2.0) * expected_distances.sum() / 5.0)
+        expected_angle = np.prod(
+            0.5 * (1.0 + np.cos(np.deg2rad(expected_angles)))
+        )
+        np.testing.assert_allclose(
+            fn["plausibility"].loc[
+                junction.index[0],
+                ["connection_distance", "connection_angle", "total"],
+            ].to_numpy(dtype=float),
+            [expected_distance, expected_angle, expected_distance * expected_angle],
+            rtol=1e-4,
+        )
+
+
 class TestFaultNetworkConnectionPlausibility(unittest.TestCase):
     def test_generated_rupture_uses_actual_jumps(self):
         fn = build_fault_network(

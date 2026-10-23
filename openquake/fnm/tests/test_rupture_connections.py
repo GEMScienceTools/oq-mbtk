@@ -93,6 +93,7 @@ from openquake.fnm.rupture_connections import (
     get_multifault_rupture_distances,
     subgraphs_from_connected_components,
     get_rupture_grouping,
+    find_connected_subsets_dfs_serial,
     get_mf_connection_pairs,
     adj_matrix_to_nbr_dict,
 )
@@ -1961,6 +1962,55 @@ def test__lonlat_to_xyz_roundtrip():
 
 def test__geog_vec_to_xyz():
     pass
+
+
+class TestConnectedSubsetEnumeration(unittest.TestCase):
+    def test_parallel_request_warns_and_uses_serial_search(self):
+        adj = dok_array(np.array([[0, 1], [1, 0]], dtype=np.int8))
+        groups = {0: 0, 1: 1}
+        with self.assertLogs(level="WARNING") as logs:
+            parallel_result = get_multifault_ruptures_fast(
+                adj, rup_groups=groups, parallel=True
+            )
+        self.assertIn(
+            "Parallel multifault search is slow; defaulting to serial search.",
+            logs.records[0].getMessage(),
+        )
+        with self.assertNoLogs(level="WARNING"):
+            serial_result = get_multifault_ruptures_fast(
+                adj, rup_groups=groups, parallel=False
+            )
+        self.assertEqual(parallel_result, serial_result)
+        self.assertEqual(
+            {frozenset(r) for r in parallel_result}, {frozenset({0, 1})}
+        )
+
+    def test_branched_sets_are_found(self):
+        # star graph: vertex 0 is a junction joining three branches
+        adj = {0: [1, 2, 3], 1: [0], 2: [0], 3: [0]}
+        groups = {i: i for i in range(4)}
+        sets = find_connected_subsets_dfs_serial(adj, groups, 10)
+        sets = {frozenset(s) for s in sets}
+        self.assertIn(frozenset({0, 1, 2, 3}), sets)
+        self.assertEqual(len(sets), 7)  # 3 pairs, 3 triples, 1 quadruple
+
+        sets = {frozenset(s) for s in find_connected_subsets_dfs(adj, 10)}
+        self.assertIn(frozenset({0, 1, 2, 3}), sets)
+
+    def test_groups_and_max_vertices(self):
+        adj = {0: [1, 2, 3], 1: [0], 2: [0], 3: [0]}
+        groups = {0: 0, 1: 1, 2: 1, 3: 2}  # 1 and 2 are on the same fault
+        sets = {
+            frozenset(s)
+            for s in find_connected_subsets_dfs_serial(adj, groups, 3)
+        }
+        self.assertEqual(
+            sets,
+            {
+                frozenset(s)
+                for s in [{0, 1}, {0, 2}, {0, 3}, {0, 1, 3}, {0, 2, 3}]
+            },
+        )
 
 
 class TestConnectionPairs(unittest.TestCase):
