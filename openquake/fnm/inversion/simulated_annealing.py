@@ -252,7 +252,9 @@ def _single_thread_anneal(
     mult_result = d * 0.0  # preallocate memory
 
     if current_misfit == -1.0:
-        current_misfit = _eval_x(A, x, d, mult_result, w)
+        current_misfit = _eval_x(
+            A, x, d, mult_result, w, misfit_type=misfit_type
+        )
 
     l_min_bounds = np.log(min_bounds)
     l_max_bounds = np.log(max_bounds)
@@ -263,6 +265,7 @@ def _single_thread_anneal(
     misfits = np.ones(n_iters) * 10.0
     current_misfits = np.ones(n_iters) * 10.0
     alltime_best_x = x
+    alltime_best_misfit = current_misfit
     i = 0
 
     while T > T_min and current_misfit > accept_norm and i < n_iters:
@@ -282,8 +285,11 @@ def _single_thread_anneal(
         misfits[i] = candidate_misfit
         misfit_diff = candidate_misfit - current_misfit
 
-        if misfit_diff <= 0.0:
+        if candidate_misfit < alltime_best_misfit:
             alltime_best_x = candidate_x
+            alltime_best_misfit = candidate_misfit
+
+        if misfit_diff <= 0.0:
             accept_prob = 1.0
 
         elif misfit_diff > 0.0:
@@ -354,7 +360,9 @@ def _parallel_anneal(
             sample_with_T=sample_with_T,
             misfit_type=misfit_type,
         )
-        thread_final_misfits[i] = thread_misfits[i, -1]
+        # each thread returns its best x, so rank threads by their best
+        # misfit (trailing entries are placeholders if a thread stopped early)
+        thread_final_misfits[i] = np.min(thread_misfits[i, :])
 
     this_best_misfit = np.min(thread_final_misfits)
     best_i = np.argmin(thread_final_misfits)
@@ -384,7 +392,7 @@ def simulated_annealing(
     max_bounds=1e-2,
     initial_temp=1.0,
     T_min=0.0,
-    accept_norm=np.sqrt(1e-5),
+    accept_norm=None,
     max_iters=int(1e4),
     scale=0.1,
     parallel=False,
@@ -398,6 +406,14 @@ def simulated_annealing(
     misfit_type: str = 'linear',
 ):
     t0 = time.time()
+
+    if misfit_type not in ('linear', 'log'):
+        raise ValueError("misfit_type must be 'linear' or 'log'")
+
+    if accept_norm is None:
+        # the log misfit (sum of log squared residuals) is usually negative,
+        # so it has no natural positive stopping threshold
+        accept_norm = np.sqrt(1e-5) if misfit_type == 'linear' else -np.inf
 
     if seed is None:
         seed = np.random.randint(0, 2**32 - 1)
@@ -427,7 +443,9 @@ def simulated_annealing(
     if parallel is False:
         x = x0
         T = initial_temp
-        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape), weights)
+        best_misfit = _eval_x(
+            Asp, x0, dw, np.zeros(dw.shape), weights, misfit_type=misfit_type
+        )
         print("init", best_misfit)
         x, current_misfits = _single_thread_anneal(
             A=Asp,
@@ -447,6 +465,7 @@ def simulated_annealing(
             replace_frac=replace_frac,
             replace_num=replace_num,
             sample_with_T=sample_with_T,
+            misfit_type=misfit_type,
         )
         misfit_history = current_misfits
         if np.min(current_misfits) > best_misfit:
@@ -457,7 +476,9 @@ def simulated_annealing(
         i = 0
         x = x0
         T = initial_temp
-        best_misfit = _eval_x(Asp, x0, dw, np.zeros(dw.shape), weights)
+        best_misfit = _eval_x(
+            Asp, x0, dw, np.zeros(dw.shape), weights, misfit_type=misfit_type
+        )
         print("init", best_misfit)
         while (
             i < max_iters
@@ -483,6 +504,7 @@ def simulated_annealing(
                 replace_frac=replace_frac,
                 replace_num=replace_num,
                 sample_with_T=sample_with_T,
+                misfit_type=misfit_type,
             )
             try:
                 misfit_history[i : i + meetup_iters] = current_misfits
