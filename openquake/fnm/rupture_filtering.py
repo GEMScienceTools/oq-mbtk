@@ -143,7 +143,7 @@ def connection_distance_plausibility(
     return total_plaus
 
 
-def slip_azimith_plausibility(
+def slip_azimuth_plausibility(
     slip_azimuths,
     function_type="cosine",
     midpoint=90.0,
@@ -346,7 +346,7 @@ def _compute_slip_az_plausibility(
     if slip_azimuth_midpoint is None:
         return 1.0
     return rupture_df["slip_azimuth"].apply(
-        slip_azimith_plausibility,
+        slip_azimuth_plausibility,
         function_type=slip_azimuth_function,
         midpoint=slip_azimuth_midpoint,
     )
@@ -407,7 +407,7 @@ def get_single_rupture_plausibilities(
         plausibilities["connection_distance"] = 1.0
 
     if slip_azimuth_midpoint is not None:
-        plausibilities["slip_azimuth"] = slip_azimith_plausibility(
+        plausibilities["slip_azimuth"] = slip_azimuth_plausibility(
             rupture["slip_azimuths"],
             function_type=slip_azimuth_function,
             midpoint=slip_azimuth_midpoint,
