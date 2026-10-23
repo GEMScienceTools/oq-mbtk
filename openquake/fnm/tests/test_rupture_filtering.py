@@ -39,7 +39,11 @@ import json
 from scipy.sparse import dok_array, issparse
 from openquake.hazardlib.geo import Line, Point
 
-from openquake.fnm.rupture_connections import get_proximal_rup_angles
+from openquake.fnm.rupture_connections import (
+    get_multifault_connection_pairs,
+    get_multifault_rupture_distances,
+    get_proximal_rup_angles,
+)
 from openquake.fnm.rupture_filtering import (
     get_rupture_plausibilities,
     compact_cosine_sigmoid,
@@ -101,6 +105,29 @@ class TestRupturePlausibilities(unittest.TestCase):
         np.testing.assert_allclose(
             plausibilities.loc[2, "total"],
             expected_angle_plaus * expected_distance_plaus,
+        )
+
+
+class TestPlausibilityRegressions(unittest.TestCase):
+    def test_distance_plausibility_counts_every_jump(self):
+        # path 2 - 9 - 5 with two 8 km jumps; the rupture list order puts
+        # the unconnected ruptures 2 and 5 next to each other
+        dist = dok_array((10, 10), dtype=np.float32)
+        for a, b in [(2, 9), (9, 5)]:
+            dist[a, b] = dist[b, a] = 8.0
+        rup_df = pd.DataFrame(
+            {"ruptures": [[2, 5, 9], [2, 9]], "slip_azimuth": [[0.0] * 3, [0.0] * 2]}
+        )
+        plaus = get_rupture_plausibilities(
+            rup_df,
+            distance_matrix=dist,
+            connection_distance_midpoint=5.0,
+            connection_angle_midpoint=None,
+            slip_azimuth_midpoint=None,
+        )
+        one_jump = np.exp(-np.log(2.0) / 5.0 * 8.0)
+        np.testing.assert_allclose(
+            plaus["connection_distance"].values, [one_jump**2, one_jump]
         )
 
 
@@ -474,3 +501,82 @@ class TestFaultNetworkPlausibilityFullRup(unittest.TestCase):
         for col in ["connection_angle", "connection_distance", "slip_azimuth"]:
             self.assertTrue(np.all(plaus_df[col] > 0))
         self.assertTrue(np.all(plaus_df["total"] > 0))
+
+        # The three-fault rupture forms a cycle. Its shortest connections
+        # are 4--23 (3.1238 km) and 23--20 (1.4302 km), rather than the
+        # consecutive-list connection 4--20 (19.4328 km).
+        three_fault = fn["rupture_df"][
+            fn["rupture_df"].ruptures.apply(lambda r: set(r) == {4, 20, 23})
+        ]
+        self.assertEqual(len(three_fault), 1)
+        np.testing.assert_allclose(
+            plaus_df.loc[
+                three_fault.index[0],
+                ["connection_distance", "connection_angle", "total"],
+            ].to_numpy(dtype=float),
+            [0.8102295084, 0.0265688313, 0.0047834483],
+            rtol=1e-4,
+        )
+
+
+class TestFaultNetworkConnectionPlausibility(unittest.TestCase):
+    def test_generated_rupture_uses_actual_jumps(self):
+        fn = build_fault_network(
+            fault_geojson=HERE / "data" / "motagua_3_faults.geojson",
+            settings={
+                "subsection_size": [15.0, 15.0],
+                "max_jump_distance": 10.0,
+                "full_fault_only_mf_ruptures": False,
+                "parallel_subfault_build": False,
+                "parallel_multifault_search": False,
+                "filter_by_overlap": False,
+                "filter_by_plausibility": True,
+                "rupture_filtering_connection_distance_midpoint": 5.0,
+                "rupture_filtering_connection_angle_midpoint": 90.0,
+                "rupture_filtering_slip_azimuth_midpoint": None,
+            },
+        )
+        three_fault = fn["rupture_df"][
+            fn["rupture_df"].ruptures.apply(lambda r: set(r) == {0, 6, 7})
+        ]
+        self.assertEqual(len(three_fault), 1)
+        # Use the generated list unchanged: consecutive entries 0 and 6
+        # are unconnected, while the actual path is 0--7--6.
+        self.assertEqual(three_fault.iloc[0].ruptures, [0, 6, 7])
+        self.assertEqual(fn["bin_dist_mat"][0, 6], 0)
+        self.assertEqual(fn["dist_mat"][0, 6], 0.0)
+        self.assertEqual(fn["bin_dist_mat"][0, 7], 1)
+        self.assertEqual(fn["bin_dist_mat"][7, 6], 1)
+
+        pairs = get_multifault_connection_pairs(three_fault, fn["dist_mat"])
+        self.assertEqual(
+            {frozenset(p) for p in pairs.iloc[0]},
+            {frozenset({0, 7}), frozenset({7, 6})},
+        )
+        distances = get_multifault_rupture_distances(
+            three_fault, fn["dist_mat"]
+        )
+        # Expected geometry values are fixed independently of connection
+        # selection, so a skipped jump cannot also alter the expectation.
+        expected_distances = np.array([3.1237750, 1.4301100])
+        expected_angles = np.array([162.9023733, 89.9132993])
+        np.testing.assert_allclose(
+            np.sort(distances.iloc[0]), np.sort(expected_distances), rtol=1e-4
+        )
+        expected_distance = np.exp(-np.log(2.0) * expected_distances.sum() / 5.0)
+        expected_angle = np.prod(
+            0.5 * (1.0 + np.cos(np.deg2rad(expected_angles)))
+        )
+        np.testing.assert_allclose(
+            fn["plausibility"].loc[
+                three_fault.index[0],
+                ["connection_distance", "connection_angle", "slip_azimuth", "total"],
+            ].to_numpy(dtype=float),
+            [
+                expected_distance,
+                expected_angle,
+                1.0,
+                expected_distance * expected_angle,
+            ],
+            rtol=1e-4,
+        )
