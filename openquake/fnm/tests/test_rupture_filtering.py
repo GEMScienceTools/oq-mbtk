@@ -45,7 +45,9 @@ from openquake.fnm.rupture_connections import (
     get_proximal_rup_angles,
 )
 from openquake.fnm.rupture_filtering import (
+    connection_angle_plausibility,
     get_rupture_plausibilities,
+    get_single_rupture_plausibilities,
     compact_cosine_sigmoid,
     _compute_distance_plausibility,
     _compute_angle_plausibility,
@@ -109,6 +111,12 @@ class TestRupturePlausibilities(unittest.TestCase):
 
 
 class TestPlausibilityRegressions(unittest.TestCase):
+    def test_one_degree_connection_is_not_missing(self):
+        expected = 0.5 * (1.0 + np.cos(np.deg2rad(1.0)))
+        np.testing.assert_allclose(
+            connection_angle_plausibility([1.0]), expected, rtol=1e-12
+        )
+
     def test_distance_plausibility_counts_every_jump(self):
         # path 2 - 9 - 5 with two 8 km jumps; the rupture list order puts
         # the unconnected ruptures 2 and 5 next to each other
@@ -265,6 +273,64 @@ class TestFaultNetworkPlausibility(unittest.TestCase):
         cls.settings = settings
         cls.fault_network = build_fault_network(
             fault_geojson=fgj_name, settings=settings
+        )
+
+    def test_single_rupture_angle_plausibility_matches_batch(self):
+        fn = self.fault_network
+        pairs = get_multifault_connection_pairs(fn["rupture_df"], fn["dist_mat"])
+        angle_matrix = _build_angle_matrix_from_pairs(
+            fn["single_rup_df"], fn["subfaults"], fn["bin_dist_mat"]
+        )
+        batch = get_rupture_plausibilities(
+            fn["rupture_df"],
+            distance_matrix=fn["dist_mat"],
+            angle_matrix=angle_matrix,
+            connection_distance_midpoint=None,
+            connection_angle_midpoint=90.0,
+            slip_azimuth_midpoint=None,
+        )
+        # Exercise both real connections and single-fault ruptures, using
+        # the module's -1 convention to represent no connection in the
+        # single-rupture API. The batch API already treats that case as 1.
+        self.assertTrue(any(len(p) == 0 for p in pairs))
+        self.assertTrue(any(len(p) > 0 for p in pairs))
+        for index, rup_pairs in pairs.items():
+            with self.subTest(rupture=index):
+                angles = [float(angle_matrix[i, j]) for i, j in rup_pairs]
+                single = get_single_rupture_plausibilities(
+                    {"connection_angles": angles if angles else [-1.0]},
+                    connection_distance_midpoint=None,
+                    connection_angle_midpoint=90.0,
+                    slip_azimuth_midpoint=None,
+                )
+                np.testing.assert_allclose(
+                    [single["connection_angle"], single["total"]],
+                    batch.loc[index, ["connection_angle", "total"]].to_numpy(),
+                    rtol=1e-12,
+                )
+
+    def test_missing_angle_does_not_penalize_real_connection(self):
+        fn = self.fault_network
+        angle_matrix = _build_angle_matrix_from_pairs(
+            fn["single_rup_df"], fn["subfaults"], fn["bin_dist_mat"]
+        )
+        pairs = get_multifault_connection_pairs(fn["rupture_df"], fn["dist_mat"])
+        connected_pairs = [p for p in pairs if p]
+        self.assertEqual(len(connected_pairs), 1)
+        angles = [float(angle_matrix[i, j]) for i, j in connected_pairs[0]]
+        expected = np.prod(0.5 * (1.0 + np.cos(np.deg2rad(angles))))
+        # A missing-angle marker must contribute a factor of exactly one,
+        # while retaining the penalty for the GeoJSON-derived connection.
+        single = get_single_rupture_plausibilities(
+            {"connection_angles": angles + [-1.0]},
+            connection_distance_midpoint=None,
+            connection_angle_midpoint=90.0,
+            slip_azimuth_midpoint=None,
+        )
+        np.testing.assert_allclose(
+            [single["connection_angle"], single["total"]],
+            [expected, expected],
+            rtol=1e-12,
         )
 
     def test_angle_matrix_build(self):
