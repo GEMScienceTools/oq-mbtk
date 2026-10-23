@@ -93,6 +93,8 @@ from openquake.fnm.rupture_connections import (
     get_multifault_rupture_distances,
     subgraphs_from_connected_components,
     get_rupture_grouping,
+    get_mf_connection_pairs,
+    adj_matrix_to_nbr_dict,
 )
 
 HERE = pathlib.Path(__file__).parent.absolute()
@@ -1959,3 +1961,28 @@ def test__lonlat_to_xyz_roundtrip():
 
 def test__geog_vec_to_xyz():
     pass
+
+
+class TestConnectionPairs(unittest.TestCase):
+    def test_pairs_follow_connections_not_list_order(self):
+        # path 2 - 9 - 5; the rupture list order puts 2 and 5 side by side
+        dist = dok_array((10, 10), dtype=np.float32)
+        for a, b in [(2, 9), (9, 5)]:
+            dist[a, b] = dist[b, a] = 8.0
+        nbr = adj_matrix_to_nbr_dict(dist)
+        pairs = get_mf_connection_pairs([2, 5, 9], nbr)
+        self.assertEqual(
+            {frozenset(p) for p in pairs}, {frozenset({2, 9}), frozenset({9, 5})}
+        )
+        np.testing.assert_array_almost_equal(
+            get_mf_distances_from_adj_matrix([2, 5, 9], dist), [8.0, 8.0]
+        )
+
+    def test_pairs_use_shortest_jumps_in_cycle(self):
+        dist = np.array(
+            [[0.0, 1.0, 9.0], [1.0, 0.0, 2.0], [9.0, 2.0, 0.0]]
+        )
+        np.testing.assert_array_almost_equal(
+            sorted(get_mf_distances_from_adj_matrix([0, 1, 2], dist)),
+            [1.0, 2.0],
+        )
