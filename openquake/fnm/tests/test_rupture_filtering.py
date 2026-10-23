@@ -106,6 +106,39 @@ class TestRupturePlausibilities(unittest.TestCase):
 
 
 class TestPlausibilityRegressions(unittest.TestCase):
+    def test_slip_azimuth_average_agreement(self):
+        for angles, expected in (
+            ([15.0], 1.0),
+            ([15.0, 15.0, 15.0], 1.0),
+            ([0.0, 90.0], 0.5),
+            ([0.0, 180.0], 0.0),
+            ([0.0, 120.0, 240.0], 0.0),
+            ([0.0, 0.0, 180.0], 1.0 / 9.0),
+        ):
+            with self.subTest(angles=angles):
+                self.assertAlmostEqual(
+                    slip_azimuth_plausibility(angles), expected
+                )
+
+    def test_slip_azimuth_order_and_repetition(self):
+        angles = [0.0, 40.0, 80.0]
+        expected = ((1.0 + 2.0 * np.cos(np.radians(40.0))) / 3.0) ** 2
+        for values in (angles, angles[::-1], angles * 2):
+            self.assertAlmostEqual(slip_azimuth_plausibility(values), expected)
+
+    def test_slip_azimuth_midpoint(self):
+        for midpoint in (30.0, 60.0, 90.0, 120.0):
+            self.assertAlmostEqual(
+                slip_azimuth_plausibility([0.0, midpoint], midpoint=midpoint),
+                0.5,
+            )
+        self.assertEqual(
+            slip_azimuth_plausibility([0.0, 180.0], midpoint=None), 1.0
+        )
+        for midpoint in (0.0, 180.0, -1.0):
+            with self.assertRaises(ValueError):
+                slip_azimuth_plausibility([0.0, 90.0], midpoint=midpoint)
+
     def test_slip_azimuth_wraps_around_north(self):
         self.assertAlmostEqual(
             slip_azimuth_plausibility([5.0, 355.0]),
