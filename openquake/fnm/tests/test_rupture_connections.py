@@ -98,6 +98,31 @@ from openquake.fnm.rupture_connections import (
 HERE = pathlib.Path(__file__).parent.absolute()
 
 
+class TestAngleDifference(unittest.TestCase):
+    def test_scalars(self):
+        for first, second, expected in (
+            (355, 5, 10), (5, 355, 10), (0, 180, 180),
+            (-10, 370, 20), (0, 720, 0),
+        ):
+            self.assertEqual(angle_difference(first, second), expected)
+
+    def test_arrays_and_broadcasting(self):
+        result = angle_difference(np.array([355, 180, 720]), 0)
+        self.assertIsInstance(result, np.ndarray)
+        np.testing.assert_array_equal(result, [5, 180, 0])
+
+    def test_lists(self):
+        for first, second, expected in (
+            ([355, 5], [5, 355], [10, 10]),
+            ([355, 5], 5, [10, 0]),
+            (5, [355, 5], [10, 0]),
+        ):
+            result = angle_difference(first, second)
+            self.assertIsInstance(result, list)
+            self.assertTrue(all(type(value) is float for value in result))
+            self.assertEqual(result, expected)
+
+
 class TestDistanceMatrix(unittest.TestCase):
     def setUp(self):
         mesh_spacing = 2.5

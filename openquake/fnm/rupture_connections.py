@@ -911,7 +911,16 @@ def get_proximal_rup_angles(
 
 
 def angle_difference(angle_1, angle_2):
-    return np.abs(angle_1 - angle_2) % 360
+    """Return the smallest absolute difference in degrees, in [0, 180].
+
+    Inputs support NumPy broadcasting. Return a list if either input is a list.
+    """
+    difference = (np.asarray(angle_1, dtype=float)
+                  - np.asarray(angle_2, dtype=float)) % 360.0
+    difference = np.minimum(difference, 360.0 - difference)
+    if isinstance(angle_1, list) or isinstance(angle_2, list):
+        return difference.tolist()
+    return difference
 
 
 def get_dists_and_azimuths_from_pt(trace, pt):
