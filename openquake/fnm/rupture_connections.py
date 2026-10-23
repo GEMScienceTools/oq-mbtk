@@ -1313,60 +1313,72 @@ def sparse_to_adj_dict(sparse_matrix: csr_matrix):
 #    return vertex_sets
 
 
-def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+def _enumerate_connected_subsets(adj_dict, max_vertices=10, group_of=None):
+    """
+    Enumerate every connected vertex set of size 2 to `max_vertices`
+    exactly once, using the ESU algorithm (Wernicke, 2006). Unlike a
+    path-based search, this also finds branched sets (e.g. a fault junction
+    with three or more branches).
+
+    If `group_of` (vertex -> group id) is given, only sets in which no two
+    vertices share a group are returned. The constraint is hereditary, so
+    branches that violate it can be pruned without losing valid sets.
+    """
     all_subsets = set()
+    nbrs = {v: set(int(n) for n in ns) for v, ns in adj_dict.items()}
 
-    def explore(vertex, current_set):
-        if 1 < len(current_set) <= max_vertices:
-            # Add the current set as an immutable set to avoid duplicates
-            all_subsets.add(frozenset(current_set))
-
-        if len(current_set) == max_vertices:
+    def extend(sub, ext, v, used_groups):
+        if len(sub) > 1:
+            all_subsets.add(frozenset(sub))
+        if len(sub) == max_vertices:
             return
 
-        for neighbor in adj_dict[vertex]:
-            if neighbor not in current_set:
-                # Explore further only if the neighbor is not already in the current set
-                explore(neighbor, current_set | {neighbor})
+        closed_nbhd = set(sub)
+        for u in sub:
+            closed_nbhd |= nbrs.get(u, set())
 
-    for vertex in adj_dict.keys():
-        explore(vertex, {vertex})
+        ext = list(ext)
+        while ext:
+            w = ext.pop()
+            if group_of is not None:
+                g = group_of[w]
+                if g in used_groups:
+                    continue
+                new_used = used_groups | {g}
+            else:
+                new_used = used_groups
+            new_ext = ext + [
+                u
+                for u in nbrs.get(w, ())
+                if u > v and u not in closed_nbhd
+            ]
+            extend(sub | {w}, new_ext, v, new_used)
 
+    for v in adj_dict:
+        v = int(v)
+        used = {group_of[v]} if group_of is not None else set()
+        extend({v}, [u for u in nbrs[v] if u > v], v, used)
+
+    return all_subsets
+
+
+def find_connected_subsets_dfs(adj_dict, max_vertices=10):
+    all_subsets = _enumerate_connected_subsets(adj_dict, max_vertices)
     return [list(subset) for subset in all_subsets]
 
 
 def find_connected_subsets_bfs(adj_dict, max_vertices=10):
     """
-    Find all connected subsets of vertices up to a specified size using BFS.
+    Find all connected subsets of vertices up to a specified size.
 
     Parameters:
     - adj_dict: A dictionary where each key is a vertex and the value is a list of neighbors.
-    - cutoff: The maximum size of vertex subsets to find.
+    - max_vertices: The maximum size of vertex subsets to find.
 
     Returns:
     - A list of sets, each representing a connected subset of vertices up to the cutoff size.
     """
-    all_subsets = set()  # Use a set to store unique subsets
-
-    for start_vertex in adj_dict.keys():
-        # Queue items are tuples (vertex, subset) where 'subset' includes 'vertex'
-        queue = deque([(start_vertex, frozenset([start_vertex]))])
-
-        while queue:
-            vertex, current_set = queue.popleft()
-
-            # Add the current subset to the collection if it's within the size limit
-            if 1 < len(current_set) <= max_vertices:
-                all_subsets.add(current_set)
-
-            if len(current_set) < max_vertices:
-                # Only consider neighbors not already in the current subset
-                for neighbor in adj_dict[vertex]:
-                    if neighbor not in current_set:
-                        new_set = current_set | frozenset([neighbor])
-                        queue.append((neighbor, new_set))
-
-    # Convert frozensets back to lists or regular sets if necessary
+    all_subsets = _enumerate_connected_subsets(adj_dict, max_vertices)
     return [set(subset) for subset in all_subsets]
 
 
@@ -1447,34 +1459,10 @@ def find_connected_subsets_dfs_serial(
     list[list[int]]
         Each inner list is a connected, group‑unique vertex set.
     """
-    all_subsets: Set[frozenset[int]] = set()
+    all_subsets = _enumerate_connected_subsets(
+        adj_dict, max_vertices, group_of=group_of
+    )
 
-    def explore(
-        vertex: int, current_set: Set[int], used_groups: Set[int]
-    ) -> None:
-
-        if 1 < len(current_set) <= max_vertices:
-            all_subsets.add(frozenset(current_set))
-
-        if len(current_set) == max_vertices:
-            return
-
-        for nbr in adj_dict[vertex]:
-            if nbr in current_set:  # already inside
-                continue
-            g = group_of[nbr]
-            if g in used_groups:  # would repeat a group
-                continue
-            explore(
-                nbr,
-                current_set | {nbr},
-                used_groups | {g},
-            )
-
-    for v in adj_dict:
-        explore(v, {v}, {group_of[v]})
-
-    # convert back to mutable containers if that is what the caller wants
     return [list(s) for s in all_subsets]
 
 
@@ -1486,6 +1474,10 @@ def get_multifault_ruptures_fast(
     min_parallel_subgraphs: int = 0,
 ) -> list[list[int]]:
 
+    if parallel:
+        logging.warning(
+            "Parallel multifault search is slow; defaulting to serial search."
+        )
     parallel = False
 
     n = dist_adj_binary.shape[0]  # Number of vertices
@@ -1662,9 +1654,103 @@ def rdist_to_dist_matrix(
     return dist_matrix
 
 
+def adj_matrix_to_nbr_dict(adj_matrix) -> Dict[int, Dict[int, float]]:
+    """
+    Converts a (dense or sparse) adjacency matrix into a nested dictionary
+    `{i: {j: value}}` holding only the non-zero entries.
+    """
+    nbr_dict = {}
+    if issparse(adj_matrix):
+        mat = adj_matrix.tocsr()
+        indptr, indices, data = mat.indptr, mat.indices, mat.data
+        for i in range(mat.shape[0]):
+            row = {
+                int(j): float(v)
+                for j, v in zip(
+                    indices[indptr[i] : indptr[i + 1]],
+                    data[indptr[i] : indptr[i + 1]],
+                )
+                if v != 0.0
+            }
+            if row:
+                nbr_dict[i] = row
+    else:
+        arr = np.asarray(adj_matrix)
+        for i, j in zip(*np.nonzero(arr)):
+            nbr_dict.setdefault(int(i), {})[int(j)] = float(arr[i, j])
+    return nbr_dict
+
+
+def get_mf_connection_pairs(mf, nbr_dict) -> list[tuple[int, int]]:
+    """
+    Get the connections (pairs of single-fault ruptures) that join the
+    ruptures of a multifault rupture. The rupture indices in `mf` are not
+    in any particular order, so the connections are taken from the
+    adjacency structure: they are the edges of the minimum spanning tree
+    (by adjacency value, i.e. distance) of the subgraph induced by `mf`.
+
+    Parameters
+    ----------
+    mf : list of int
+        List of rupture indices.
+    nbr_dict : dict
+        Nested dictionary `{i: {j: value}}`, see `adj_matrix_to_nbr_dict`.
+
+    Returns
+    -------
+    list of tuples
+        The `len(mf) - 1` connections for a connected rupture.
+    """
+    if len(mf) < 2:
+        return []
+    members = set(int(r) for r in mf)
+    in_tree = [int(mf[0])]
+    in_tree_set = set(in_tree)
+    pairs = []
+    while len(in_tree) < len(members):
+        best = None
+        for u in in_tree:
+            for w, val in nbr_dict.get(u, {}).items():
+                if w in members and w not in in_tree_set:
+                    if best is None or val < best[2]:
+                        best = (u, w, val)
+        if best is None:
+            logging.warning("Multifault rupture %s is not connected", mf)
+            break
+        pairs.append((best[0], best[1]))
+        in_tree.append(best[1])
+        in_tree_set.add(best[1])
+    return pairs
+
+
+def get_multifault_connection_pairs(rupture_df, adj_matrix) -> pd.Series:
+    """
+    Get the connections for every rupture in `rupture_df` (see
+    `get_mf_connection_pairs`) as a Pandas Series indexed like `rupture_df`.
+    """
+    nbr_dict = adj_matrix_to_nbr_dict(adj_matrix)
+    return pd.Series(
+        data=[
+            get_mf_connection_pairs(row.ruptures, nbr_dict)
+            for row in rupture_df.itertuples()
+        ],
+        index=rupture_df.index,
+        dtype=object,
+    )
+
+
+def _distances_from_pairs(pairs, nbr_dict) -> np.ndarray:
+    if len(pairs) == 0:
+        return np.zeros(1)
+    return np.array(
+        [nbr_dict.get(i, {}).get(j, 0.0) for i, j in pairs], dtype=float
+    )
+
+
 def get_mf_distances_from_adj_matrix(mf, dist_adj_matrix) -> np.ndarray:
     """
-    Get the distances between the ruptures in a multifault rupture.
+    Get the distances between the ruptures in a multifault rupture, i.e.
+    the distances of the connections returned by `get_mf_connection_pairs`.
 
     Parameters
     ----------
@@ -1680,13 +1766,19 @@ def get_mf_distances_from_adj_matrix(mf, dist_adj_matrix) -> np.ndarray:
     """
     if len(mf) == 1:
         return np.zeros(1)
-    distances = np.empty(len(mf) - 1)
-    for i in range(len(distances)):
-        distances[i] = dist_adj_matrix[mf[i], mf[i + 1]]
-    return distances
+    idx = np.asarray(mf, dtype=int)
+    if issparse(dist_adj_matrix):
+        sub = dist_adj_matrix.tocsr()[idx][:, idx].toarray()
+    else:
+        sub = np.asarray(dist_adj_matrix)[np.ix_(idx, idx)]
+    local = adj_matrix_to_nbr_dict(sub)
+    local_pairs = get_mf_connection_pairs(list(range(len(idx))), local)
+    return _distances_from_pairs(local_pairs, local)
 
 
-def get_multifault_rupture_distances(rupture_df, distance_matrix) -> pd.Series:
+def get_multifault_rupture_distances(
+    rupture_df, distance_matrix, pairs: Optional[pd.Series] = None
+) -> pd.Series:
     """
     Get the distances between the ruptures in a multifault rupture.
     The distances are given as a Pandas Series, where the index is the rupture
@@ -1702,17 +1794,28 @@ def get_multifault_rupture_distances(rupture_df, distance_matrix) -> pd.Series:
             fault: fault identifier
     distance_matrix : np.ndarray
         Rupture adjacency matrix.
+    pairs : pd.Series, optional
+        Connections for each rupture, as returned by
+        `get_multifault_connection_pairs`. Computed from `distance_matrix`
+        if not given.
 
     Returns
     -------
     pd.Series
         Series of distances between the ruptures in the multifault rupture.
     """
+    nbr_dict = adj_matrix_to_nbr_dict(distance_matrix)
+    if pairs is None:
+        pairs = pd.Series(
+            data=[
+                get_mf_connection_pairs(row.ruptures, nbr_dict)
+                for row in rupture_df.itertuples()
+            ],
+            index=rupture_df.index,
+            dtype=object,
+        )
     distances = pd.Series(
-        data=[
-            get_mf_distances_from_adj_matrix(row.ruptures, distance_matrix)
-            for row in rupture_df.itertuples()
-        ],
+        data=[_distances_from_pairs(p, nbr_dict) for p in pairs.values],
         index=rupture_df.index,
     )
 
