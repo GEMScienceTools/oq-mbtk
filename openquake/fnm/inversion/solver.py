@@ -450,18 +450,18 @@ def nnls_pg(
         # stop on misfit
         if misfit < accept_norm:
             print("misfit below threshold")
-            return y, misfit_history
+            return y, misfit_history[:k + 1]
 
         # stopping test on projected gradient (unchanged)
         if projected_grad_ratio(y, g, m) < tol:
             print("gradient below threshold")
-            return y, misfit_history
+            return y, misfit_history[:k + 1]
 
         if k > stall_window:
             w = misfit_history[k - stall_window:k]
             if float(np.max(w) - np.min(w)) < stall_val:
                 print(f"inversion stalled at {k}")
-                return y, misfit_history
+                return y, misfit_history[:k + 1]
 
         x, y, t = y, x_next, t_next
 
@@ -582,7 +582,5 @@ def solve_nnls_pg(
         l_norm=l_norm,
         delta=delta,
     )
-
-    misfit_history = misfit_history[misfit_history >= 0.0]
 
     return x, misfit_history
