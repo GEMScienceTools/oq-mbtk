@@ -33,3 +33,8 @@
 SHEAR_MODULUS = 32e9
 PI = 3.1415926535
 EARTH_RADIUS = 6371.0
+
+# Distance (km) stored in rupture adjacency matrices for ruptures that touch
+# (true distance 0.0). A stored 0.0 means 'not connected', so touching
+# ruptures get this tiny positive value instead.
+MIN_CONNECTION_DIST = 1e-3

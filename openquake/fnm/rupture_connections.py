@@ -36,6 +36,7 @@ from openquake.fnm.fault_modeler import (
 
 from openquake.fnm.mesh import get_mesh_bb
 from openquake.fnm.bbox import get_bb_distance
+from openquake.fnm.constants import MIN_CONNECTION_DIST
 
 # these don't work well
 # from openquake.fnm.multifault_parallel import (
@@ -478,8 +479,9 @@ def get_rupture_adjacency_matrix(
     """
     Get the rupture adjacency matrix for a set of faults. Adjacency values
     are the distances between the ruptures in km. The distance value for
-    non-adjacent ruptures is 0.0, which is probably a bad idea and will
-    likely be changed in the future.
+    non-adjacent ruptures is 0.0; ruptures that touch (distance 0.0) are
+    stored with the small positive value `MIN_CONNECTION_DIST` so that they
+    are still recognised as connected.
 
     Parameters
     ----------
@@ -604,7 +606,9 @@ def get_rupture_adjacency_matrix(
                         )
                     )
                     if dist <= max_dist:
-                        dist_adj_matrix[row_ff, col_ff] = dist
+                        dist_adj_matrix[row_ff, col_ff] = max(
+                            dist, MIN_CONNECTION_DIST
+                        )
 
     else:
         single_fault_rup_coords = [
@@ -642,6 +646,9 @@ def get_rupture_adjacency_matrix(
                 #    pass
 
                 if pw_source_dists is not None:
+                    pw_source_dists['d'] = np.maximum(
+                        pw_source_dists['d'], MIN_CONNECTION_DIST
+                    )
                     local_dist_matrix = rdist_to_dist_matrix(
                         pw_source_dists, nrows, ncols
                     )

@@ -658,10 +658,10 @@ class TestMotaguaBranchedRuptures(unittest.TestCase):
 
     def test_multifault_count_includes_branched_ruptures(self):
         multifaults = self.fault_network["multifault_inds"]
-        # The path-only search returned 267. Connected-set enumeration
-        # adds 28 branched ruptures with four to seven constituent faults.
-        self.assertEqual(len(multifaults), 295)
-        self.assertEqual(len({frozenset(r) for r in multifaults}), 295)
+        # Connected-set enumeration gives 295 ruptures without touching
+        # connections; retaining those connections adds six more.
+        self.assertEqual(len(multifaults), 301)
+        self.assertEqual(len({frozenset(r) for r in multifaults}), 301)
         self.assertLessEqual(max(map(len, multifaults)), 7)
 
     def test_generated_junction_uses_all_three_jumps(self):

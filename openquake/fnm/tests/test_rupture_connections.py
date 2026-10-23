@@ -97,6 +97,7 @@ from openquake.fnm.rupture_connections import (
     get_mf_connection_pairs,
     adj_matrix_to_nbr_dict,
 )
+from openquake.fnm.fault_modeler import simple_fault_from_feature
 
 HERE = pathlib.Path(__file__).parent.absolute()
 
@@ -1987,6 +1988,52 @@ def test__lonlat_to_xyz_roundtrip():
 
 def test__geog_vec_to_xyz():
     pass
+
+
+class TestTouchingFaults(unittest.TestCase):
+    @staticmethod
+    def _feature(fid, coords):
+        return {
+            "type": "Feature",
+            "properties": {
+                "fid": fid,
+                "dip": 90.0,
+                "dip_dir": "N",
+                "net_slip_rate": 1.0,
+                "net_slip_rate_err": 0.5,
+                "rake": 0.0,
+            },
+            "geometry": {"type": "LineString", "coordinates": coords},
+        }
+
+    def test_faults_sharing_an_endpoint_are_connected(self):
+        # both traces start at the same point, so the rupture meshes share
+        # points and the rupture distance is exactly zero
+        faults = [
+            simple_fault_from_feature(
+                self._feature("a", [[10.2, 45.0], [10.0, 45.0]])
+            ),
+            simple_fault_from_feature(
+                self._feature("b", [[10.2, 45.0], [10.2, 45.2]])
+            ),
+        ]
+        subs = [
+            get_subsections_from_fault(
+                f, subsection_size=[15, 15], surface=f['surface']
+            )
+            for f in faults
+        ]
+        for full_fault_only in (True, False):
+            _, dist_mat = get_rupture_adjacency_matrix(
+                faults,
+                all_subfaults=subs,
+                max_dist=10.0,
+                full_fault_only_mf_ruptures=full_fault_only,
+            )
+            bin_mat = make_binary_adjacency_matrix_sparse(
+                dist_mat, max_dist=10.0
+            )
+            self.assertEqual(bin_mat.sum(), 2)
 
 
 class TestConnectedSubsetEnumeration(unittest.TestCase):
