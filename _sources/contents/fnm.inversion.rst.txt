@@ -1,0 +1,101 @@
+fnm.inversion package
+=====================
+
+Submodules
+----------
+
+fnm.inversion.fastmath module
+-----------------------------
+
+.. automodule:: fnm.inversion.fastmath
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.fermi\_importer module
+------------------------------------
+
+.. automodule:: fnm.inversion.fermi_importer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.nnls module
+-------------------------
+
+.. automodule:: fnm.inversion.nnls
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.osha\_importer module
+-----------------------------------
+
+.. automodule:: fnm.inversion.osha_importer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.particle\_swarm\_optimization module
+--------------------------------------------------
+
+.. automodule:: fnm.inversion.particle_swarm_optimization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.plausibility\_regularization module
+-------------------------------------------------
+
+.. automodule:: fnm.inversion.plausibility_regularization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.plots module
+--------------------------
+
+.. automodule:: fnm.inversion.plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.simulated\_annealing module
+-----------------------------------------
+
+.. automodule:: fnm.inversion.simulated_annealing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.soe\_builder module
+---------------------------------
+
+.. automodule:: fnm.inversion.soe_builder
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.solver module
+---------------------------
+
+.. automodule:: fnm.inversion.solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+fnm.inversion.utils module
+--------------------------
+
+.. automodule:: fnm.inversion.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: fnm.inversion
+   :members:
+   :show-inheritance:
+   :undoc-members:

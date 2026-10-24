@@ -1,0 +1,37 @@
+man.tests.single\_source\_utils package
+=======================================
+
+Submodules
+----------
+
+man.tests.single\_source\_utils.area\_utils\_test module
+--------------------------------------------------------
+
+.. automodule:: man.tests.single_source_utils.area_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tests.single\_source\_utils.fault\_utils\_test module
+---------------------------------------------------------
+
+.. automodule:: man.tests.single_source_utils.fault_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tests.single\_source\_utils.point\_utils\_test module
+---------------------------------------------------------
+
+.. automodule:: man.tests.single_source_utils.point_utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: man.tests.single_source_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
