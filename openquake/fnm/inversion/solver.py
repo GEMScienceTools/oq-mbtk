@@ -374,6 +374,7 @@ def nnls_pg(
     min: np.float64 = 0.0,
     l_norm: int = 2,
     delta: np.float64 = 1e-3,
+    stall_relative: bool = True,
 ):
     m = b.size
     n = x.size
@@ -459,7 +460,10 @@ def nnls_pg(
 
         if k > stall_window:
             w = misfit_history[k - stall_window:k]
-            if float(np.max(w) - np.min(w)) < stall_val:
+            spread = float(np.max(w) - np.min(w))
+            if stall_relative:
+                spread /= max(float(np.max(w)), 1e-300)
+            if spread < stall_val:
                 print(f"inversion stalled at {k}")
                 return y, misfit_history
 
@@ -489,6 +493,7 @@ def solve_nnls_pg(
     stall_val=1e-8,
     l_norm: int = 2,
     delta: float = 1e-3,
+    stall_relative: bool = True,
 ):
     """
     Solve  min_x ½‖Ax – b‖²  (or pseudo-Huber “L1” if l_norm=1)
@@ -516,12 +521,18 @@ def solve_nnls_pg(
     copy : bool, default True
         Whether to copy/convert `A` to CSR float64 even if already CSR.
     stall_val : float, default 1e-8
-        Stall threshold for the fixed sliding-window stopping test.
+        Stall threshold for the sliding-window stopping test (500
+        iterations): the inversion stops when the spread of the misfit in
+        the window is below this value.
     l_norm : int, default 2
         2 → standard L2 least squares.
         1 → pseudo-Huber “L1” (robust) loss.
     delta : float, default 1e-3
         Pseudo-Huber smoothing parameter (only used if l_norm == 1).
+    stall_relative : bool, default True
+        If True, the misfit spread in the stall window is divided by the
+        largest misfit in the window, so `stall_val` does not depend on
+        the scaling of the system. If False, the spread is absolute.
 
     Returns
     -------
@@ -581,6 +592,7 @@ def solve_nnls_pg(
         min=min,
         l_norm=l_norm,
         delta=delta,
+        stall_relative=stall_relative,
     )
 
     misfit_history = misfit_history[misfit_history >= 0.0]
