@@ -391,7 +391,8 @@ def nnls_pg(
     ATAz = np.empty(n)
 
     pred = np.zeros(m)
-    misfit_history = np.zeros(maxit)
+    # Negative entries mark unused iterations; zero is a valid exact misfit.
+    misfit_history = np.full(maxit, -1.0)
 
     mat_vec_mul = spspmm_csr
     for _ in range(3):
@@ -465,8 +466,9 @@ def nnls_pg(
 
         x, y, t = y, x_next, t_next
 
-    project_to_min(y, min=min)
-    return y, misfit_history
+    # x is the last feasible iterate whose misfit was recorded. y is the
+    # extrapolated point for the next iteration, which has not been evaluated.
+    return x, misfit_history
 
 
 def get_obs_equalization_weights(rhs, eps=None):

@@ -1,133 +1,26 @@
-import math
-from typing import Tuple, Union, Literal
+"""Experimental regularizers for linear inversions of rupture occurrence rates."""
+
+from typing import Tuple, Literal
 
 import numpy as np
 import scipy.sparse as sp
-from numba import njit, prange
-
-# -----------------------------------------------------------------------------
-# 1.  Internal helpers – normalisation & tiny K‑heap maintenance
-# -----------------------------------------------------------------------------
 
 
-def _normalise_columns(A_csr: sp.csr_matrix) -> sp.csr_matrix:
-    """Return a *new* **CSR** matrix whose columns have unit 2‑norm.
+def _normalise_columns(A_csr):
+    A_csr = sp.csr_matrix(A_csr, dtype=float)
+    norms = np.sqrt(np.asarray(A_csr.power(2).sum(axis=0)).ravel())
+    norms[norms == 0] = 1.0
+    return A_csr.multiply(1.0 / norms).tocsr()
 
-    ``scipy.sparse`` converts to COO when broadcasting with a 1‑D array; we
-    force the result back to CSR to guarantee ``.indptr``/``.indices`` attrs.
-    Columns with zero norm are left as all‑zero (their norm is set to 1).
+
+def build_similarity_topk(A, K=10, **kwargs):
+    """Return indices, indptr, data of the symmetric cosine neighbor graph.
+
+    See ``build_similarity_sparse`` for candidate restrictions. Symmetrization
+    keeps the union of directed selections, so final degrees can exceed K.
     """
-    col_norms = np.sqrt(A_csr.power(2).sum(axis=0)).A1.astype(np.float32)
-    col_norms[col_norms == 0.0] = 1.0  # avoid division by zero
-    inv_norms = 1.0 / col_norms
-    return A_csr.multiply(inv_norms).tocsr()  # «ensure CSR»
-
-
-@njit(inline="always")
-def _restore_min_root(vals: np.ndarray, idx: np.ndarray):
-    """After the 0‑th element was overwritten, move the new minimum to index 0."""
-    k = 0
-    for i in range(1, vals.shape[0]):  # tiny loop, K ≤ 15
-        if vals[i] < vals[k]:
-            k = i
-    if k != 0:
-        vals[0], vals[k] = vals[k], vals[0]
-        idx[0], idx[k] = idx[k], idx[0]
-
-
-@njit(parallel=True, fastmath=True)
-def _topk_cosine_kernel(
-    indptr: np.ndarray,
-    indices: np.ndarray,
-    data: np.ndarray,
-    n_cols: int,
-    K: int,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Populate *fixed‑size* ``topk_val`` and ``topk_idx`` arrays.
-
-    ``topk_val[i, 0]`` always stores the current **minimum** within the K best
-    of column *i* (min‑heap trick, O(K) memory per column).
-    """
-    topk_val = np.full((n_cols, K), -1.0, dtype=np.float32)
-    topk_idx = np.full((n_cols, K), -1, dtype=np.int32)
-
-    n_rows = indptr.shape[0] - 1
-
-    for r in prange(n_rows):
-        start = indptr[r]
-        stop = indptr[r + 1]
-        row_len = stop - start
-
-        for ii in range(row_len):
-            ci = indices[start + ii]
-            vi = data[start + ii]
-            for jj in range(ii + 1, row_len):
-                cj = indices[start + jj]
-                vj = data[start + jj]
-                s = vi * vj  # contribution to cosine dot‑product
-
-                # update heap of column ci
-                if s > topk_val[ci, 0]:
-                    topk_val[ci, 0] = s
-                    topk_idx[ci, 0] = cj
-                    _restore_min_root(topk_val[ci], topk_idx[ci])
-
-                # update heap of column cj
-                if s > topk_val[cj, 0]:
-                    topk_val[cj, 0] = s
-                    topk_idx[cj, 0] = ci
-                    _restore_min_root(topk_val[cj], topk_idx[cj])
-
-    return topk_idx, topk_val
-
-
-# -----------------------------------------------------------------------------
-# 2.  Public – similarity KNN graph (cosine of columns of *A*)
-# -----------------------------------------------------------------------------
-
-
-def build_similarity_topk(
-    A: sp.csr_matrix, K: int = 10
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return **CSR arrays** of a symmetric cosine KNN adjacency.
-
-    ``indices_S, indptr_S, data_S`` correspond to the *upper‑triangle* edges
-    (we symmetrise later) – this saves half the memory.
-    """
-    if not sp.isspmatrix_csr(A):
-        raise TypeError("A must be CSR")
-    if K < 1:
-        raise ValueError("K must be ≥1")
-
-    A_norm = _normalise_columns(A)  # now guaranteed CSR
-    indptr, indices, data = A_norm.indptr, A_norm.indices, A_norm.data
-    N = A_norm.shape[1]
-
-    topk_idx, topk_val = _topk_cosine_kernel(
-        indptr, indices, data.astype(np.float32), N, int(K)
-    )
-
-    # Convert K‑best → COO edge lists
-    ei, ej, ew = [], [], []
-    for i in range(N):
-        for k in range(K):
-            w = topk_val[i, k]
-            j = int(topk_idx[i, k])
-            if w > 0.0 and j >= 0:
-                ei.append(i)
-                ej.append(j)
-                ew.append(float(w))
-
-    S_coo = sp.coo_matrix((ew, (ei, ej)), shape=(N, N))
-    S_upper = sp.triu(S_coo, k=1)
-    S_sym = S_upper + S_upper.T
-    S_sym.sum_duplicates()
-
-    return (
-        S_sym.indices.astype(np.int32),
-        S_sym.indptr.astype(np.int32),
-        S_sym.data.astype(np.float32),
-    )
+    S = build_similarity_sparse(A, K, **kwargs)
+    return S.indices, S.indptr, S.data
 
 
 # -----------------------------------------------------------------------------
@@ -136,27 +29,22 @@ def build_similarity_topk(
 
 
 def make_plausibility_block(
-    pi: np.ndarray, *, scale_mode: Literal["log", "linear"] = "log"
+    pi: np.ndarray, *, scale_mode: Literal["log", "linear"] = "log",
+    rate_scale: float | None = None
 ) -> Tuple[sp.csr_matrix, np.ndarray]:
-    """Return (P, b_P) where *P* is ``N×N`` diagonal CSR and *b_P* is RHS vector.
-    ``pi`` must be 1‑D of length N with 0 < πᵢ ≤ 1.
+    """Explicit absolute-rate prior; use proportionality_block for relative rates.
+
+    Linear mode targets ``r = rate_scale * pi``. Log mode is rejected because
+    stacking an identity matrix cannot impose a logarithm of the unknown rates.
     """
-    if pi.ndim != 1:
-        raise ValueError("pi must be 1‑D")
-    if not np.all((pi > 0) & (pi <= 1)):
-        raise ValueError("plausibility values must be in (0, 1]")
-
-    N = pi.shape[0]
-    P = sp.eye(N, format="csr", dtype=np.float32)
-
-    if scale_mode == "log":
-        b_P = np.log(pi).astype(np.float32)
-    elif scale_mode == "linear":
-        b_P = pi.astype(np.float32)
-    else:
-        raise ValueError("scale_mode must be 'log' or 'linear'")
-
-    return P, b_P
+    pi = np.asarray(pi, dtype=float)
+    if pi.ndim != 1 or not np.all(np.isfinite(pi) & (pi > 0) & (pi <= 1)):
+        raise ValueError("pi must be a finite 1-D array in (0, 1]")
+    if scale_mode != "linear":
+        raise ValueError("log-rate priors are not linear rate equations; use proportionality_block")
+    if rate_scale is None or not np.isfinite(rate_scale) or rate_scale <= 0:
+        raise ValueError("linear absolute-rate priors require a positive rate_scale")
+    return sp.eye(len(pi), format="csr"), rate_scale * pi
 
 
 def make_similarity_block(
@@ -236,31 +124,63 @@ def similarity_csr_from_arrays(
 # ----------------------------------------------------------------------
 # Convenience wrapper that does both steps in one call
 # ----------------------------------------------------------------------
-def build_similarity_sparse(A: sp.spmatrix, K: int, *, symmetric=True):
+def build_similarity_sparse(
+    A, K=10, *, symmetric=True, min_similarity=0.0,
+    magnitudes=None, max_mag_difference=None, batch_size=256,
+):
+    """Exact positive column cosines, restricted before selecting K neighbors.
+
+    Accepts sparse matrices and arrays. Products are evaluated in batches to
+    avoid allocating the complete N-by-N Gram matrix. Dense input rows can
+    still make this expensive; use fault participation rows, not regional MFD
+    rows, when similarity is intended to represent shared fault geometry.
+
+    Optional magnitude differences and ``min_similarity`` restrict candidates
+    *before* top-K selection. Ties are broken by column index. The symmetric
+    graph is the union of selections, preserving either direction of an edge.
     """
-    Complete helper:  calls `build_similarity_topk` (numba kernel) and
-    returns a CSR similarity matrix.
-
-        S = build_similarity_sparse(A, K)
-
-    Parameters
-    ----------
-    A : scipy.sparse matrix  (M × N)
-        Original data‑constraint matrix (columns = events).
-    K : int
-        Number of nearest neighbours per column to keep.
-    symmetric : bool, default True
-        Force symmetry with `S.maximum(S.T)`.
-
-    Returns
-    -------
-    S : scipy.sparse.csr_matrix, shape = (N, N)
-        Cosine‑similarity graph (weights in [0, 1]).
-    """
-    A = A.tocsr()
-    indices_S, indptr_S, data_S = build_similarity_topk(A, K)
-    return similarity_csr_from_arrays(indices_S, indptr_S, data_S,
-                                      N=A.shape[1], symmetric=symmetric)
+    if not sp.issparse(A):
+        raise TypeError("A must be a sparse matrix or array")
+    if not isinstance(K, (int, np.integer)) or K < 1:
+        raise ValueError("K must be a positive integer")
+    if not isinstance(batch_size, (int, np.integer)) or batch_size < 1:
+        raise ValueError("batch_size must be a positive integer")
+    if not np.isfinite(min_similarity) or not 0 <= min_similarity <= 1:
+        raise ValueError("min_similarity must be in [0, 1]")
+    A = sp.csr_matrix(A, dtype=float, copy=True)
+    A.sum_duplicates()
+    if not np.all(np.isfinite(A.data)):
+        raise ValueError("A must contain finite values")
+    N = A.shape[1]
+    if max_mag_difference is not None:
+        magnitudes = np.asarray(magnitudes, dtype=float)
+        if magnitudes.shape != (N,) or not np.all(np.isfinite(magnitudes)):
+            raise ValueError("magnitudes must be finite and aligned with A columns")
+        if not np.isfinite(max_mag_difference) or max_mag_difference < 0:
+            raise ValueError("max_mag_difference must be finite and nonnegative")
+    A_norm = _normalise_columns(A)
+    columns = A_norm.tocsc()
+    rows, cols, values = [], [], []
+    for start in range(0, N, batch_size):
+        products = (columns[:, start:start + batch_size].T @ A_norm).tocsr()
+        for local in range(products.shape[0]):
+            i = start + local
+            lo, hi = products.indptr[local:local + 2]
+            js = products.indices[lo:hi]
+            scores = np.clip(products.data[lo:hi], -1.0, 1.0)
+            keep = (js != i) & (scores > 0) & (scores >= min_similarity)
+            if max_mag_difference is not None:
+                keep &= np.abs(magnitudes[js] - magnitudes[i]) <= max_mag_difference + 1e-12
+            js, scores = js[keep], scores[keep]
+            best = np.lexsort((js, -scores))[:K]
+            rows.extend([i] * len(best))
+            cols.extend(js[best])
+            values.extend(scores[best])
+    S = sp.csr_matrix((values, (rows, cols)), shape=(N, N))
+    if symmetric:
+        S = S.maximum(S.T).tocsr()
+    S.sort_indices()
+    return S
 
 # -----------------------------------------------------------------------------
 # 4.  System augmentation factory
@@ -275,14 +195,20 @@ def augment_system(
     K: int = 10,
     lambda_P: float = 1.0,
     lambda_S: float = 0.1,
-    scale_mode: Literal["log", "linear"] = "log"
+    scale_mode: Literal["log", "linear"] = "log",
+    rate_scale: float | None = None,
 ) -> Tuple[sp.csr_matrix, np.ndarray]:
     """Stack *P* and *B* blocks underneath the original system ``A x = d``.
 
-    Returns ``A_aug`` (CSR) and ``d_aug`` (1‑D float32).
+    This legacy absolute-prior helper requires explicit linear mode and
+    rate_scale. For relative plausibility, stack proportionality_block instead.
+    Returns ``A_aug`` (CSR) and ``d_aug`` (1-D float64).
     """
-    if not sp.isspmatrix_csr(A):
-        raise TypeError("A must be CSR")
+    A = sp.csr_matrix(A, dtype=float)
+    d = np.asarray(d, dtype=float)
+    P, b_P = make_plausibility_block(pi, scale_mode=scale_mode, rate_scale=rate_scale)
+    if P.shape[1] != A.shape[1]:
+        raise ValueError("pi must be aligned with A columns")
     if d.ndim != 1 or d.shape[0] != A.shape[0]:
         raise ValueError("d must be 1‑D with length M (= rows of A)")
 
@@ -294,17 +220,12 @@ def augment_system(
     B = make_similarity_block(indices_S, indptr_S, N=N)
 
     # ------------------------------------------------------------------
-    # 2. Plausibility block
-    # ------------------------------------------------------------------
-    P, b_P = make_plausibility_block(pi, scale_mode=scale_mode)
-
-    # ------------------------------------------------------------------
     # 3. Stack rows
     # ------------------------------------------------------------------
     A_aug = sp.vstack([A, lambda_P * P, lambda_S * B], format="csr")
     d_aug = np.concatenate(
         [
-            d.astype(np.float32),
+            d.astype(float),
             lambda_P * b_P,
             np.zeros(B.shape[0], dtype=np.float32),
         ]
@@ -314,7 +235,7 @@ def augment_system(
 
 def plausibility_residual(r, pi, *, scale_mode="log"):
     if scale_mode == "log":
-        # P enforced   log(r_i) = log(pi_i)
+        # Descriptive log-ratio diagnostic, NOT a linear-system residual.
         return np.log(r) - np.log(pi)
     else:              # linear mode
         return r - pi
@@ -368,88 +289,81 @@ def neighbor_ratio_spread(r, pi, indices_S, indptr_S, scale_mode="log", eps=1e-3
     }
 
 
-def plausibility_similarity_report(r, pi, S, *,
-                                   scale_mode="log", lambda_P=1.0, lambda_S=0.1):
+def plausibility_similarity_report(
+    r, pi, S, *, scale_mode="log", lambda_P=1.0, lambda_S=0.1,
+    block=None, formulation="laplacian", use_weights=False,
+):
+    """Report actual proportionality residuals and descriptive neighbor spread.
 
-    e_P = plausibility_residual(r, pi, scale_mode=scale_mode)
-    e_S = similarity_residual(r, S.indices, S.indptr)
+    Pass the exact ``block`` used in the inversion (including its row scaling)
+    or specify its construction options. ``scale_mode`` affects only the
+    descriptive ratio spread, not the linear-system residual. lambda_S applies
+    to the separate ordinary-smoothing diagnostic, if that block is used.
+    """
+    r = np.asarray(r, dtype=float)
+    if block is None:
+        block = proportionality_block(S, pi, lambda_P, use_weights,
+                                      formulation=formulation)
+    e_P = np.asarray(block @ r).ravel()
+    e_S = lambda_S * similarity_residual(r, S.indices, S.indptr)
+    for label, e in (("Proportionality block", e_P), ("Ordinary smoothing", e_S)):
+        rms = np.sqrt(np.mean(e**2)) if e.size else 0.0
+        largest = np.max(np.abs(e)) if e.size else 0.0
+        print(f"{label}: RMS={rms:.3e}, max|residual|={largest:.3e}")
     q_spread = neighbor_ratio_spread(r, pi, S.indices, S.indptr,
                                      scale_mode=scale_mode)
-    print(f"P‑block:  RMS={np.sqrt(np.mean(e_P**2)):.3e}, ",
-          f"max|e_P|={np.max(np.abs(e_P)):.3e}")
-    print(f"S‑block:  RMS={np.sqrt(np.mean(e_S**2)):.3e},  ",
-          f"max|e_S|={np.max(np.abs(e_S)):.3e}")
     print(f"Neighbor ratio RMS spread = {q_spread['rms_q_diff']:.3e}")
 
 
-def proportionality_block(S,                   # sparse (N×N)  adjacency
-                          pi,                  # (N,) plausibility, >0
-                          lambda_P=1.0,        # weight for the whole block
-                          use_weights=False    # step‑2 option
-                          ):
+def proportionality_block(
+    S, pi, lambda_P=1.0, use_weights=False, *, formulation="laplacian",
+):
+    """Linear constraints with zero RHS favoring rates proportional to pi.
+
+    ``laplacian`` preserves the original N-by-N interface, with corrected
+    diagonal: -sum(w_ij)*r_i + sum(w_ij*pi_i/pi_j*r_j). An isolated rupture
+    has a zero row. Unweighted mode uses w_ij=1 for each existing edge.
+
+    ``pairwise`` uses one row per undirected edge, with coefficients
+    sqrt(w_ij) * [pi_j, -pi_i] / hypot(pi_i, pi_j). This avoids cancellation
+    between neighbors and divisions by tiny plausibilities. Its row norm is
+    sqrt(w_ij), independent of the common plausibility scale. For a symmetric S, it has the same
+    nullspace as the Laplacian, but a different penalty away from it.
+
+    Both modes annihilate r=c*pi. lambda_P multiplies rows, so its square
+    multiplies the least-squares penalty. pi must be finite and positive;
+    zero-plausibility ruptures need an explicit exclusion/fixed-zero policy.
     """
-    Build an N×N sparse matrix B such that
-
-        (B @ r)[i]  =  -r_i + Σ_j (p_i/p_j)·r_j                (unweighted)
-        (B @ r)[i]  =  -Σ_j w_ij·r_i + Σ_j w_ij(p_i/p_j)·r_j   (weighted)
-
-    equals zero when every rupture in each neighbourhood is proportional
-    to its plausibility.
-
-    Parameters
-    ----------
-    S : scipy.sparse matrix (N×N)
-        k‑nearest‑neighbour adjacency, usually the output of
-        `build_similarity_sparse`.  Only the *pattern* (and optionally the
-        data) are used.
-    pi : (N,) array_like
-        Plausibility values, strictly positive.
-    lambda_P : float, optional
-        Scalar weight.  The returned matrix is `lambda_P * B_raw`.
-    use_weights : bool, optional
-        *False* (default)  → ignore `S.data`, use plain ratios.  
-        *True*            → multiply every neighbour term by `w_ij`
-                            and the r_i term by `-Σ w_ij`.
-
-    Returns
-    -------
-    B : scipy.sparse.csr_matrix (N×N)
-        Constraint block with ~N·(k+1) non‑zeros.
-    """
-    pi = np.asarray(pi, dtype=np.float32)
-    if np.any(pi <= 0):
-        raise ValueError("plausibility values must be positive")
-
-    S_csr = S.tocsr()
-    indptr, indices, weights = S_csr.indptr, S_csr.indices, S_csr.data
-    N = S_csr.shape[0]
-
-    # -------- build COO triplets -------------------------------------
-    rows, cols, data = [], [], []
-
-    for i in range(N):
-        start, stop = indptr[i], indptr[i+1]
-        nbr_idx = indices[start:stop]
-        nbr_w   = weights[start:stop] if use_weights else None
-
-        # ---- coefficient on r_i  ------------------------------------
-        if use_weights:
-            coeff_self = -np.sum(nbr_w, dtype=np.float32)
-        else:
-            coeff_self = -1.0
-        rows.append(i)
-        cols.append(i)
-        data.append(lambda_P * coeff_self)
-
-        # ---- neighbour coefficients --------------------------------
-        p_i = pi[i]
-        for jj, j in enumerate(nbr_idx):
-            ratio = p_i / pi[j]
-            coeff = ratio * (nbr_w[jj] if use_weights else 1.0)
-            rows.append(i)
-            cols.append(j)
-            data.append(lambda_P * coeff)
-
-    B = sp.coo_matrix((data, (rows, cols)), shape=(N, N),
-                      dtype=np.float32).tocsr()
-    return B
+    S = sp.csr_matrix(S, dtype=float, copy=True)
+    S.sum_duplicates()
+    if S.shape[0] != S.shape[1]:
+        raise ValueError("S must be square")
+    pi = np.asarray(pi, dtype=float)
+    if pi.shape != (S.shape[0],) or not np.all(np.isfinite(pi) & (pi > 0)):
+        raise ValueError("pi must be finite, positive and aligned with S")
+    if not np.all(np.isfinite(S.data) & (S.data >= 0)):
+        raise ValueError("similarity weights must be finite and nonnegative")
+    if not np.isfinite(lambda_P) or lambda_P < 0:
+        raise ValueError("lambda_P must be finite and nonnegative")
+    S.setdiag(0)
+    S.eliminate_zeros()
+    if not use_weights:
+        S.data[:] = 1.0
+    if formulation == "laplacian":
+        degrees = np.asarray(S.sum(axis=1)).ravel()
+        return (lambda_P * (sp.diags(pi) @ S @ sp.diags(1 / pi)
+                            - sp.diags(degrees))).tocsr()
+    if formulation != "pairwise":
+        raise ValueError("formulation must be 'laplacian' or 'pairwise'")
+    edges = sp.triu(S.maximum(S.T), k=1).tocoo()
+    i, j = edges.row, edges.col
+    # Rescale first so the normalization is stable even for very small pi.
+    scale = np.maximum(pi[i], pi[j])
+    p_i, p_j = pi[i] / scale, pi[j] / scale
+    weights = lambda_P * np.sqrt(edges.data) / np.hypot(p_i, p_j)
+    n = len(i)
+    return sp.csr_matrix(
+        (np.concatenate((weights * p_j, -weights * p_i)),
+         (np.concatenate((np.arange(n), np.arange(n))), np.concatenate((i, j)))),
+        shape=(n, len(pi)),
+    )
