@@ -374,6 +374,7 @@ def nnls_pg(
     min: np.float64 = 0.0,
     l_norm: int = 2,
     delta: np.float64 = 1e-3,
+    restart: bool = True,
 ):
     m = b.size
     n = x.size
@@ -447,6 +448,12 @@ def nnls_pg(
 
         misfit_history[k] = misfit
 
+        # Adaptive restart (O'Donoghue & Candes, 2015): when the misfit
+        # increases, drop the momentum and restart the acceleration
+        if restart and k > 0 and misfit > misfit_history[k - 1]:
+            t_next = 1.0
+            x_next = y.copy()
+
         # stop on misfit
         if misfit < accept_norm:
             print("misfit below threshold")
@@ -489,6 +496,7 @@ def solve_nnls_pg(
     stall_val=1e-8,
     l_norm: int = 2,
     delta: float = 1e-3,
+    restart: bool = True,
 ):
     """
     Solve  min_x ½‖Ax – b‖²  (or pseudo-Huber “L1” if l_norm=1)
@@ -522,6 +530,9 @@ def solve_nnls_pg(
         1 → pseudo-Huber “L1” (robust) loss.
     delta : float, default 1e-3
         Pseudo-Huber smoothing parameter (only used if l_norm == 1).
+    restart : bool, default True
+        If True, the Nesterov momentum is reset whenever the misfit
+        increases (adaptive restart).
 
     Returns
     -------
@@ -581,6 +592,7 @@ def solve_nnls_pg(
         min=min,
         l_norm=l_norm,
         delta=delta,
+        restart=restart,
     )
 
     misfit_history = misfit_history[misfit_history >= 0.0]
