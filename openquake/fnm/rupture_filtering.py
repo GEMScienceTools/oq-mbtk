@@ -75,6 +75,8 @@ def connection_angle_plausibility(
     no_connection_val=-1,
     midpoint=90.0,
 ):
+    if midpoint is None:
+        return 1.0
     conns = np.array(connection_angles)
     conns[conns == no_connection_val] = 0.0
 
