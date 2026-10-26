@@ -229,15 +229,19 @@ def _matrix_to_rupture_series(rupture_df, matrix, pairs=None):
     if pairs is None:
         pairs = get_multifault_connection_pairs(rupture_df, matrix)
 
-    mat = matrix.todok() if issparse(matrix) else np.asarray(matrix)
-    is_sparse = issparse(mat)
+    is_sparse = issparse(matrix)
+    # DOK scalar indexing performs SciPy's index validation on every jump.
+    # These pairs already contain matrix indices; missing entries still mean
+    # zero, so a plain dictionary provides the same values at much lower cost.
+    mat = dict(matrix.todok().items()) if is_sparse else np.asarray(matrix)
     seqs = []
     for rup_pairs in pairs.values:
         if len(rup_pairs) == 0:
             seqs.append(np.zeros(1, dtype=np.float64))
             continue
         vals = [
-            float(mat[i, j] if is_sparse else mat[i][j]) for i, j in rup_pairs
+            float(mat.get((i, j), 0.0) if is_sparse else mat[i][j])
+            for i, j in rup_pairs
         ]
         seqs.append(np.asarray(vals, dtype=np.float64))
 
@@ -355,11 +359,43 @@ def _compute_slip_az_plausibility(
 ):
     if slip_azimuth_midpoint is None:
         return 1.0
-    return rupture_df["slip_azimuth"].apply(
-        slip_azimuth_plausibility,
-        function_type=slip_azimuth_function,
-        midpoint=slip_azimuth_midpoint,
+    azimuths = rupture_df["slip_azimuth"]
+    if azimuths.empty:
+        return azimuths.copy()
+    if slip_azimuth_function != "cosine":
+        raise NotImplementedError(
+            f"Function type {slip_azimuth_function} not implemented."
+        )
+    if not 0.0 < slip_azimuth_midpoint < 180.0:
+        raise ValueError("midpoint must be between 0 and 180 degrees")
+
+    exponent = np.log(0.5) / (
+        2.0 * np.log(np.cos(np.radians(slip_azimuth_midpoint) / 2.0))
     )
+    sequences = azimuths.to_numpy()
+    scores = np.ones(len(sequences), dtype=float)
+    # Batch equal-length sequences so each row has the same reduction order
+    # as the scalar calculation, without padding or a per-rupture NumPy call.
+    # Bound temporary storage rather than padding the entire rupture set.
+    for start in range(0, len(sequences), 16384):
+        groups = {}
+        for i in range(start, min(start + 16384, len(sequences))):
+            size = len(sequences[i])
+            if size == 0:
+                scores[i] = np.nan
+            elif size > 1:
+                groups.setdefault(size, []).append(i)
+        for indices in groups.values():
+            angles = np.radians(np.asarray(
+                sequences[indices].tolist(), dtype=float
+            ))
+            resultant_squared = np.clip(
+                np.mean(np.cos(angles), axis=1) ** 2
+                + np.mean(np.sin(angles), axis=1) ** 2,
+                0.0, 1.0,
+            )
+            scores[indices] = resultant_squared ** exponent
+    return pd.Series(scores, index=azimuths.index, name=azimuths.name)
 
 
 def _build_angle_matrix_from_pairs(single_rup_df, subfaults, binary_matrix):
