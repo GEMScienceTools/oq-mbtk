@@ -52,6 +52,7 @@ from openquake.fnm.rupture_filtering import (
     _compute_distance_plausibility,
     _compute_angle_plausibility,
     _compute_slip_az_plausibility,
+    _matrix_to_rupture_series,
     _build_angle_matrix_from_pairs,
     slip_azimuth_plausibility,
 )
@@ -112,6 +113,73 @@ class TestRupturePlausibilities(unittest.TestCase):
 
 
 class TestPlausibilityRegressions(unittest.TestCase):
+    def test_matrix_lookup_preserves_pairs_and_missing_values(self):
+        matrix = np.array([[0.0, 12.5, 0.0],
+                           [47.0, 0.0, -1.0],
+                           [0.0, 8.0, 0.0]])
+        df = pd.DataFrame({"ruptures": [[0], [0, 1, 2], [2, 1]]},
+                          index=[7, 2, 11])
+        pairs = pd.Series([[], [(0, 1), (0, 2), (1, 2)], [(2, 1)]],
+                          index=df.index)
+        expected = [[0.0], [12.5, 0.0, -1.0], [8.0]]
+        sparse = dok_array(matrix)
+        for values in (matrix, sparse, sparse.tocsr()):
+            result = _matrix_to_rupture_series(df, values, pairs=pairs)
+            self.assertTrue(result.index.equals(df.index))
+            for actual, wanted in zip(result, expected):
+                np.testing.assert_array_equal(actual, wanted)
+
+    def test_batched_slip_azimuth_matches_scalar(self):
+        rng = np.random.default_rng(32)
+        sequences = [
+            [15.0], [np.nan], [0.0, 180.0], [359.0, 1.0],
+            [0.0, 120.0, 240.0], [0.0, 0.0, 180.0],
+            [15.0] * 9, [0.0, np.nan],
+        ]
+        sequences.extend(
+            rng.uniform(-720.0, 720.0, size).tolist()
+            for size in range(2, 66)
+        )
+        # Cross a batch boundary and retain positional alignment even with
+        # repeated/non-contiguous dataframe labels and mixed sequence types.
+        sequences = [[10.0, 100.0]] * 16380 + sequences
+        sequences[-1] = np.asarray(sequences[-1])
+        sequences[-2] = tuple(sequences[-2])
+        df = pd.DataFrame(
+            {"slip_azimuth": sequences},
+            index=np.arange(len(sequences)) // 2 * 3,
+        )
+        for midpoint in (30.0, 60.0, 90.0, 120.0, 175.0):
+            with self.subTest(midpoint=midpoint):
+                expected = df.slip_azimuth.apply(
+                    slip_azimuth_plausibility, midpoint=midpoint
+                )
+                actual = _compute_slip_az_plausibility(
+                    df, "cosine", midpoint
+                )
+                pd.testing.assert_series_equal(
+                    actual, expected, rtol=1e-14, atol=1e-15
+                )
+
+    def test_batched_slip_azimuth_empty_and_validation(self):
+        empty = pd.DataFrame({"slip_azimuth": pd.Series(dtype=object)})
+        pd.testing.assert_series_equal(
+            _compute_slip_az_plausibility(empty, "cosine", 90.0),
+            empty.slip_azimuth,
+        )
+        df = pd.DataFrame({"slip_azimuth": [[], [20.0]]})
+        actual = _compute_slip_az_plausibility(df, "cosine", 90.0)
+        self.assertTrue(np.isnan(actual.iloc[0]))
+        self.assertEqual(actual.iloc[1], 1.0)
+        for midpoint in (0.0, 180.0, -1.0, np.nan):
+            with self.assertRaises(ValueError):
+                _compute_slip_az_plausibility(df, "cosine", midpoint)
+        with self.assertRaises(NotImplementedError):
+            _compute_slip_az_plausibility(df, "invalid", 90.0)
+        self.assertEqual(
+            _compute_slip_az_plausibility(df, "invalid", None), 1.0
+        )
+
     def test_slip_azimuth_average_agreement(self):
         for angles, expected in (
             ([15.0], 1.0),
