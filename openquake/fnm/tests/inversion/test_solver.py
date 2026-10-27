@@ -202,15 +202,15 @@ class TestSolveNnlsPgFromLilFaults(unittest.TestCase):
             slip_rate_eqns=True,
             return_sparse=True,
         )
-        w = weights_from_errors(err)
+        # `err` returned by make_eqns already holds row weights (1/sigma)
         x, _ = solve_nnls_pg(
-            A, b, weights=w, max_iters=20000, accept_norm=1e-14, accept_grad=1e-10
+            A, b, weights=err, max_iters=20000, accept_norm=1e-14, accept_grad=1e-10
         )
-        np.testing.assert_allclose(
-            x,
-            np.array([2.773e-4, 7.810e-4, 2.773e-4, 1.519e-5, 8.124e-4]),
-            rtol=1e-2,
-        )
+        # 3 equations and 5 ruptures: the system has infinitely many exact
+        # solutions, so check that x is one of them rather than pinning
+        # values that depend on the path of the iterations
+        np.testing.assert_allclose(A @ x, b, rtol=1e-3)
+        assert np.all(x >= 0.0)
 
     def test_slip_rate_system_weighted_residual_norm(self):
         A, b, err = make_eqns(
