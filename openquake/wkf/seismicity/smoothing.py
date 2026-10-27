@@ -37,6 +37,9 @@ def create_smoothing_per_zone(fname_points: str, fname_polygons: str,
     if len(use) > 0:
         use=get_list(use)
 
+    if len(skip) > 0:
+        skip=get_list(skip)
+
     # Create a geodataframe with the point sources
     df = pd.read_csv(fname_points)
     gdf = gpd.GeoDataFrame(df.drop(['lon', 'lat'], axis=1), crs='epsg:4326',

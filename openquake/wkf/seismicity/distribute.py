@@ -28,6 +28,7 @@
 import os
 import glob
 import math
+import logging
 import argparse
 
 try:
@@ -43,12 +44,8 @@ import pandas as pd
 
 
 def _distribute_total_rates(
-        aGR: float,
-        bGR: float,
-        fname_in: str,
-        fname_out: str,
-        fraction_flat: float
-    ):
+    aGR: float, bGR: float, fname_in: str, fname_out: str, fraction_flat: float
+):
     """
     Distributes the seismicity specified by the aGR and bGR parameters
     over an irregular grid and writes a .csv with the coordinates of each
@@ -81,41 +78,43 @@ def _distribute_total_rates(
     assert abs(1.0 - weights.sum()) < 1e-10
 
     # Total activity rate
-    total_activity_rate = (10.0 ** aGR)
+    total_activity_rate = 10.0**aGR
 
     # Flat contribution
     flat_contr = np.full_like(
-            weights.values,
-            total_activity_rate * fraction_flat / len(weights.values),
-            dtype=float
+        weights.values,
+        total_activity_rate * fraction_flat / len(weights.values),
+        dtype=float,
     )
 
     # Compute the smoothed seismicity component and add the flat part
     aGR_points = np.log10(
-            total_activity_rate * weights.values * fraction_smooth +
-            flat_contr)
+        total_activity_rate * weights.values * fraction_smooth + flat_contr
+    )
     bGR_points = np.full_like(aGR_points, bGR, dtype=float)
 
     # Creating output DataFrame
-    outdf = pd.DataFrame({
-        "lon": points_df["lon"],
-        "lat": points_df["lat"],
-        "agr": aGR_points,
-        "bgr": bGR_points
-    })
+    outdf = pd.DataFrame(
+        {
+            "lon": points_df["lon"],
+            "lat": points_df["lat"],
+            "agr": aGR_points,
+            "bgr": bGR_points,
+        }
+    )
 
     # Write output
     outdf.to_csv(fname_out, index=False)
 
 
 def _distribute_rates(
-        folder_smooth: str,
-        fname_config: str,
-        folder_out: str,
-        eps_b: float = 0.0,
-        eps_rate: float = 0.0,
-        fraction_flat: float = 0.0
-        ):
+    folder_smooth: str,
+    fname_config: str,
+    folder_out: str,
+    eps_b: float = 0.0,
+    eps_rate: float = 0.0,
+    fraction_flat: float = 0.0,
+):
     """
 
     :param folder_smooth:
@@ -145,7 +144,11 @@ def _distribute_rates(
 
         # bgr
         sigma_b = src_cfg.get("bgr_sig", 0.0)
-        bgr = src_cfg["bgr"] + sigma_b * eps_b
+        try:
+            bgr = src_cfg["bgr"] + sigma_b * eps_b
+        except KeyError:  # not defined perhaps due to low seismicity
+            logging.warning(f"{source_id} does not have bgr defined")
+            continue
 
         # If rmag exists → support uncertainty on rate
         if "rmag" in src_cfg:
