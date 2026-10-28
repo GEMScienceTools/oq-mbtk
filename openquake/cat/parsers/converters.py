@@ -244,7 +244,7 @@ class GCMTtoISFParser(object):
             isf_cat.events.append(event)
         return isf_cat
         
-def hmtk_to_df(hmtk_cat)
+def hmtk_to_df(hmtk_cat):
     """
     Convert a hmtk catalogue object to a pandas dataframe
     
