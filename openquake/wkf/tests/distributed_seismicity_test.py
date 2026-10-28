@@ -100,8 +100,8 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         npd = PMF([(1, NodalPlane(strike=0., dip=50, rake=90.))])
         hpd = PMF([(0.2, 5.), (0.5, 10.), (0.3, 15.)])
 
+        ya = -2
         for ii in ['1', '2']:
-            ya = -2
             lon = np.arange(-2, 2, 0.2)
             lat = np.arange(ya, ya + 2, 0.2)
             ya += 2
@@ -120,7 +120,7 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
                         nodal_plane_distribution=npd,
                         hypocenter_distribution=hpd,
                         location=Point(lo, la))
-                sources.append(src1)
+                    sources.append(src1)
 
             fmt = '{}/sources_{}.xml'
             write_source_model(fmt.format(points_dir, ii), sources)
@@ -169,13 +169,13 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         _ = subprocess.run(cmd, shell=True)
 
         # Check if new files match the ones in expected
-        expc_dir = pathlib.Path('./expected/ds_test_02')
+        expc_dir = pathlib.Path('./expected/ds_test_01')
         files = sorted([f for f in folder_out.glob('*.xml')])
         if OVERWRITE:
-            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
-            shutil.copyfile(files[1], HERE / expc_dir / 'src_buffers_02.xml')
-            shutil.copyfile(files[2], HERE / expc_dir / 'src_points_01.xml')
-            shutil.copyfile(files[3], HERE / expc_dir / 'src_points_02.xml')
+            shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_1.xml')
+            shutil.copyfile(files[1], HERE / expc_dir / 'src_buffers_2.xml')
+            shutil.copyfile(files[2], HERE / expc_dir / 'src_points_1.xml')
+            shutil.copyfile(files[3], HERE / expc_dir / 'src_points_2.xml')
         files_e = sorted([f for f in expc_dir.glob('*.xml')])
 
         for f1, f2 in zip(files, files_e):
