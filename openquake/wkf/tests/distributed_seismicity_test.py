@@ -72,11 +72,11 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
 
         # Check if new files match the ones in expected
         expc_dir = pathlib.Path('./expected/ds_test_02')
-        files = sorted([f for f in outdir.glob('*.xml')])
+        files = sorted([f for f in outdir.glob('*01.xml')])
         if OVERWRITE:
             shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
             shutil.copyfile(files[1], HERE / expc_dir / 'src_points_01.xml')
-        files_e = sorted([f for f in expc_dir.glob('*.xml')])
+        files_e = sorted([f for f in expc_dir.glob('*01.xml')])
 
         # Compare files
         for f1, f2 in zip(files, files_e):
