@@ -34,7 +34,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -65,7 +65,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -96,7 +96,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="7.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -127,7 +127,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="7.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -158,7 +158,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -189,7 +189,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="7.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -220,7 +220,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -251,7 +251,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -282,7 +282,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -313,7 +313,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -344,7 +344,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -375,7 +375,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -406,7 +406,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -437,7 +437,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -468,7 +468,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -499,7 +499,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.1" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.19897000433601872" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -530,7 +530,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.25" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="0.19897000433601883" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>
@@ -561,7 +561,7 @@ xmlns:gml="http://www.opengis.net/gml"
                 <ruptAspectRatio>
                     1.0
                 </ruptAspectRatio>
-                <truncGutenbergRichterMFD aValue="0.15" bValue="1.0" maxMag="6.5" minMag="5.0"/>
+                <truncGutenbergRichterMFD aValue="-0.02287874528033758" bValue="1.0" maxMag="6.5" minMag="5.0"/>
                 <nodalPlaneDist>
                     <nodalPlane dip="50.0" probability="1.0" rake="90.0" strike="0.0"/>
                 </nodalPlaneDist>

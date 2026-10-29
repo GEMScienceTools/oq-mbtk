@@ -221,7 +221,7 @@ def remove_buffer_around_faults(
     dst: Union[float, np.ndarray],
     threshold_mag: Union[float, np.ndarray] = 6.5,
     use: str = '',
-    rupture_mesh_spacing=5.0,
+    rupture_mesh_spacing=1.0,
     complex_fault_mesh_spacing=5.0,
     area_source_discretization=5.0,
     PLOTTING=False,
@@ -347,6 +347,7 @@ def remove_buffer_around_faults(
 
                     # Process each individual point source
                     for pnt_src_exp in pnt_srcs_exp:
+                        update = False
                         _, _, _, rrup = get_data(
                             src, [], pnt_src_exp, dist_type='rrup'
                         )
@@ -358,12 +359,14 @@ def remove_buffer_around_faults(
                         for d, m in zip(dst_array, threshold_mag_array):
                             if rrup < d:
                                 applicable_mag = m
+                                update = True
                                 break
 
                         # Update maximum magnitude for the point source
-                        pnt_src_exp.mfd.max_mag = min(
-                            pnt_src_exp.mfd.max_mag, applicable_mag
-                        )
+                        if update:
+                            pnt_src_exp.mfd.max_mag = min(
+                                pnt_src_exp.mfd.max_mag, applicable_mag
+                            )
 
                     # Adding point sources to the buffer
                     buffer_pts.extend(pnt_srcs_exp)
