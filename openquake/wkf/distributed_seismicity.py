@@ -364,9 +364,15 @@ def remove_buffer_around_faults(
 
                         # Update maximum magnitude for the point source
                         if update:
-                            pnt_src_exp.mfd.max_mag = min(
-                                pnt_src_exp.mfd.max_mag, applicable_mag
-                            )
+                            if hasattr(pnt_src_exp.mfd, 'max_mag'):
+                                pnt_src_exp.mfd.max_mag = min(
+                                    pnt_src_exp.mfd.max_mag, applicable_mag
+                                )
+                            else:
+                                mr = pnt_src_exp.mfd.get_annual_occurrence_rates()
+                                mags, rates = np.asarray(mr).T
+                                selected_rates = rates[mags < 6.5]
+                                pnt_src_exp.mfd.occurrence_rates = selected_rates
 
                     # Adding point sources to the buffer
                     buffer_pts.extend(pnt_srcs_exp)
