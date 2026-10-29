@@ -371,7 +371,7 @@ def remove_buffer_around_faults(
                             else:
                                 mr = pnt_src_exp.mfd.get_annual_occurrence_rates()
                                 mags, rates = np.asarray(mr).T
-                                selected_rates = rates[mags < 6.5]
+                                selected_rates = rates[mags < applicable_mag]
                                 pnt_src_exp.mfd.occurrence_rates = selected_rates
 
                     # Adding point sources to the buffer
