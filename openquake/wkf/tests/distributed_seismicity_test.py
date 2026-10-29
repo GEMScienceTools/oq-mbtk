@@ -48,7 +48,7 @@ from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.sourcewriter import write_source_model
 
 HERE = Path(__file__).parent
-PLOTTING = False
+PLOTTING =  False
 OVERWRITE = False
 
 
@@ -126,7 +126,7 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
             write_source_model(fmt.format(points_dir, ii), sources)
 
         # then create the faults
-        dips = [30, 90]
+        dips = [1, 90]
         rakes = [90, 0]
         ddw = [45, 20]
         usd = 0
@@ -214,7 +214,7 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
             plot_results(faults_fname, fname_points, fname_buffer)
 
         # Check if new files match the ones in expected
-        expc_dir = pathlib.Path('./expected/ds_test_02')
+        expc_dir = pathlib.Path('./expected/ds_test_03')
         files = sorted([f for f in folder_out.glob('*.xml')])
         if OVERWRITE:
             shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
@@ -256,7 +256,7 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
             plot_results(faults_fname, fname_points, fname_buffer)
 
         # Check if new files match the ones in expected
-        expc_dir = pathlib.Path('./expected/ds_test_02')
+        expc_dir = pathlib.Path('./expected/ds_test_04')
         files = sorted([f for f in folder_out.glob('*.xml')])
         if OVERWRITE:
             shutil.copyfile(files[0], HERE / expc_dir / 'src_buffers_01.xml')
