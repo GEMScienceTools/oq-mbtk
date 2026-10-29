@@ -43,9 +43,10 @@ from openquake.hazardlib.source import (PointSource, SimpleFaultSource)
 from openquake.hazardlib.scalerel import PointMSR, WC1994
 from openquake.hazardlib.tom import PoissonTOM
 from openquake.hazardlib.geo import Point, NodalPlane, Line
-from openquake.hazardlib.mfd import TruncatedGRMFD
+from openquake.hazardlib.mfd import TruncatedGRMFD, EvenlyDiscretizedMFD
 from openquake.hazardlib.pmf import PMF
 from openquake.hazardlib.sourcewriter import write_source_model
+from openquake.wkf.distributed_seismicity import remove_buffer_around_faults
 
 HERE = Path(__file__).parent
 PLOTTING =  False
@@ -53,6 +54,68 @@ OVERWRITE = False
 
 
 class ClipDSAroundFaultsTest(unittest.TestCase):
+
+    def test_evenly_discretized_mfd(self):
+        """Clip incremental rates without max_mag, preserving retained rates."""
+        threshold = 6.5
+        rates = [0.01 / (i + 1) for i in range(20)]
+        mfd = EvenlyDiscretizedMFD(
+            min_mag=5.5, bin_width=0.1, occurrence_rates=rates)
+        self.assertFalse(hasattr(mfd, 'max_mag'))
+        magnitudes, original_rates = np.asarray(
+            mfd.get_annual_occurrence_rates()).T
+        keep = magnitudes < threshold
+
+        sources = []
+        for sid, location in [('inside', Point(-0.25, 0.6)),
+                              ('outside', Point(3., 3.))]:
+            sources.append(PointSource(
+                source_id=sid, name=sid,
+                tectonic_region_type='Active Shallow Crust', mfd=mfd,
+                rupture_mesh_spacing=2., rupture_aspect_ratio=1.,
+                magnitude_scaling_relationship=PointMSR(),
+                temporal_occurrence_model=PoissonTOM(1.),
+                upper_seismogenic_depth=2., lower_seismogenic_depth=20.,
+                nodal_plane_distribution=PMF([
+                    (1., NodalPlane(strike=0., dip=50., rake=90.))]),
+                hypocenter_distribution=PMF([(0.2, 5.), (0.8, 10.)]),
+                location=location))
+
+        faults_fname = HERE / 'data' / 'areas_and_faults' / 'fault_01.xml'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            points_fname = tmpdir / 'sources_01.xml'
+            outdir = tmpdir / 'output'
+            outdir.mkdir()
+            write_source_model(points_fname, sources)
+            remove_buffer_around_faults(
+                str(faults_fname), str(points_fname), str(outdir),
+                dst=10., threshold_mag=threshold)
+
+            converter = SourceConverter(
+                investigation_time=1., rupture_mesh_spacing=2.,
+                width_of_mfd_bin=0.2, area_source_discretization=5.)
+            buffered = [src for group in to_python(
+                outdir / 'src_buffers_01.xml', converter) for src in group]
+            self.assertEqual(len(buffered), 2)
+            for src in buffered:
+                weight = {5.: 0.2, 10.: 0.8}[
+                    src.hypocenter_distribution.data[0][1]]
+                actual_mags, actual_rates = np.asarray(
+                    src.mfd.get_annual_occurrence_rates()).T
+                np.testing.assert_allclose(actual_mags, magnitudes[keep])
+                np.testing.assert_allclose(
+                    actual_rates, original_rates[keep] * weight)
+
+            outside = [point for group in to_python(
+                outdir / 'src_points_01.xml', converter)
+                for multipoint in group for point in multipoint]
+            self.assertEqual(len(outside), 1)
+            self.assertAlmostEqual(outside[0].location.longitude, 3.)
+            self.assertAlmostEqual(outside[0].location.latitude, 3.)
+            np.testing.assert_allclose(
+                outside[0].mfd.get_annual_occurrence_rates(),
+                mfd.get_annual_occurrence_rates())
 
     def test_with_multipoint_sources(self):
 
