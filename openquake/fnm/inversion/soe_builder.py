@@ -1410,6 +1410,10 @@ def make_eqns(
 ):
     """
     Modified to track and return equation metadata
+
+    `openquake.fnm.inversion.utils.get_block_residuals` returns the
+    weighted residuals of each block for a given solution (use
+    `return_metadata=True` to get the blocks).
     """
     lhs_set = []
     rhs_set = []
