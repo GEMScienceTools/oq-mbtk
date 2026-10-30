@@ -54,6 +54,7 @@ from openquake.hazardlib.mfd import (
     TruncatedGRMFD,
     TaperedGRMFD,
     YoungsCoppersmith1985MFD,
+    EvenlyDiscretizedMFD,
 )
 from openquake.baselib.general import AccumDict
 from openquake.hazardlib.mfd.tapered_gr_mfd import mag_to_mo
@@ -393,6 +394,52 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=None, cumulative=False):
         mfd_occ_rates = make_cumulative(mfd_occ_rates)
 
     return mfd_occ_rates
+
+
+def make_target_gr_mfd(
+    mags, moment_rate, b_val=1.0, bin_width=0.1, mag_decimals=1
+):
+    """
+    Build a moment-balanced, truncated Gutenberg-Richter MFD whose bin
+    centres coincide with the (rounded) rupture magnitudes, so it can be
+    used directly as the target of the absolute MFD equations.
+
+    The rates are scaled so that the moment rate of the discretised MFD,
+    computed with :func:`mag_to_mo` as elsewhere in this package, equals
+    `moment_rate`. (`TruncatedGRMFD.from_moment` balances the moment of
+    the continuous distribution with a different moment-magnitude
+    constant, so its discretised moment rate is lower.)
+
+    :param mags:
+        Rupture magnitudes (e.g. `rupture_df.mag`)
+    :param moment_rate:
+        Total moment rate [N·m/yr] to be released by the MFD
+    :param b_val:
+        Gutenberg-Richter b-value
+    :param bin_width:
+        Width of the magnitude bins
+    :param mag_decimals:
+        Number of decimals used to round the rupture magnitudes. Must be
+        consistent with the `mag_decimals` used to build the equations.
+    :returns:
+        An instance of
+        :class:`openquake.hazardlib.mfd.EvenlyDiscretizedMFD`
+    """
+    mags = np.asarray(mags, dtype=float)
+    mmin = round(float(mags.min()), mag_decimals)
+    mmax = round(float(mags.max()), mag_decimals)
+    num_bins = int(round((mmax - mmin) / bin_width)) + 1
+    centres = np.array([round(mmin + i * bin_width, mag_decimals)
+                        for i in range(num_bins)])
+    # Truncated GR rates per bin, up to a constant
+    rates = (10 ** (-b_val * (centres - bin_width / 2))
+             - 10 ** (-b_val * (centres + bin_width / 2)))
+    rates *= moment_rate / np.sum(mag_to_mo(centres) * rates)
+    return EvenlyDiscretizedMFD(
+        min_mag=mmin,
+        bin_width=bin_width,
+        occurrence_rates=rates.tolist(),
+    )
 
 
 def get_mfd_moment(mfd, mag_decimals=None):
