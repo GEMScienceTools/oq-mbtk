@@ -109,7 +109,7 @@ COLORS = [
         '#DAA520',  # goldenrod
         '#708090',  # slategray
         '#A0522D',  # sienna
-        '#4B0082',  # indigo (was #FF4500 orange red — too close to #FF0000 red at index 2)
+        '#4B0082',  # indigo
         '#32CD32',  # lime green
         '#FF8C00',  # dark orange
         '#9400D3',  # dark violet
@@ -121,7 +121,7 @@ COLORS = [
         '#CD853F',  # peru
         '#9ACD32',  # yellow green
         '#3CB371',  # medium sea green
-        '#4B0082',  # indigo
+        '#4B7082',  # dark grey
         '#FFFF00',  # yellow
         '#1E90FF',  # dodger blue
         '#FFB6C1',  # light pink
