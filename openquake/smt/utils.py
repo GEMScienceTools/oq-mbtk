@@ -109,7 +109,7 @@ COLORS = [
         '#DAA520',  # goldenrod
         '#708090',  # slategray
         '#A0522D',  # sienna
-        '#FF4500',  # orange red
+        '#4B0082',  # indigo (was #FF4500 orange red — too close to #FF0000 red at index 2)
         '#32CD32',  # lime green
         '#FF8C00',  # dark orange
         '#9400D3',  # dark violet
