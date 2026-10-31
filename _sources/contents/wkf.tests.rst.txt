@@ -1,0 +1,53 @@
+wkf.tests package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   wkf.tests.seismicity
+
+Submodules
+----------
+
+wkf.tests.adaptive\_smoothing\_wkf\_test module
+-----------------------------------------------
+
+.. automodule:: wkf.tests.adaptive_smoothing_wkf_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.tests.catalogue\_test module
+--------------------------------
+
+.. automodule:: wkf.tests.catalogue_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.tests.compute\_gr\_params\_test module
+------------------------------------------
+
+.. automodule:: wkf.tests.compute_gr_params_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+wkf.tests.distributed\_seismicity\_test module
+----------------------------------------------
+
+.. automodule:: wkf.tests.distributed_seismicity_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: wkf.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,10 @@
+mbt.tools.strain package
+========================
+
+Module contents
+---------------
+
+.. automodule:: mbt.tools.strain
+   :members:
+   :show-inheritance:
+   :undoc-members:
