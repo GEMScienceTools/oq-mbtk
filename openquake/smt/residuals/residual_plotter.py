@@ -28,7 +28,7 @@ from copy import deepcopy
 from scipy.stats import norm
 
 from openquake.hazardlib.imt import from_string
-from openquake.smt.utils import COLORS
+from openquake.smt.utils import COLORS, MARKERS
 from openquake.smt.residuals.gmpe_residuals import Residuals, SingleStationAnalysis
 from openquake.smt.residuals.residual_plotter_utils import (
                                                     _get_residuals_density_distribution,
@@ -920,15 +920,16 @@ def plot_residual_means_and_stds_with_period(residuals, filename):
     # Set plots
     fig, ax = _set_residuals_means_and_stds_plots(residuals, res_dists, imts_to_plot)
 
-    # Define colours for GMPEs
+    # Define colours and markers for GMPEs
     gmpe_colors = {gmpe: COLORS[i % len(COLORS)] for i, gmpe in enumerate(residuals.gmpe_list)}
+    gmpe_markers = {gmpe: MARKERS[i % len(MARKERS)] for i, gmpe in enumerate(residuals.gmpe_list)}
 
     # Plot data
     for gmpe in residuals.gmpe_list.keys():
 
         # Assign colour and marker to each gmpe
         color_inp = gmpe_colors[gmpe]
-        marker_inp = 'x'
+        marker_inp = gmpe_markers[gmpe]
                 
         # Plot means
         ax = plot_residual_means_and_stds(

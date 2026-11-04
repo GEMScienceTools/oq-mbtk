@@ -141,6 +141,27 @@ COLORS = [
         ]
 
 
+MARKERS = [
+        'o', 's', '^', 'v', '<', '>', 'D', 'd', 'p', 'h',
+        'H', '8', 'P', 'X', '*',
+        '+', 'x', '1', '2', '3', '4', '|', '_', '.',
+        (7, 0, 0),    # heptagon
+        (9, 0, 0),    # nonagon
+        (10, 0, 0),   # decagon
+        (5, 1, 0),    # 5-point star (open-arm)
+        (6, 1, 0),    # 6-point star
+        (7, 1, 0),    # 7-point star
+        (8, 1, 0),    # 8-point star
+        (4, 2, 0),    # 4-arm asterisk
+        (5, 2, 0),    # 5-arm asterisk
+        (6, 2, 0),    # 6-arm asterisk
+        (7, 2, 0),    # 7-arm asterisk
+        (4, 0, 45),   # square rotated 45 deg
+        (5, 0, 36),   # pentagon rotated 36 deg
+        (6, 0, 30),   # hexagon rotated 30 deg
+        ]
+
+
 ### Plotting utils
 def add_borders(ax):
     """
