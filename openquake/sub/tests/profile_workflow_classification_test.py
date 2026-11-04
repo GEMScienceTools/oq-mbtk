@@ -13,7 +13,6 @@ HERE = pathlib.Path(__file__).parent.resolve()
 
 
 def test_geojson_classification_workflow():
-    raise unittest.SkipTest
     fname_geojson = HERE / "data" / "izu_slab2_css.geojson"
     fname_slab = HERE / "data" / "izu_slab2_dep_02.24.18.grd"
     classification_ini = HERE / "data" / "mariana_classification.ini"
@@ -43,13 +42,22 @@ def test_geojson_classification_workflow():
     with open(classification_ini, "w") as configfile:
         config.write(configfile)
 
-    max_sampl_dist = 25
-    upper_depth_int = 0
-    lower_depth_int = 50
-    lower_depth_slab = 300
+    max_sampl_dist = 25.0
+    upper_depth_int = 0.0
+    lower_depth_int = 50.0
+    lower_depth_slab = 300.0
 
     slb = get_profiles_geojson(fname_geojson, fname_slab, spacing=10.0)
     slb.write_profiles(profiles)
+    
+    # Compare slab profiles
+    import pandas as pd
+
+    df1 = pd.read_csv(os.path.join(profiles, "cs_000.csv"), header=None, delim_whitespace=True)
+    df2 = pd.read_csv(HERE / "data" / "cs_000.csv", header=None, delim_whitespace=True)
+    
+    # Compare dataframes
+    pd.testing.assert_frame_equal(df1,df2, check_exact=False, atol=1e-3, rtol=0)
 
     create_2pt5_model(profiles, sfc_out, max_sampl_dist)
 
@@ -68,6 +76,21 @@ def test_geojson_classification_workflow():
     )
 
     classify.classify(classification_ini, True)
+    
+    # Test the distances are the same 
+    dists = pd.read_pickle(os.path.join(top_level, "distances", "vert_dist_to_slab_slab.pkl"))
+    test_dists = pd.read_pickle(HERE / "data" / "vert_dist_to_slab_slab.pkl")
+    assert len(dists) == len(test_dists)
+    for a, b in zip(dists, test_dists):
+        assert a == b
+        
+    # Test the slab depths are the same 
+    depths = pd.read_pickle(os.path.join(top_level, "distances", "sub_depths_slab.pkl"))
+    test_depths = pd.read_pickle(HERE / "data" / "sub_depths_slab.pkl")
+    assert len(depths) == len(test_depths)
+    for a, b in zip(depths, test_depths):
+        assert a == b
+
 
     # Test the resulting classification is as expected
     classified = pd.read_csv(os.path.join(top_level, "classified_earthquakes.csv"))
