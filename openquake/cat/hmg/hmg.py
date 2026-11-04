@@ -126,19 +126,18 @@ def process_magnitude_keep_all(work, mag_rules, msig=0.2):
             flag = rows["eventID"].duplicated(keep='first')
 
             if any(flag):
-                # this line is so the larger M is taken - expiremental based on MEX issue
-                rows = rows.sort_values("value", ascending=False).drop_duplicates('eventID').sort_index()
-                #tmp = sorted_rows[~flag].copy()
-                #rows = tmp
+                # this line is so the larger M is taken - expiremental based
+                # on MEX issue
+                rows = rows.sort_values(
+                    "value", ascending=False).drop_duplicates('eventID').sort_index()
 
             # Magnitude conversion
             if len(rows) > 0:
                 low_mags = mag_rules[agency][mag_type]['low_mags']
                 conv_eqs = mag_rules[agency][mag_type]['conv_eqs']
                 conv_sigma = mag_rules[agency][mag_type]['sigma']
-                save = apply_mag_conversion_rule_keep_all(low_mags, conv_eqs,
-                                                          conv_sigma,
-                                                       rows, save)
+                save = apply_mag_conversion_rule_keep_all(
+                    low_mags, conv_eqs, conv_sigma, rows, save)
         print(")")
 
     return save
@@ -190,7 +189,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, conv_sigs, rows, save, work, m
         m_inds = m >= mlow
         if conversion == 'm':
             tmp[m_inds] = m[m_inds]
-            tmpsig[m_inds] = sig[m_inds] 
+            tmpsig[m_inds] = sig[m_inds]
         else:
             tmpstr = re.sub('m', fmt2.format(mlow), conversion)
             tmpstrP = re.sub('m', '(' + fmt2.format(mlow)+'+ 0.001)', conversion)
@@ -203,7 +202,7 @@ def apply_mag_conversion_rule(low_mags, conv_eqs, conv_sigs, rows, save, work, m
                 exec(cmd)
                 exec(cmdsp)
                 exec(cmdsm)
-                deriv = [(ta-tb)/0.002 for ta, tb in zip(tmpsiga, tmpsigb)] 
+                deriv = [(ta-tb)/0.002 for ta, tb in zip(tmpsiga, tmpsigb)]
                 sig_new = np.array([np.sqrt(s**2 + d**2 * sigma**2) for s, d in zip(sig, deriv)])
                 tmpsig[m_inds] = sig_new[m_inds]
 
@@ -304,11 +303,15 @@ def process_origin(odf, ori_rules):
 
 def process_magnitude(work, mag_rules, msig=0.2):
     """
+    This function applies the magnitude conversion rules
+
     :param work:
         A :class:`pandas.DataFrame` instance obtained by joining the origin
         and magnitude dataframes
     :param mag_rules:
         A dictionary with the rules to be used for processing the catalogue
+    :param msig:
+        Standard deviation of magnitude.
     :return:
         Two :class:`pandas.DataFrame` instances. The first one with the
         homogenised catalogue, the second one with the information not
@@ -354,16 +357,18 @@ def process_magnitude(work, mag_rules, msig=0.2):
 
             # Magnitude conversion
             if len(rows) > 0:
+
                 low_mags = mag_rules[agency][mag_type]['low_mags']
                 conv_eqs = mag_rules[agency][mag_type]['conv_eqs']
                 conv_sigma = mag_rules[agency][mag_type]['sigma']
+
                 if 'mag_sigma' in mag_rules[agency][mag_type]:
                     m_sigma = mag_rules[agency][mag_type]['mag_sigma']
                 else:
                     m_sigma = msig
-                save, work = apply_mag_conversion_rule(low_mags, conv_eqs,
-                                                       conv_sigma, rows,
-                                                       save, work, m_sigma)
+
+                save, work = apply_mag_conversion_rule(
+                    low_mags, conv_eqs, conv_sigma, rows, save, work, m_sigma)
         print(")")
 
     return save, work
@@ -383,38 +388,50 @@ def process_dfs(odf_fname, mdf_fname, settings_fname=None):
     save = None
     work = None
 
-    # Reading settings
+    # Reading settings. These include the priority agencies for the origin and
+    # the rules for magnitude conversion.
     rules = toml.load(settings_fname)
 
+    mag_n_sigma = 0.0
+    if 'default' in rules.keys():
+        mag_n_sigma = rules['default'].get('mag_sigma', mag_n_sigma)
+    else:
+        rules['default'] = {'mag_sigma': mag_n_sigma}
+
+    for agency in rules['magnitude'].keys():
+        for mag_type in rules['magnitude'][agency].keys():
+            if 'sigma' not in rules['magnitude'][agency][mag_type].keys():
+                n_mags = len(rules['magnitude'][agency][mag_type]['low_mags'])
+                tmp = [mag_n_sigma for i in range(n_mags)]
+                rules['magnitude'][agency][mag_type]['sigma'] = tmp
+
     # Checking input
-    if not('origin' in rules.keys() or 'magnitude' in rules.keys()):
+    if not ('origin' in rules.keys() or 'magnitude' in rules.keys()):
         raise ValueError('At least one set of settings must be defined')
 
     # These are the tables with origins and magnitudes
     odf = pd.read_hdf(odf_fname)
     mdf = pd.read_hdf(mdf_fname)
-
     print("Number of EventIDs {:d}\n".format(len(odf["eventID"].unique())))
 
     # Processing origins
     if 'origin' in rules.keys():
         print('Selecting origins')
         odf = process_origin(odf, rules['origin'])
-
     print("Number of origins selected {:d}\n".format(len(odf)))
-
-    if 'default' in rules.keys():
-        mag_n_sigma = rules['default']['mag_sigma']
 
     # Processing magnitudes
     if 'magnitude' in rules.keys():
         print('Homogenising magnitudes')
+
         # Creating a single dataframe by joining
         work = pd.merge(odf, mdf, on=["eventID"])
-        save, work = process_magnitude(work, rules['magnitude'], msig=mag_n_sigma)
+        save, work = process_magnitude(
+            work, rules['magnitude'], msig=mag_n_sigma)
 
         work_all_m = pd.merge(odf, mdf, on=["eventID"])
-        save_all_m = process_magnitude_keep_all(work_all_m, rules['magnitude'],msig=mag_n_sigma)
+        save_all_m = process_magnitude_keep_all(
+            work_all_m, rules['magnitude'], msig=mag_n_sigma)
 
     print("Number of origins with final mag type {:d}\n".format(len(save)))
 

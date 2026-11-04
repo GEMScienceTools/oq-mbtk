@@ -678,7 +678,6 @@ class ISFCatalogue(object):
             idx_mag = max(np.argwhere(magnitude > mag_low_edges))[0]
             tmp_val = float(dtime_a.year)
             idx_t = max(np.argwhere(tmp_val > time_low_edges))[0]
-
             ll_thrs = ll_d[idx_t][idx_mag]
             sel_thrs = time_d[idx_t][idx_mag]
             sel_thrs = sel_thrs.total_seconds()
@@ -772,7 +771,7 @@ class ISFCatalogue(object):
                             tmp[0].is_prime = False
 
                         # Check event ID
-                        if use_ids:
+                        if use_ids == True:
                             if event.id != self.events[i_eve].id:
                                 fmt = " Trying to add a secondary origin "
                                 fmt += " whose ID {:s} differs from the "
@@ -917,7 +916,7 @@ class ISFCatalogue(object):
                 # already
                 if event.id in set(self.ids):
 
-                    if use_ids:
+                    if use_ids == True:
                         fmt = "Adding a new event whose ID {:s}"
                         fmt += " is already in the DB. Making it secondary."
                         msg = fmt.format(event.id)
@@ -939,9 +938,17 @@ class ISFCatalogue(object):
                         raise ValueError(msg)
 
                 else:
-                    assert len(event.origins) == 1
-                    event.origins[0].is_prime = True
-                    self.events.append(event)
+                    try:
+                        assert len(event.origins) == 1
+                        event.origins[0].is_prime = True
+                        self.events.append(event)
+                    except:
+                        prime = [origin for origin in event.origins if origin.is_prime == True] 
+                        # This will find the prime, but we need to 
+                        # replace origins with prime origin
+                        event.origins = prime
+                        event.origins[0].is_prime = True
+                        self.events.append(event)
 
                     if logfle:
                         msg = "Adding new event\n"
