@@ -161,6 +161,7 @@ class Reasenberg(BaseCatalogueDecluster):
         # Pre-allocate cluster index vectors
         vcl = np.zeros(neq, dtype=int).flatten()
         msi = np.zeros(neq, dtype=int).flatten()
+        msl = np.zeros(neq, dtype=int).flatten()
         ev_id = np.arange(0, neq)
         # set the interaction zones, in km
         # Reasenberg 1987 or alternate version: Wells & Coppersmith 1994 / Helmstetter (SRL) 2007
@@ -328,7 +329,7 @@ class Reasenberg(BaseCatalogueDecluster):
             # attach clustnumber to catalogue yet unrelated to a cluster
             vcl[events_in_no_cluster] = my_cluster
             
-        # set mainshock index for all events not in a cluster to be 1 also
+        # set mainshock index for all events not in a cluster to be 0 also
         # i.e. an independent event counts as a mainshock
         msi[vcl == 0] = 1
             
@@ -339,10 +340,12 @@ class Reasenberg(BaseCatalogueDecluster):
             biggest_mag_idx = mags[vcl == cluster_no].argmax()
             ms_id = cluster_ids[biggest_mag_idx]
             msi[ms_id] = 1
+            msl[vcl == cluster_no] = ms_id
+            
         
         # 
-        msi = 1 - msi         
-        return vcl, msi
+        msi = 1- msi
+        return msl, msi
 
 
 

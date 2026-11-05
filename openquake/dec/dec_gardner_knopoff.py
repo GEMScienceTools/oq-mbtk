@@ -94,7 +94,7 @@ class GardnerKnopoffType1(BaseCatalogueDecluster):
         :type config: Dictionary
 
         :returns:
-          **vcl vector** indicating cluster number,
+          **vcl vector** indicating cluster number. Location of mainshock in catalogue. 
           **flagvector** indicating which eq events belong to a cluster
         :rtype: numpy.ndarray
         """
@@ -114,16 +114,17 @@ class GardnerKnopoffType1(BaseCatalogueDecluster):
         eqid = np.arange(0, neq, 1)
         # Pre-allocate cluster index vectors
         vcl = np.zeros(neq, dtype=int)
+        cln = np.zeros(neq, dtype=int)
         # Sort magnitudes into descending order
         id0 = np.flipud(
             np.argsort(catalogue.data["magnitude"], kind="heapsort")
         )
         longitude = catalogue.data["longitude"][id0]
         latitude = catalogue.data["latitude"][id0]
+        eqid = eqid[id0]
         sw_space = sw_space[id0]
         sw_time = sw_time[id0]
         year_dec = year_dec[id0]
-        eqid = eqid[id0]
         flagvector = np.zeros(neq, dtype=int)
         # Begin cluster identification
         clust_index = 0
@@ -155,6 +156,7 @@ class GardnerKnopoffType1(BaseCatalogueDecluster):
                 if any(temp_vsel):
                     # Allocate a cluster number
                     vcl[vsel] = clust_index + 1
+                    cln[vsel] = eqid[i]
                     flagvector[vsel] = 1
                     # For those events in the cluster before the main event,
                     # flagvector is equal to -1
@@ -165,8 +167,8 @@ class GardnerKnopoffType1(BaseCatalogueDecluster):
 
         # Re-sort the catalog_matrix into original order
         id1 = np.argsort(eqid, kind="heapsort")
-        eqid = eqid[id1]
+        cln = cln[id1]
         vcl = vcl[id1]
         flagvector = flagvector[id1]
 
-        return vcl, flagvector
+        return cln, flagvector
