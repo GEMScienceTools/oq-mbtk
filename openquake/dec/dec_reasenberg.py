@@ -336,10 +336,12 @@ class Reasenberg(BaseCatalogueDecluster):
         clusters = np.unique(vcl[vcl != 0])
         for cluster_no in clusters:
             cluster_ids = ev_id[vcl == cluster_no]
-            biggest_mag_idx = np.where(np.max(mags[vcl == cluster_no]))
+            biggest_mag_idx = mags[vcl == cluster_no].argmax()
             ms_id = cluster_ids[biggest_mag_idx]
             msi[ms_id] = 1
-                
+        
+        # 
+        msi = 1 - msi         
         return vcl, msi
 
 
