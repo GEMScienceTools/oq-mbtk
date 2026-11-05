@@ -31,13 +31,14 @@ from openquake.wkf.seismicity.distribute import _distribute_rates
 
 
 def main(
-        smooth_folder,
-        config,
-        folder_out,
-        eps_b=0.0,
-        eps_rate=0.0,
-        fraction_flat=0.0
-    ):
+    smooth_folder,
+    config,
+    folder_out,
+    *,
+    eps_b: float = 0.0,
+    eps_rate: float = 0.0,
+    fraction_flat: float = 0.0,
+):
     """
     Distributes the rates using the output of a seismicity smoothing function.
     """
@@ -46,13 +47,9 @@ def main(
     os.makedirs(folder_out, exist_ok=True)
 
     _distribute_rates(
-        smooth_folder,
-        config,
-        folder_out,
-        eps_b,
-        eps_rate,
-        fraction_flat
+        smooth_folder, config, folder_out, eps_b, eps_rate, fraction_flat
     )
+
 
 main.smooth_folder = "Folder containing CSV files from smoothing algorithm"
 main.config = "TOML configuration file"
