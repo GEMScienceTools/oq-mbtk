@@ -385,9 +385,27 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=None, cumulative=False):
         raise ValueError("mfd must be a dictionary or an MFD object")
 
     if mag_decimals is not None:
-        mfd_occ_rates = {
-            round(m, mag_decimals): r for m, r in mfd_occ_rates.items()
-        }
+        # Rates of bins that collapse onto the same rounded magnitude are
+        # summed, not overwritten, so the total rate is preserved. This
+        # happens e.g. with a TruncatedGRMFD (bin centres at x.x5) rounded
+        # to one decimal: the bins do not match the rupture magnitudes.
+        rounded = {}
+        collisions = set()
+        for m, r in mfd_occ_rates.items():
+            key = round(m, mag_decimals)
+            if key in rounded:
+                collisions.add(key)
+                rounded[key] += r
+            else:
+                rounded[key] = r
+        if collisions:
+            logging.warning(
+                "MFD bins collapse onto the same magnitude after rounding "
+                f"to {mag_decimals} decimals: {sorted(collisions)}. Their "
+                "rates are summed; use bin centres aligned with the rupture "
+                "magnitudes."
+            )
+        mfd_occ_rates = rounded
 
     if cumulative is True:
         mfd_occ_rates = make_cumulative(mfd_occ_rates)

@@ -1035,11 +1035,13 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             ),
         )
 
+        # The bins of the TruncatedGRMFD centred at 5.95 and 6.05 are both
+        # rounded to 6.0: their rates are summed in the first row
         np.testing.assert_almost_equal(
             rhs,
             np.array(
                 [
-                    4.57959562e-04,
+                    1.03449649e-03,
                     3.63770211e-04,
                     1.82316986e-04,
                     1.44819529e-04,
@@ -1064,7 +1066,7 @@ class TestEqnsFromLilFaults(unittest.TestCase):
             err,
             np.array(
                 [
-                    4.67289943e01,
+                    3.10910571e01,
                     5.24307939e01,
                     7.40604649e01,
                     8.30972084e01,
