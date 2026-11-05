@@ -268,13 +268,18 @@ def _nanlinregress(x, y):
     Calls scipy linregress only on finite numbers of x and y.
     """
     finite = np.isfinite(x) & np.isfinite(y)
-        
+
     if not finite.any():
         # Empty arrays passed to linreg raise ValueError
         # so force returning an object with nans
         return linregress([np.nan], [np.nan])
-    else:
-        return linregress(x[finite], y[finite])
+    xf, yf = x[finite], y[finite]
+    if len(xf) < 2 or np.min(xf) == np.max(xf):
+        # linregress raises on single-point or all-equal x (e.g. residuals
+        # for a single-event subset binned by magnitude). Return nan-filled
+        # result so plotters can still draw the points.
+        return linregress([np.nan], [np.nan])
+    return linregress(xf, yf)
 
 
 ### Utils for binning residuals w.r.t. a given GMM input variable
@@ -374,9 +379,25 @@ def get_binning_params(var_type, vals):
                 }
     val_bin = var_bins[var_type]
 
-    # Create bins and make last interval fill up to max var value
-    val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
-    val_bins[len(val_bins) - 1] = np.max(vals)
+    vals = np.asarray(vals)
+    if len(vals) == 0:
+        # Nothing to bin; return empty structures so plotters produce
+        # a scatter without any binned mean/sigma overlay.
+        return {}, {}
+    vmin, vmax = float(np.min(vals)), float(np.max(vals))
+    if vmin == vmax:
+        # Single unique value (e.g. single-event dataset binned by magnitude).
+        # Emit a single degenerate bin spanning the value so the caller can
+        # still plot the point rather than crash.
+        pad = max(val_bin / 2.0, 1e-9)
+        val_bins = np.array([vmin - pad, vmax + pad])
+    else:
+        val_bins = np.arange(vmin, vmax, val_bin)
+        if len(val_bins) < 2:
+            # Range narrower than one bin width.
+            val_bins = np.array([vmin, vmax])
+        else:
+            val_bins[-1] = vmax
     bin_bounds = {}
     for idx, val_bin in enumerate(val_bins):
         if idx == len(val_bins) - 1:

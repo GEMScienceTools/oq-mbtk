@@ -655,7 +655,8 @@ def make_rupture_df(
         DataFrame containing information about each single-fault rupture.
         See `get_single_fault_ruptures` for more information on the format.
     multi_fault_rups : list of lists
-        List of lists of subfault indices for each multi-fault rupture.
+        List of lists of single-fault rupture indices for each multi-fault
+        rupture.
     subfault_df : pd.DataFrame
         DataFrame containing information about each subfault.
         See `make_subfault_df` for more information on the format.
@@ -671,10 +672,9 @@ def make_rupture_df(
     t = time.perf_counter
 
     timing = {
-        "sf_rup_azimuths_setup": 0.0,
+        "sf_rup_statistics_setup": 0.0,
         "mf_debug": 0.0,
         "loop_areas": 0.0,
-        "loop_rakes": 0.0,
         "loop_azimuths": 0.0,
         "loop_mean_rake": 0.0,
         "loop_mag": 0.0,
@@ -707,15 +707,30 @@ def make_rupture_df(
     slip_az_lookup = subfault_df['slip_azimuth'].to_dict()
     sub_fid_lookup = subfault_df['fid'].to_dict()
 
-    logging.debug("\tmaking azimuth lookup table")
+    logging.debug("\tmaking single-fault rupture statistics lookup tables")
     t0 = t()
     sf_rup_azimuths = {}
+    sf_areas = {}
+    sf_rake_components = {}
+    sf_fault_areas = {}
     for row in single_fault_rup_df.itertuples():
         row_slip_azimuths = [slip_az_lookup[sf] for sf in row.subfaults]
         sf_rup_azimuths[row.Index] = round(
             angular_mean_degrees(row_slip_azimuths), 1
         )
-    timing["sf_rup_azimuths_setup"] += t() - t0
+        areas = np.array([area_lookup[sf] for sf in row.subfaults])
+        rakes = np.radians([rake_lookup[sf] for sf in row.subfaults])
+        sf_areas[row.Index] = areas
+        sf_rake_components[row.Index] = (
+            float(np.sum(areas * np.sin(rakes))),
+            float(np.sum(areas * np.cos(rakes))),
+        )
+        fault_areas = {}
+        for sf, area in zip(row.subfaults, areas):
+            fid = sub_fid_lookup[sf]
+            fault_areas[fid] = fault_areas.get(fid, 0.0) + float(area)
+        sf_fault_areas[row.Index] = fault_areas
+    timing["sf_rup_statistics_setup"] += t() - t0
 
     logging.debug("\tmaking multifault rup fault debug")
     t0 = t()
@@ -758,17 +773,17 @@ def make_rupture_df(
 
         # areas + frac_area
         t0 = t()
-        areas = np.array([area_lookup[sf] for sf in row.subfaults])
+        component_areas = [sf_areas[r] for r in row.ruptures]
+        areas = (
+            component_areas[0]
+            if len(component_areas) == 1
+            else np.concatenate(component_areas)
+        )
         sum_area = areas.sum()
         area_fracs = areas / sum_area
         frac_areas.append(np.round(area_fracs, 4).tolist())
         all_areas.append(sum_area)
         timing["loop_areas"] += t() - t0
-
-        # rakes
-        t0 = t()
-        rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
-        timing["loop_rakes"] += t() - t0
 
         # slip azimuths (per rupture)
         t0 = t()
@@ -778,7 +793,22 @@ def make_rupture_df(
 
         # mean rake (weighted angular mean)
         t0 = t()
-        mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
+        # Area-weighted circular means can be combined from unrounded
+        # sine/cosine sums, without revisiting every subfault's rake.
+        components = [sf_rake_components[r] for r in row.ruptures]
+        rake_sin = sum(c[0] for c in components)
+        rake_cos = sum(c[1] for c in components)
+        mean_rake = math.degrees(math.atan2(rake_sin, rake_cos))
+        if (
+            math.hypot(rake_sin, rake_cos) <= 1e-12 * sum_area
+            or abs(abs(mean_rake) * 10 % 1 - 0.5) < 1e-10
+            or abs(abs(mean_rake) - 45.0) < 1e-10
+            or abs(abs(mean_rake) - 135.0) < 1e-10
+        ):
+            # Retain the original summation order for cancelling directions,
+            # rounding ties, and strike-slip/dip-slip scaling boundaries.
+            rakes = np.array([rake_lookup[sf] for sf in row.subfaults])
+            mean_rake = weighted_angular_mean_degrees(rakes, area_fracs)
         mean_rakes.append(mean_rake)
         timing["loop_mean_rake"] += t() - t0
 
@@ -794,14 +824,11 @@ def make_rupture_df(
             f_areas = [1.0]
         else:
             f_area_d = {}
-            total_area = 0.0
-            for sf in row.subfaults:
-                fid = sub_fid_lookup[sf]
-                a = area_lookup[sf]
-                total_area += a
-                f_area_d[fid] = f_area_d.get(fid, 0.0) + a
+            for rup in row.ruptures:
+                for fid, area in sf_fault_areas[rup].items():
+                    f_area_d[fid] = f_area_d.get(fid, 0.0) + area
 
-            inv_total = 1.0 / total_area
+            inv_total = 1.0 / sum_area
             f_areas = [
                 round(f_area_d.get(fault, 0.0) * inv_total, 1)
                 for fault in row.faults

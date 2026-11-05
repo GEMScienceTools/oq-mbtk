@@ -39,7 +39,7 @@ import numpy as np
 import tempfile
 import shutil
 
-from openquake.man.ses_cat import (
+from openquake.man.ses_utils.ses_cat import (
     merge_ses_event_rupture, 
     add_random_datetime, 
     convert_to_hmtk,
@@ -136,4 +136,3 @@ class TestSESCatalogue(unittest.TestCase):
         saved_df = pd.read_csv(result_path)
         self.assertEqual(len(saved_df), 10)
         self.assertEqual(saved_df.columns[0], "longitude")
-

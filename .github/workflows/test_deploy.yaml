@@ -46,9 +46,15 @@ jobs:
          then
            echo "This is not a workflow_dispatch RUN, use master for OQ engine"
            python install.py devel --version master
+           if [[ $EXIT_CODE -ne 0 ]]; then
+                break
+           fi
          else
            echo "This is a workflow_dispatch RUN, use: $GITHUB_INPUT_REF for OQ engine"
            python install.py devel --version ${GITHUB_INPUT_REF}
+           if [[ $EXIT_CODE -ne 0 ]]; then
+                break
+           fi
         fi
         source ~/openquake/bin/activate
         cd ..

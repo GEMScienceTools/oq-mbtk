@@ -557,6 +557,13 @@ def parse_ground_motion(location, row, record, headers):
     
     # Build the hdf5 files
     filename = os.path.join(location, "{:s}.hdf5".format(record.id))
+    if os.path.exists(filename):
+        raise ValueError(
+            f"Duplicate record in flatfile: event_id={row.get('event_id')!r}, "
+            f"network_code={row.get('network_code')!r}, "
+            f"station_code={row.get('station_code')!r} "
+            f"(record.id={record.id!r})"
+        )
     fle = h5py.File(filename, "w-")
     ims_grp = fle.create_group("IMS")
     for comp, key in [("X", "U"), ("Y", "V"), ("V", "W")]:

@@ -33,7 +33,7 @@ def check_symmetry(mesh, values):
     vals_row = values[idx]
 
     # find the center: the point with the highest smoothing value
-    center = int(numpy.where(vals_row == max(vals_row))[0])
+    center = int(numpy.argmax(vals_row))
 
     # take the smoothed values on either side of the center
     center_left = center - int(numpy.floor(0.45*len(vals_row)))

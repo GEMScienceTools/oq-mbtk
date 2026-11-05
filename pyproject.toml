@@ -9,7 +9,7 @@ description = "Model Building Toolkit"
 readme = """
 Python and OpenQuake-based Toolkit for the construction of Seismic Source
 Models
-Copyright (C) 2017-2025 GEM Foundation
+Copyright (C) 2017-2026 GEM Foundation
 """
 license = { text = "AGPL-3.0-only" }
 
@@ -37,7 +37,6 @@ classifiers = [
 
 requires-python = ">=3.11, <3.14"
 dependencies = [
-    "openquake.engine",
     "geojson",
     "pygmt <= 0.17.0",
     "igraph",
@@ -46,6 +45,7 @@ dependencies = [
     "jupyter_client >= 5.0.0",
     "nbconvert",
     "nbformat",
+	"pandas~=2.2",
     "nbstripout >= 0.3.0",
     "netCDF4 >= 1.7",
     "notebook >= 5.0.0",
@@ -67,6 +67,7 @@ Documentation = "https://gemsciencetools.github.io/oq-mbtk/index.html"
 oqm = "openquake.mbi.__main__:oqm"
 
 [tool.setuptools.packages.find]
+namespaces = true
 where = ["."]
 include = ["openquake*"]
 

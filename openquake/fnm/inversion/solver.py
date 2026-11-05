@@ -374,6 +374,7 @@ def nnls_pg(
     min: np.float64 = 0.0,
     l_norm: int = 2,
     delta: np.float64 = 1e-3,
+    seed: int = 42,
 ):
     m = b.size
     n = x.size
@@ -384,7 +385,9 @@ def nnls_pg(
     y = x.copy()
     t = 1.0
 
-    # Lipschitz estimate for ATA via 3 power iterations
+    # Lipschitz estimate for ATA via power iteration. Seeded so that the
+    # step size, hence the solution, is reproducible.
+    np.random.seed(seed)
     z = np.random.randn(n)
     z /= np.linalg.norm(z)
     Az = np.empty_like(b)
@@ -394,14 +397,26 @@ def nnls_pg(
     misfit_history = np.zeros(maxit)
 
     mat_vec_mul = spspmm_csr
-    for _ in range(3):
+    # Power iteration until the estimate is stable. The estimate approaches
+    # the true value from below, and with only a few iterations it can be
+    # far too small when row weights span orders of magnitude: the step
+    # 1/L is then too large and the accelerated iterations oscillate.
+    L = 0.0
+    for _ in range(100):
         mat_vec_mul(A_data, A_indices, A_indptr, z, Az)
         mat_vec_mul(AT_data, AT_indices, AT_indptr, Az, ATAz)
-        z = ATAz / norm2(ATAz)
-    L = np.dot(z, ATAz)
+        L_new = norm2(ATAz)
+        if L_new <= 0.0:
+            break
+        z = ATAz / L_new
+        if abs(L_new - L) <= 1e-6 * L_new:
+            L = L_new
+            break
+        L = L_new
     if L <= 0.0:
         L = 1.0
-    alpha = 1.0 / L
+    # Small safety margin, since the estimate is a lower bound
+    alpha = 1.0 / (1.05 * L)
 
     stall_window = 500
 
@@ -489,6 +504,7 @@ def solve_nnls_pg(
     stall_val=1e-8,
     l_norm: int = 2,
     delta: float = 1e-3,
+    seed: int = 42,
 ):
     """
     Solve  min_x ½‖Ax – b‖²  (or pseudo-Huber “L1” if l_norm=1)
@@ -522,6 +538,9 @@ def solve_nnls_pg(
         1 → pseudo-Huber “L1” (robust) loss.
     delta : float, default 1e-3
         Pseudo-Huber smoothing parameter (only used if l_norm == 1).
+    seed : int, default 42
+        Seed for the random start of the power iteration that estimates
+        the step size.
 
     Returns
     -------
@@ -581,6 +600,7 @@ def solve_nnls_pg(
         min=min,
         l_norm=l_norm,
         delta=delta,
+        seed=seed,
     )
 
     misfit_history = misfit_history[misfit_history >= 0.0]

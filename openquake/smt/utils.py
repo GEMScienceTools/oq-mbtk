@@ -109,7 +109,7 @@ COLORS = [
         '#DAA520',  # goldenrod
         '#708090',  # slategray
         '#A0522D',  # sienna
-        '#FF4500',  # orange red
+        '#4B0082',  # indigo
         '#32CD32',  # lime green
         '#FF8C00',  # dark orange
         '#9400D3',  # dark violet
@@ -121,7 +121,7 @@ COLORS = [
         '#CD853F',  # peru
         '#9ACD32',  # yellow green
         '#3CB371',  # medium sea green
-        '#4B0082',  # indigo
+        '#4B7082',  # dark grey
         '#FFFF00',  # yellow
         '#1E90FF',  # dodger blue
         '#FFB6C1',  # light pink
@@ -138,6 +138,27 @@ COLORS = [
         '#C71585',  # medium violet red
         '#E9967A',  # dark salmon
         '#A9A9A9',  # dark gray
+        ]
+
+
+MARKERS = [
+        'o', 's', '^', 'v', '<', '>', 'D', 'd', 'p', 'h',
+        'H', '8', 'P', 'X', '*',
+        '+', 'x', '1', '2', '3', '4', '|', '_', '.',
+        (7, 0, 0),    # heptagon
+        (9, 0, 0),    # nonagon
+        (10, 0, 0),   # decagon
+        (5, 1, 0),    # 5-point star (open-arm)
+        (6, 1, 0),    # 6-point star
+        (7, 1, 0),    # 7-point star
+        (8, 1, 0),    # 8-point star
+        (4, 2, 0),    # 4-arm asterisk
+        (5, 2, 0),    # 5-arm asterisk
+        (6, 2, 0),    # 6-arm asterisk
+        (7, 2, 0),    # 7-arm asterisk
+        (4, 0, 45),   # square rotated 45 deg
+        (5, 0, 36),   # pentagon rotated 36 deg
+        (6, 0, 30),   # hexagon rotated 30 deg
         ]
 
 
@@ -464,7 +485,9 @@ def check_gsim_list(gsim_list):
     output_gsims = {}
     for gs in gsim_list:
         if isinstance(gs, GMPE):
-            output_gsims[_get_gmpe_name(gs)] = gs # Get name of GMPE instance
+            # str(gs) is the toml block '[Name]\nkw = \"v\"' which already
+            # carries the kwargs that distinguish GSIMs sharing a base class
+            output_gsims[str(gs)] = gs
         elif gs in AVAILABLE_GSIMS:
             output_gsims[gs] = AVAILABLE_GSIMS[gs]()
         else:
@@ -476,32 +499,6 @@ def check_gsim_list(gsim_list):
                 raise ValueError('%s Not supported by OpenQuake' % gs)
 
     return output_gsims
-
-
-def _get_gmpe_name(gsim):
-    """
-    Returns the name of the GMPE given an instance of the class
-    """
-    match = _GMPETABLE_REGEX.match(str(gsim)) # GMPETable ?
-    if match:
-        filepath = match.group(1).split("=")[1][1:-1]
-        return 'GMPETable(gmpe_table=%s)' % filepath
-    else:
-        gsim_name = gsim.__class__.__name__
-        additional_args = []
-        # Build the GSIM string by showing name and arguments. Keep things
-        # simple (no replacements, no case changes) as we might want to be able
-        # to get back the GSIM from its string in the future.
-        for key in gsim.__dict__:
-            if key.startswith("kwargs"):
-                continue
-            val = str(gsim.__dict__[key]) 
-            additional_args.append("{:s}={:s}".format(key, val))
-        if len(additional_args):
-            gsim_name_str = "({:s})".format(", ".join(additional_args))
-            return gsim_name + gsim_name_str
-        else:
-            return gsim_name
 
 
 def clean_gmm_label(gmpe, drop_weight_info=False):

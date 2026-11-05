@@ -44,9 +44,12 @@ def _dfs_from_vertex(start_vertex: int) -> Set[frozenset[int]]:
         if len(current_set) == MAX_VERTS:
             continue
 
-        for nbr in ADJ_DICT[v]:
-            if nbr in current_set:
-                continue
+        # expand from every vertex in the set, not just the last one added,
+        # so that branched (non-path) sets are found too
+        frontier = {
+            nbr for u in current_set for nbr in ADJ_DICT[u]
+        } - current_set
+        for nbr in frontier:
             g = GROUP_OF[nbr]
             if g in used_groups:
                 continue
