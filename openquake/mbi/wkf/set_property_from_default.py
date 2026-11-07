@@ -25,8 +25,9 @@ def main(fname_conf: str, key: str, *, use: str = [], skip: str = []):
 
         if (len(use) and src_id not in use) or (src_id in skip):
             continue
-
-        output['sources'][src_id][key] = default
+        
+        if key not in output['sources'][src_id]:
+            output['sources'][src_id][key] = default
 
     # Saving results into the config file
     with open(fname_conf, 'w') as f:
