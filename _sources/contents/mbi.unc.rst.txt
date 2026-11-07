@@ -1,0 +1,21 @@
+mbi.unc package
+===============
+
+Submodules
+----------
+
+mbi.unc.apply\_mmax\_epri module
+--------------------------------
+
+.. automodule:: mbi.unc.apply_mmax_epri
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbi.unc
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,18 @@
+ghm.data package
+================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   ghm.data.gis
+
+Module contents
+---------------
+
+.. automodule:: ghm.data
+   :members:
+   :show-inheritance:
+   :undoc-members:

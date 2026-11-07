@@ -1,0 +1,45 @@
+smt.tests.comparison package
+============================
+
+Submodules
+----------
+
+smt.tests.comparison.cgmpe\_from\_toml\_test module
+---------------------------------------------------
+
+.. automodule:: smt.tests.comparison.cgmpe_from_toml_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.tests.comparison.comparison\_test module
+--------------------------------------------
+
+.. automodule:: smt.tests.comparison.comparison_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.tests.comparison.indirect\_avgsa\_from\_toml\_test module
+-------------------------------------------------------------
+
+.. automodule:: smt.tests.comparison.indirect_avgsa_from_toml_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+smt.tests.comparison.mgmpe\_from\_toml\_test module
+---------------------------------------------------
+
+.. automodule:: smt.tests.comparison.mgmpe_from_toml_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.tests.comparison
+   :members:
+   :show-inheritance:
+   :undoc-members:

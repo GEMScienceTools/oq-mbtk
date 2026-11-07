@@ -1,0 +1,69 @@
+man.tools package
+=================
+
+Submodules
+----------
+
+man.tools.csv\_output module
+----------------------------
+
+.. automodule:: man.tools.csv_output
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.get\_shapely\_pgn\_area\_in\_km2 module
+-------------------------------------------------
+
+.. automodule:: man.tools.get_shapely_pgn_area_in_km2
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.make\_gmm\_list module
+--------------------------------
+
+.. automodule:: man.tools.make_gmm_list
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.plot\_3d\_disagg module
+---------------------------------
+
+.. automodule:: man.tools.plot_3d_disagg
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.plot\_disagg\_LLT module
+----------------------------------
+
+.. automodule:: man.tools.plot_disagg_LLT
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.plot\_disagg\_MDE module
+----------------------------------
+
+.. automodule:: man.tools.plot_disagg_MDE
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+man.tools.read\_calc\_results module
+------------------------------------
+
+.. automodule:: man.tools.read_calc_results
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: man.tools
+   :members:
+   :show-inheritance:
+   :undoc-members:

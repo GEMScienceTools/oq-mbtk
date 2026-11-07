@@ -1,0 +1,45 @@
+mbi.ccl package
+===============
+
+Submodules
+----------
+
+mbi.ccl.change\_class module
+----------------------------
+
+.. automodule:: mbi.ccl.change_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.ccl.classify module
+-----------------------
+
+.. automodule:: mbi.ccl.classify
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.ccl.create\_sub\_catalogues module
+--------------------------------------
+
+.. automodule:: mbi.ccl.create_sub_catalogues
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbi.ccl.decluster\_multiple\_TR module
+--------------------------------------
+
+.. automodule:: mbi.ccl.decluster_multiple_TR
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbi.ccl
+   :members:
+   :show-inheritance:
+   :undoc-members:
