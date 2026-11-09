@@ -831,7 +831,7 @@ class Residuals(object):
         of Earthquake Ground Motion Models Using the Stochastic Area Metric,
         Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
         """
-        # Midpoint quantiles give deterministic model samples.
+        # Midpoint quantiles give deterministic model samples
         quantiles = norm.ppf((np.arange(num_samples) + 0.5) / num_samples)
 
         # Create store of values per gmm
