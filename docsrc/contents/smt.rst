@@ -78,12 +78,7 @@ We can specify the inputs to perform a residual analysis with as follows:
     
         > # Specify some GMPEs and intensity measures within a list
         > gmpe_list = ['AbrahamsonEtAl2014',
-        >              'AkkarEtAlRjb2014',
-        >              'BooreEtAl2014',
         >              'BooreEtAl2020',
-        >              'CauzziEtAl2014',
-        >              'CampbellBozorgnia2014',
-        >              'ChiouYoungs2014',
         >              'KothaEtAl2020',
         >              'LanzanoEtAl2019_RJB_OMO']
         > imt_list = ['PGA', 'SA(0.2)', 'SA(0.6)', 'SA(1.0)']
@@ -98,17 +93,7 @@ We can specify the inputs to perform a residual analysis with as follows:
     
        [models.AbrahamsonEtAl2014]
         
-       [models.AkkarEtAlRjb2014]
-        
-       [models.BooreEtAl2014]
-        
        [models.BooreEtAl2020]
-        
-       [models.CauzziEtAl2014]
-        
-       [models.CampbellBozorgnia2014]
-        
-       [models.ChiouYoungs2014]
         
        [models.KothaEtAl2020]
        
