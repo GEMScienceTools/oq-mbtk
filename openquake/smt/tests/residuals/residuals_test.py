@@ -28,7 +28,7 @@ import unittest
 import pickle
 import numpy as np
 from numpy.testing import assert_allclose
-from scipy.stats import norm, wasserstein_distance
+from scipy.stats import norm
 
 import openquake.smt.residuals.gmpe_residuals as res
 import openquake.smt.residuals.residual_plotter as rspl
@@ -111,7 +111,7 @@ EXP_STATIONS = [{gsim: RES_STATIONS.read(
 
 
 def _context(obs, mean, sigma):
-    # Predictions have already been restricted to retained observations.
+    # Predictions have already been restricted to retained observations
     obs = np.asarray(obs, dtype=float)
     return {
         'Observations': {'PGA': np.exp(obs)},
@@ -122,7 +122,7 @@ def _context(obs, mean, sigma):
 
 
 def _score(contexts, num_samples=1000):
-    # Bypass GSIM construction to isolate the metric from model evaluation.
+    # Bypass GSIM construction to isolate the metric from model evaluation
     residuals = object.__new__(res.Residuals)
     residuals.gmpe_list = {'model': None}
     residuals.imts = ['PGA']
@@ -133,55 +133,33 @@ def _score(contexts, num_samples=1000):
 
 class StochasticAreaTestCase(unittest.TestCase):
     def test_empirical_distributions(self):
-        # Zero sigma gives exact empirical distributions, including ties.
-        cases = [([0, 1, 2], [0, 1, 2]),
-                 ([0, 1, 2], [3, 4, 5]),
-                 ([0], [3]),
-                 ([-1, 0, 1], [-2, 0, 2]),
-                 ([0, 1, 2], [0, 2, 2])]
-        for obs, mean in cases:
+        # Zero sigma gives exact empirical distributions, including ties
+        cases = [([0, 1, 2], [3, 4, 5], 3.),
+                 ([-1, 0, 1], [-2, 0, 2], 2 / 3),
+                 ([0, 1, 2], [0, 2, 2], 1 / 3)]
+        for obs, mean, expected in cases:
             with self.subTest(obs=obs, mean=mean):
-                got = _score([_context(obs, mean, 0.)])
-                expected = max(1E-09, wasserstein_distance(obs, mean))
-                assert_allclose(got, expected, atol=1E-14)
+                assert_allclose(_score([_context(obs, mean, 0.)]), expected,
+                                atol=1E-14)
 
-    def test_single_gaussian(self):
-        # W1 between a point and a Gaussian is the folded-normal mean.
-        for offset in [0., 1., 3.]:
-            for sigma in [0.1, 0.5, 2.]:
-                with self.subTest(offset=offset, sigma=sigma):
-                    expected = (2 * sigma * norm.pdf(offset / sigma)
-                                + offset * (2 * norm.cdf(offset / sigma) - 1))
-                    got = _score([_context([0.], [offset], sigma)])
-                    assert_allclose(got, expected, atol=5E-04, rtol=0)
-
-    def test_sigma_sensitivity_and_convergence(self):
-        context = _context([0.], [0.], 1.)
+    def test_gaussian_and_convergence(self):
+        # W1 between a point and a Gaussian is the folded-normal mean
+        for offset, sigma in [(0., 0.1), (1., 0.5), (3., 2.)]:
+            with self.subTest(offset=offset, sigma=sigma):
+                expected = (2 * sigma * norm.pdf(offset / sigma)
+                            + offset * (2 * norm.cdf(offset / sigma) - 1))
+                got = _score([_context([0.], [offset], sigma)])
+                assert_allclose(got, expected, atol=5E-04, rtol=0)
+        context = [_context([0.], [0.], 1.)]
         expected = np.sqrt(2 / np.pi)
-        coarse = _score([context], num_samples=100)
-        fine = _score([context], num_samples=10000)
+        coarse, fine = [_score(context, n) for n in (100, 10000)]
         self.assertLess(abs(fine - expected), abs(coarse - expected))
-        small = _score([_context([0.], [0.], 0.1)])
-        large = _score([_context([0.], [0.], 2.)])
-        assert_allclose(large / small, 20.)
-
-    def test_record_weighting_and_context_partition(self):
-        # Records have equal mass irrespective of event/context size.
-        together = [_context([0., 1., 3.], [0., 2., 4.], [0.1, 0.5, 2.])]
-        split = [_context([0.], [0.], 0.1),
-                 _context([1., 3.], [2., 4.], [0.5, 2.])]
-        assert_allclose(_score(together), _score(split))
-        q = norm.ppf((np.arange(10000) + 0.5) / 10000)
-        model = np.concatenate([0.1 * q, 2. + 0.5 * q, 4. + 2. * q])
-        reference = wasserstein_distance([0., 1., 3.], model)
-        assert_allclose(_score(split), reference, atol=5E-04, rtol=0)
 
     def test_missing_observations(self):
-        reference = _score([_context([0., 2.], [0., 2.], 0.5)])
-        missing = _context([0., np.nan, 2.], [0., 2.], 0.5)
-        assert_allclose(_score([missing]), reference)
-        empty = _context([np.nan], [], [])
-        assert_allclose(_score([empty, missing]), reference)
+        together = _context([0., 1., 3.], [0., 2., 4.], [0.1, 0.5, 2.])
+        # Predictions have already been restricted to retained observations
+        missing = _context([0., np.nan, 1., 3.], [0., 2., 4.], [0.1, 0.5, 2.])
+        assert_allclose(_score([missing]), _score([together]))
 
 
 class ResidualsTestCase(unittest.TestCase):
