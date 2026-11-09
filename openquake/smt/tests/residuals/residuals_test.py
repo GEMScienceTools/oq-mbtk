@@ -110,52 +110,6 @@ EXP_STATIONS = [{gsim: RES_STATIONS.read(
     gsim, idx) for gsim in GSIMS} for idx in range(8)]
 
 
-class StochasticAreaTestCase(unittest.TestCase):
-    def _context(self, obs, mean, sigma):
-        # Predictions have already been restricted to retained obs
-        obs = np.asarray(obs, dtype=float)
-        return {
-            'Observations': {'PGA': np.exp(obs)},
-            'Retained': {'PGA': np.flatnonzero(~np.isnan(obs))},
-            'Expected': {'model': {'PGA': {
-                'Mean': np.asarray(mean, dtype=float),
-                'Total': np.broadcast_to(sigma, np.shape(mean))}}}}
-
-    def _score(self, contexts):
-        residuals = object.__new__(res.Residuals)
-        residuals.gmpe_list = {'model': None} # Skip making a GMM
-        residuals.imts = ['PGA']
-        residuals.contexts = contexts
-        residuals.get_sto_wrt_imt()
-        return residuals.stoch_areas_wrt_imt['model']['PGA']
-
-    def test_disjoint_and_crossing_distributions(self):
-        # Zero sigma gives exact empirical distributions, including ties
-        cases = [([0, 1, 2], [3, 4, 5], 3.),
-                 ([-1, 0, 1], [-2, 0, 2], 2 / 3),
-                 ([0, 1, 2], [0, 2, 2], 1 / 3)]
-        for obs, mean, expected in cases:
-            with self.subTest(obs=obs, mean=mean):
-                got = self._score([self._context(obs, mean, 0.)])
-                assert_allclose(got, expected, atol=1E-14)
-
-    def test_predictive_sigma(self):
-        # W1 between a point and a Gaussian is the folded-normal mean
-        for offset, sigma in [(0., 0.1), (1., 0.5), (3., 2.)]:
-            with self.subTest(offset=offset, sigma=sigma):
-                expected = (2 * sigma * norm.pdf(offset / sigma)
-                            + offset * (2 * norm.cdf(offset / sigma) - 1))
-                got = self._score([self._context([0.], [offset], sigma)])
-                assert_allclose(got, expected, atol=5E-04, rtol=0)
-
-    def test_missing_observations(self):
-        together = self._context([0., 1., 3.], [0., 2., 4.], [0.1, 0.5, 2.])
-        # Predictions have already been restricted to retained observations
-        missing = self._context([0., np.nan, 1., 3.], [0., 2., 4.],
-                                [0.1, 0.5, 2.])
-        assert_allclose(self._score([missing]), self._score([together]))
-
-
 class ResidualsTestCase(unittest.TestCase):
     """
     Core test case for the residuals objects.
@@ -371,3 +325,48 @@ class ResidualsTestCase(unittest.TestCase):
         Deletes the database.
         """
         shutil.rmtree(cls.out_location)
+
+
+class StochasticAreaTestCase(unittest.TestCase):
+    def _context(self, obs, mean, sigma):
+        # Predictions have already been restricted to retained obs
+        obs = np.asarray(obs, dtype=float)
+        return {
+            'Observations': {'PGA': np.exp(obs)},
+            'Retained': {'PGA': np.flatnonzero(~np.isnan(obs))},
+            'Expected': {'model': {'PGA': {
+                'Mean': np.asarray(mean, dtype=float),
+                'Total': np.broadcast_to(sigma, np.shape(mean))}}}}
+
+    def _score(self, contexts):
+        residuals = object.__new__(res.Residuals)
+        residuals.gmpe_list = {'model': None} # Skip making a GMM
+        residuals.imts = ['PGA']
+        residuals.contexts = contexts
+        residuals.get_sto_wrt_imt()
+        return residuals.stoch_areas_wrt_imt['model']['PGA']
+
+    def test_disjoint_and_crossing_distributions(self):
+        # Zero sigma gives exact empirical distributions, including ties
+        cases = [([0, 1, 2], [3, 4, 5], 3.),
+                 ([-1, 0, 1], [-2, 0, 2], 2 / 3),
+                 ([0, 1, 2], [0, 2, 2], 1 / 3)]
+        for obs, mean, expected in cases:
+            with self.subTest(obs=obs, mean=mean):
+                got = self._score([self._context(obs, mean, 0.)])
+                assert_allclose(got, expected, atol=1E-14)
+
+    def test_predictive_sigma(self):
+        # W1 between a point and a Gaussian is the folded-normal mean
+        for offset, sigma in [(0., 0.1), (1., 0.5), (3., 2.)]:
+            with self.subTest(offset=offset, sigma=sigma):
+                expected = (2 * sigma * norm.pdf(offset / sigma)
+                            + offset * (2 * norm.cdf(offset / sigma) - 1))
+                got = self._score([self._context([0.], [offset], sigma)])
+                assert_allclose(got, expected, atol=5E-04, rtol=0)
+
+    def test_missing_observations(self):
+        together = self._context([0., 1., 3.], [0., 2., 4.], [0.1, 0.5, 2.])
+        missing = self._context([0., np.nan, 1., 3.], [0., 2., 4.],
+                                [0.1, 0.5, 2.])
+        assert_allclose(self._score([missing]), self._score([together]))
