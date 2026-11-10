@@ -195,17 +195,10 @@ DATA = {'GID_0': {
        'cea': ['KAZ', 'KGZ', 'TJK', 'TKM', 'UZB'],
        'chn': ['CHN', 'Z02', 'Z03', 'Z08'],
        'gld': ['GRL'],
-       # for placing Turkey, Cyprus, North Cyprus in MIE
-       'mie': ['AFG', 'ARM', 'AZE', 'CYP', 'GEO',
+       'mie': ['AFG', 'ARM', 'AZE', 'GEO',
                'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
                'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
-               'SYR', 'TUR', 'ZNC'],
-       # for placing Turkey, Cyprus, North Cyprus in EUR
-       #'mie': ['AFG', 'ARM', 'AZE', 'GEO',
-       #        'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
-       #        'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
-       #        'SYR' 'TUR'],
-       # for placing Turkey, Cyprus, North Cyprus in EUR
+               'SYR'],
        'eur': ['ALB', 'AND', 'AUT', 'BEL', 'BGR',
                'BIH', 'BLR', 'CHE', 'CZE', 'DEU',
                'DNK', 'ESP', 'EST', 'FIN', 'FRA',
@@ -234,14 +227,14 @@ DATA = {'GID_0': {
                'REU', 'GNQ', 'MYT', 'COM','BMU',
                'FLK', 'SGS', 'BVT', 'ATA', 'BRA',
                'OAT'],
-       'oin': ['MDV', 'CCK', 'CXR', 'MUS', 
-               'IOT', 'IND', 'ATF'], 
+       'oin': ['MDV', 'CCK', 'CXR', 'MUS',
+               'IOT', 'IND', 'ATF'],
         # KIR - Kiribati
         # COK - Cook Islands
         # NFK - Norfolk Island
-       'opa': ['KIR', 'PLW', 'FSM', 'PCN', 'COK', 
+       'opa': ['KIR', 'PLW', 'FSM', 'PCN', 'COK',
                'PYF', 'XCL','UMI', 'CRI', 'MNP', 'NFK'
-               'GUM', 'MHL', 'NRU', 'CHL', 'ECU', 
+               'GUM', 'MHL', 'NRU', 'CHL', 'ECU',
                'JPN', 'MEX', 'NZL', 'AUS', 'OPA'],
         # ASM - American Samoa
         # FJI - Fiji
@@ -257,7 +250,7 @@ DATA = {'GID_0': {
         # VUT - Vanuatu
         # WLF - Wallis and Fortuna
         # WSM - Samoa
-       'pac': ['ASM', 'FJI', 'KIR', 'NCL', 
+       'pac': ['ASM', 'FJI', 'KIR', 'NCL',
                'NIU', 'NRU', 'NZL', 'SLB', 'TKL',
                'TON', 'TUV', 'VUT', 'WLF', 'WSM'],
        'par': ['SJM', 'RUS'],
@@ -274,6 +267,7 @@ DATA = {'GID_0': {
                'KEN', 'MDG', 'MOZ', 'MWI', 'NAM',
                'RWA', 'SDN', 'SOM', 'SSD', 'TZA',
                'UGA', 'ZMB', 'ZWE', 'OAT'],
+       'tur': ['TUR', 'CYP', 'ZNC', 'XAD'],
        'twn': ['TWN'],
        'usa': ['USA', 'CAL'],
        'waf': ['AGO', 'BEN', 'BFA', 'BWA', 'CAF',
