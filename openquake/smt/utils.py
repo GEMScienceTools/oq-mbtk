@@ -32,7 +32,7 @@ from openquake.hazardlib.gsim.gmpe_table import GMPETable
 from openquake.hazardlib.gsim.base import GMPE
 from openquake.hazardlib import valid
 from openquake.commonlib.readinput import read_geometries
-from openquake.hmtk.plotting.patch import PolygonPatch
+from openquake.hazardlib.geo.utils import PolygonPatch
 from openquake.qa_tests_data import global_risk
 
 
