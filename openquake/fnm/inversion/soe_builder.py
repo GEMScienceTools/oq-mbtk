@@ -821,11 +821,27 @@ def make_abs_mfd_eqns(
     cumulative=False,
     region_name=None,
     min_mfd_error=1e-5,
+    err_mode="poisson",
+    rel_err=0.3,
 ):
     """
     Vectorized build of absolute MFD equations.
     Rows = magnitudes, Cols = ruptures.
+
+    The returned `errs` are row weights (1/sigma) multiplied by `weight`.
+    The sigma of each row depends on `err_mode`:
+
+    - "poisson" (default): sigma = sqrt(rate). This is a Poisson error on
+      counts applied to annual rates; for rates << 1 the rows have a small
+      weight compared to slip-rate rows, so `weight` must be large
+      (~1/sqrt(rate)) for the MFD to have an effect.
+    - "relative": sigma = `rel_err` * rate. Weighted residuals are
+      dimensionless (fractions of the target rate) and comparable with
+      slip-rate residuals expressed in sigma units, so `weight` ~ 1 gives
+      the MFD an importance similar to the slip rates.
     """
+    if err_mode not in {"poisson", "relative"}:
+        raise ValueError("err_mode must be 'poisson' or 'relative'")
 
     # TODO: Cumulative fits don't work well. Need to investigate.
 
@@ -897,7 +913,14 @@ def make_abs_mfd_eqns(
 
     # --- errors and weights ---
     # Note: sqrt(0) -> 0; if you want to avoid zero-variance, add small epsilon.
-    mfd_abs_errs = np.sqrt(mfd_abs_rhs)
+    if err_mode == "poisson":
+        mfd_abs_errs = np.sqrt(mfd_abs_rhs)
+    else:
+        # Bins without a target rate get the sigma of the smallest
+        # positive rate, rather than an (almost) infinite weight
+        pos = mfd_abs_rhs > 0
+        floor = mfd_abs_rhs[pos].min() if np.any(pos) else 1.0
+        mfd_abs_errs = rel_err * np.maximum(mfd_abs_rhs, floor)
     mfd_abs_errs_weighted = (
         weights_from_errors(mfd_abs_errs, min_error=min_mfd_error) * weight
     )
@@ -912,6 +935,7 @@ def make_abs_mfd_eqns(
             "region": region_name if region_name else "global",
             "cumulative": cumulative,
             "normalized": normalize,
+            "err_mode": err_mode,
         },
     }
 
@@ -1400,6 +1424,8 @@ def make_eqns(
     ridge_default_rate: float = 0.0,
     fault_rel_mfds=None,
     mfd_abs_normalize=False,
+    mfd_abs_err_mode="poisson",
+    mfd_abs_rel_err=0.3,
     slip_rate_smoothing=False,
     fault_adjacence=None,
     slip_rate_smooth_weight=1.0,
@@ -1410,6 +1436,12 @@ def make_eqns(
 ):
     """
     Modified to track and return equation metadata
+
+    `mfd_abs_err_mode` and `mfd_abs_rel_err` set the sigma of the absolute
+    MFD equations (see `make_abs_mfd_eqns`): "poisson" (default, sigma =
+    sqrt(rate)) or "relative" (sigma = `mfd_abs_rel_err` * rate, giving
+    dimensionless residuals for which `mfd_abs_weight` ~ 1 is a sensible
+    starting point).
     """
     lhs_set = []
     rhs_set = []
@@ -1637,6 +1669,8 @@ def make_eqns(
                 rups,
                 mfd,
                 weight=mfd_abs_weight,
+                err_mode=mfd_abs_err_mode,
+                rel_err=mfd_abs_rel_err,
                 normalize=mfd_abs_normalize,
             )
             if abs_result[-1] is not None:
@@ -1656,6 +1690,8 @@ def make_eqns(
                 rups,
                 mfd,
                 weight=mfd_abs_weight,
+                err_mode=mfd_abs_err_mode,
+                rel_err=mfd_abs_rel_err,
                 normalize=mfd_abs_normalize,
                 cumulative=True,
             )
@@ -1683,6 +1719,8 @@ def make_eqns(
                         rup_include_list=reg_mfd_data["rups_include"],
                         rup_fractions=reg_mfd_data["rup_fractions"],
                         weight=mfd_abs_weight,
+                        err_mode=mfd_abs_err_mode,
+                        rel_err=mfd_abs_rel_err,
                         region_name=reg,
                     )
                     if reg_result[-1] is not None:
@@ -1710,6 +1748,8 @@ def make_eqns(
                         rup_include_list=reg_mfd_data["rups_include"],
                         rup_fractions=reg_mfd_data["rup_fractions"],
                         weight=mfd_abs_weight,
+                        err_mode=mfd_abs_err_mode,
+                        rel_err=mfd_abs_rel_err,
                         cumulative=True,
                         region_name=reg,
                     )
