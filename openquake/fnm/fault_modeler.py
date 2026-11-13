@@ -41,6 +41,7 @@ from concurrent.futures import (
     ProcessPoolExecutor,
     as_completed,
 )
+from concurrent.futures.process import BrokenProcessPool
 
 from shapely.geometry import LineString, Polygon, MultiPolygon
 
@@ -524,6 +525,27 @@ def build_subfaults_parallel(fault_network, build_settings, max_workers=None):
 
     tasks = [(i, faults[i], build_settings) for i in range(n_faults)]
 
+    try:
+        _run_subfault_tasks(fault_network, tasks, max_workers)
+    except BrokenProcessPool:
+        # Typically a script run without an `if __name__ == "__main__":`
+        # guard (the workers re-import it), or a worker killed by the OS
+        logging.warning(
+            "Process pool broken while building subfaults: falling back "
+            "to the serial build. In scripts, protect the main code with "
+            "`if __name__ == '__main__':` to use the parallel build."
+        )
+        for task in tasks:
+            i, subfaults, err = _build_subfaults_for_one_fault(task)
+            if err is not None:
+                e, tb = err
+                logging.error(f"Error with fault {i}: {e}")
+                logging.error(tb)
+                raise e
+            fault_network['subfaults'][i] = subfaults
+
+
+def _run_subfault_tasks(fault_network, tasks, max_workers):
     with ProcessPoolExecutor(max_workers=max_workers) as ex:
         futures = [ex.submit(_build_subfaults_for_one_fault, t) for t in tasks]
 

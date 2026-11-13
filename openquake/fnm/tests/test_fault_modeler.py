@@ -2131,3 +2131,25 @@ class MiscTests(unittest.TestCase):
         weights = [1, 2, 3, 4, 5]
         mean = weighted_angular_mean_degrees(angles, weights)
         np.testing.assert_almost_equal(mean, 26.141656559913944, decimal=3)
+
+
+class TestBuildSubfaultsParallelFallback(unittest.TestCase):
+    def test_serial_fallback_on_broken_pool(self):
+        from unittest import mock
+        from concurrent.futures.process import BrokenProcessPool
+        import openquake.fnm.fault_modeler as fm
+
+        fault_network = {'faults': ['a', 'b', 'c']}
+
+        def fake_build(task):
+            i, fault, _ = task
+            return (i, [fault], None)
+
+        with mock.patch.object(
+            fm, '_run_subfault_tasks', side_effect=BrokenProcessPool
+        ), mock.patch.object(
+            fm, '_build_subfaults_for_one_fault', side_effect=fake_build
+        ), self.assertLogs(level='WARNING'):
+            fm.build_subfaults_parallel(fault_network, build_settings={})
+
+        self.assertEqual(fault_network['subfaults'], [['a'], ['b'], ['c']])
