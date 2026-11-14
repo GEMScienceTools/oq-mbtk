@@ -1,0 +1,61 @@
+mbt.tools.model\_building package
+=================================
+
+Submodules
+----------
+
+mbt.tools.model\_building.dclustering module
+--------------------------------------------
+
+.. automodule:: mbt.tools.model_building.dclustering
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model\_building.mpl\_plt\_tools module
+------------------------------------------------
+
+.. automodule:: mbt.tools.model_building.mpl_plt_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model\_building.myv\_plt\_tools module
+------------------------------------------------
+
+.. automodule:: mbt.tools.model_building.myv_plt_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model\_building.plt\_mfd module
+-----------------------------------------
+
+.. automodule:: mbt.tools.model_building.plt_mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model\_building.plt\_mtd module
+-----------------------------------------
+
+.. automodule:: mbt.tools.model_building.plt_mtd
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+mbt.tools.model\_building.plt\_tools module
+-------------------------------------------
+
+.. automodule:: mbt.tools.model_building.plt_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: mbt.tools.model_building
+   :members:
+   :show-inheritance:
+   :undoc-members:

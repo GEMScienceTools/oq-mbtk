@@ -1,0 +1,10 @@
+ghm.gmt.cpt package
+===================
+
+Module contents
+---------------
+
+.. automodule:: ghm.gmt.cpt
+   :members:
+   :show-inheritance:
+   :undoc-members:

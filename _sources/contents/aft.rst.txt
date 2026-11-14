@@ -1,0 +1,37 @@
+aft package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   aft.tests
+
+Submodules
+----------
+
+aft.aftershock\_probabilities module
+------------------------------------
+
+.. automodule:: aft.aftershock_probabilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+aft.rupture\_distances module
+-----------------------------
+
+.. automodule:: aft.rupture_distances
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: aft
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,21 @@
+smt.tests.demos package
+=======================
+
+Submodules
+----------
+
+smt.tests.demos.demos\_test module
+----------------------------------
+
+.. automodule:: smt.tests.demos.demos_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: smt.tests.demos
+   :members:
+   :show-inheritance:
+   :undoc-members:

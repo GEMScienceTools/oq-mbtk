@@ -1,0 +1,29 @@
+ghm.gmt package
+===============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   ghm.gmt.cpt
+
+Submodules
+----------
+
+ghm.gmt.cat\_json module
+------------------------
+
+.. automodule:: ghm.gmt.cat_json
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: ghm.gmt
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,77 @@
+cat.hmg package
+===============
+
+Submodules
+----------
+
+cat.hmg.check module
+--------------------
+
+.. automodule:: cat.hmg.check
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.hmg module
+------------------
+
+.. automodule:: cat.hmg.hmg
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.info module
+-------------------
+
+.. automodule:: cat.hmg.info
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.map module
+------------------
+
+.. automodule:: cat.hmg.map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.merge module
+--------------------
+
+.. automodule:: cat.hmg.merge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.plot module
+-------------------
+
+.. automodule:: cat.hmg.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.purge module
+--------------------
+
+.. automodule:: cat.hmg.purge
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+cat.hmg.utils module
+--------------------
+
+.. automodule:: cat.hmg.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: cat.hmg
+   :members:
+   :show-inheritance:
+   :undoc-members:

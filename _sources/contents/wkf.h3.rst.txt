@@ -1,0 +1,21 @@
+wkf.h3 package
+==============
+
+Submodules
+----------
+
+wkf.h3.zones module
+-------------------
+
+.. automodule:: wkf.h3.zones
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: wkf.h3
+   :members:
+   :show-inheritance:
+   :undoc-members:
