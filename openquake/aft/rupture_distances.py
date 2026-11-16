@@ -38,7 +38,7 @@ from openquake.hazardlib.source import PointSource
 from openquake.hazardlib.geo.geodetic import spherical_to_cartesian
 
 # typing
-from openquake.hazardlib.source import BaseSeismicSource
+from openquake.hazardlib.source.base import BaseSeismicSource
 
 # A Numpy dtype with fields for rupture indices and distances
 RupDistType = np.dtype([("r1", np.int32), ("r2", np.int32), ("d", np.single)])

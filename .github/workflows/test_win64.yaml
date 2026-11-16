@@ -118,4 +118,4 @@ jobs:
           $curDir = Get-Location
           Write-Host "Current Working Directory: $curDir"
           cd openquake
-          pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt
+          pytest -vs --color=yes --durations=10 cat ghm man mbt sub wkf smt hmtk

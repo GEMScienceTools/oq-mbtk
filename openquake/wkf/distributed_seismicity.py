@@ -47,9 +47,9 @@ from openquake.hazardlib.source import (
     MultiPointSource,
     AreaSource,
     PointSource,
-    BaseSeismicSource,
     MultiFaultSource,
 )
+from openquake.hazardlib.source.base import BaseSeismicSource
 from openquake.hazardlib.geo.surface import SimpleFaultSurface
 from openquake.hazardlib.mfd.multi_mfd import MultiMFD
 from openquake.hazardlib.mfd import (
