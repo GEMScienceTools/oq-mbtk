@@ -127,8 +127,8 @@ def write_as_multipoint_sources(df, model, src_id, subzones,
                     a_val=avals)
 
     mesh = Mesh(np.array(lons), np.array(lats))
-    srcmp = MultiPointSource(src_id, name, trt, mmfd, msr, rar, usd, lsd,
-                             npd, hyd, mesh, tom)
+    srcmp = MultiPointSource(src_id, name, trt, mmfd, None, msr, rar, tom,
+                             usd, lsd, npd, hyd, mesh)
 
     # Write output file
     fname_out = os.path.join(folder_out, 'src_{:s}.xml'.format(src_id))

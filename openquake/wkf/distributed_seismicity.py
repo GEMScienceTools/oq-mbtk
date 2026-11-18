@@ -576,7 +576,7 @@ def _from_list_ps_to_multipoint_even_disc_mfd(
     name = src_id
     mesh = Mesh(np.array(lons), np.array(lats))
     srcmp = MultiPointSource(
-        src_id, name, trt, mmfd, msr, rar, usd, lsd, npd, hyd, mesh, tom
+        src_id, name, trt, mmfd, None, msr, rar, tom, usd, lsd, npd, hyd, mesh
     )
 
     return srcmp
@@ -620,7 +620,7 @@ def _from_list_ps_to_multipoint_arbitrary_mfd(
     name = src_id
     mesh = Mesh(np.array(lons), np.array(lats))
     srcmp = MultiPointSource(
-        src_id, name, trt, mmfd, msr, rar, usd, lsd, npd, hyd, mesh, tom
+        src_id, name, trt, mmfd, None, msr, rar, tom, usd, lsd, npd, hyd, mesh
     )
 
     return srcmp
@@ -679,7 +679,7 @@ def _from_list_ps_to_multipoint_trunc_grmfd(
     # Instantiate the multi-point source
     mesh = Mesh(np.array(lons), np.array(lats))
     srcmp = MultiPointSource(
-        src_id, name, trt, mmfd, msr, rar, usd, lsd, npd, hyd, mesh, tom
+        src_id, name, trt, mmfd, None, msr, rar, tom, usd, lsd, npd, hyd, mesh
     )
 
     return srcmp
