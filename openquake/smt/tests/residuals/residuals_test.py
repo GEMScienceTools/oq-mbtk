@@ -154,7 +154,9 @@ class ResidualsTestCase(unittest.TestCase):
         compare_residuals([self.residuals.residuals], [self.exp])
 
     def test_unnormalised_residual_values(self):
-        """All residual components use natural-log units when requested."""
+        """
+        All residual components use natural-log units when requested.
+        """
         residuals = res.Residuals(GSIMS, self.imts)
         residuals.compute_residuals(self.database, component="Geometric",
                                     normalise=False)
