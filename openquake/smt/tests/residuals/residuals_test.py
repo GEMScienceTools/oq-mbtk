@@ -153,6 +153,25 @@ class ResidualsTestCase(unittest.TestCase):
         """
         compare_residuals([self.residuals.residuals], [self.exp])
 
+    def test_unnormalised_residual_values(self):
+        """
+        All residual components use natural-log units when requested.
+        """
+        residuals = res.Residuals(GSIMS, self.imts)
+        residuals.compute_residuals(self.database, component="Geometric",
+                                    normalise=False)
+        for ctx in residuals.contexts:
+            for gmpe in residuals.gmpe_list:
+                for imt in self.imts:
+                    values = ctx["Residual"][gmpe][imt]
+                    expected = ctx["Expected"][gmpe][imt]
+                    observed = ctx["Observations"][imt][ctx["Retained"][imt]]
+                    assert_allclose(values["Total"],
+                                    np.log(observed) - expected["Mean"])
+                    assert_allclose(values["Total"],
+                                    values["Inter event"] + values["Intra event"],
+                                    atol=1e-12)
+
     def test_residuals_execution_from_toml(self):
         """
         Tests basic execution of residuals when specifying gmpes

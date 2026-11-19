@@ -270,6 +270,9 @@ class Residuals(object):
             observed IMTs.
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase`
             for an example
+        :param normalise: If True, divide total, inter-event and intra-event
+                          residuals by their corresponding standard deviations.
+                          If False, return all residuals in natural-log units.
         :param stations: Bool which if set to True prevents an error being raised
                          if all obs values for given IMT are nans at the station,
                          which is forbidden for a single ground-motion record in
@@ -402,7 +405,8 @@ class Residuals(object):
 
     def calculate_residuals(self, context, normalise=True):
         """
-        Calculate the residual terms.
+        Calculate all residual terms in natural-log units, or standardised
+        by their corresponding sigma components when normalise is True.
         """
         # Calculate residual
         residual = {}
@@ -418,7 +422,10 @@ class Residuals(object):
                     continue
                 mean = context["Expected"][gmpe][imtx]["Mean"]
                 total_stddev = context["Expected"][gmpe][imtx]["Total"]
-                residual[gmpe][imtx]["Total"] = (obs - mean) / total_stddev
+                total_residual = obs - mean
+                if normalise:
+                    total_residual = total_residual / total_stddev
+                residual[gmpe][imtx]["Total"] = total_residual
                 if "Inter event" in self.residuals[gmpe][imtx].keys():
                     inter, intra = self._get_random_effects_residuals(
                         obs,
