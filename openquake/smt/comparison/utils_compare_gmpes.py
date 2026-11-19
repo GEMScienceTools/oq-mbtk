@@ -414,18 +414,25 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                         rs_ms.append(rs_min_sigma_dist)
                     
 
-                # Plot individual GMPEs
+                # Plot individual GMPEs. Drop periods where the GMM did not
+                # return a value (NaN placeholder from att_curves when the IMT
+                # is outside the GMM's coefficient table) so the line connects
+                # across the gap instead of leaving isolated points invisible.
                 if 'plot_lt_only' not in str(gmpe):
-                    ax.plot(periods,
-                            rs_50p,
+                    rs_50p = np.asarray(rs_50p)
+                    valid = ~np.isnan(rs_50p)
+                    ax.plot(periods[valid],
+                            rs_50p[valid],
                             color=col,
                             linewidth=2,
                             linestyle='-',
                             label=clean_gmm_label(gmpe),
                             zorder=1)
                     if config.nstd > 0:
-                        ax.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
-                        ax.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods[valid], np.asarray(rs_ps)[valid],
+                                color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods[valid], np.asarray(rs_ms)[valid],
+                                color=col, linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
                 gmc_vals = spectra_data(gmpe,
