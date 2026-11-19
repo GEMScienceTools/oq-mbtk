@@ -93,7 +93,7 @@ jobs:
           python -m pip install -e .
           $Env:MPLBACKEND="AGG"
           $Env:PYTHONUTF8=1
-          Start-Job -ScriptBlock{& 'oq.exe' engine --upgrade-db}
+          oq.exe engine --upgrade-db
           oq.exe --version
           Write-Host "Print all environments variables to check"
           dir env:
