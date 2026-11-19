@@ -395,6 +395,53 @@ def get_mfd_occurrence_rates(mfd, mag_decimals=None, cumulative=False):
     return mfd_occ_rates
 
 
+def get_block_residuals(lhs, rhs, weights, x, metadata, by_region=False):
+    """
+    Summarise the weighted residuals of each block of equations, to check
+    the relative importance of the constraints in a solution.
+
+    :param lhs:
+        The matrix of the system of equations (as returned by `make_eqns`)
+    :param rhs:
+        The data vector
+    :param weights:
+        The row weights (the `errs` returned by `make_eqns`)
+    :param x:
+        The solution (rupture rates)
+    :param metadata:
+        The list of block metadata returned by
+        `make_eqns(..., return_metadata=True)`
+    :param by_region:
+        If True, one row per block (e.g. per fault or region). If False,
+        blocks of the same type are merged.
+    :returns:
+        A :class:`pandas.DataFrame` with the number of equations, and the
+        mean absolute, RMS and maximum absolute weighted residual
+    """
+    res = (lhs @ np.asarray(x, dtype=float) - rhs) * weights
+    groups = {}
+    for meta in metadata:
+        key = meta["type"]
+        if by_region:
+            region = meta.get("details", {}).get("region")
+            if region is not None:
+                key = (meta["type"], region)
+        groups.setdefault(key, []).append(
+            res[meta["start_idx"]:meta["end_idx"]]
+        )
+    rows = []
+    for key, chunks in groups.items():
+        r = np.concatenate(chunks)
+        rows.append({
+            "block": key if isinstance(key, str) else f"{key[0]}:{key[1]}",
+            "n_eqs": r.size,
+            "mean_abs": float(np.mean(np.abs(r))) if r.size else np.nan,
+            "rms": float(np.sqrt(np.mean(r ** 2))) if r.size else np.nan,
+            "max_abs": float(np.max(np.abs(r))) if r.size else np.nan,
+        })
+    return pd.DataFrame(rows).set_index("block")
+
+
 def get_mfd_moment(mfd, mag_decimals=None):
     mfd_moment = sum(
         [
