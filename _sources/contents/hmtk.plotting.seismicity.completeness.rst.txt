@@ -1,0 +1,29 @@
+hmtk.plotting.seismicity.completeness package
+=============================================
+
+Submodules
+----------
+
+hmtk.plotting.seismicity.completeness.cumulative\_rate\_analysis module
+-----------------------------------------------------------------------
+
+.. automodule:: hmtk.plotting.seismicity.completeness.cumulative_rate_analysis
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.plotting.seismicity.completeness.plot\_stepp\_1972 module
+--------------------------------------------------------------
+
+.. automodule:: hmtk.plotting.seismicity.completeness.plot_stepp_1972
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting.seismicity.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:

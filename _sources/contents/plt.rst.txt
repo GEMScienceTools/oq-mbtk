@@ -1,0 +1,53 @@
+plt package
+===========
+
+Submodules
+----------
+
+plt.catalogue module
+--------------------
+
+.. automodule:: plt.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+plt.faults module
+-----------------
+
+.. automodule:: plt.faults
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+plt.interevent module
+---------------------
+
+.. automodule:: plt.interevent
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+plt.mapping module
+------------------
+
+.. automodule:: plt.mapping
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+plt.sections module
+-------------------
+
+.. automodule:: plt.sections
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: plt
+   :members:
+   :show-inheritance:
+   :undoc-members:

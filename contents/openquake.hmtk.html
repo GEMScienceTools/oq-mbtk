@@ -1,0 +1,361 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>openquake.hmtk package &mdash; OpenQuake Model Building Toolkit Suite  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="openquake.hmtk.comparison package" href="openquake.hmtk.comparison.html" />
+    <link rel="prev" title="Hazard Modeller Toolkit (hmtk) module" href="hmtk.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            OpenQuake Model Building Toolkit Suite
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="hmtk.html">Hazard Modeller Toolkit (hmtk) module</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">openquake.hmtk package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.comparison.html">openquake.hmtk.comparison package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.html">openquake.hmtk.faults package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.html">openquake.hmtk.parsers package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.html">openquake.hmtk.plotting package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.html">openquake.hmtk.seismicity package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.sources.html">openquake.hmtk.sources package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.strain.html">openquake.hmtk.strain package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openquake-hmtk-models-module">openquake.hmtk.models module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#openquake-hmtk-registry-module">openquake.hmtk.registry module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cat.html">CAtalogue Toolkit (cat) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ghm.html">Global Hazard Map (ghm) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="man.html">Model ANalysis (man) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mbt.html">Model Building Toolkit (mbt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sub.html">SUBduction (sub) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="smt.html">Strong-Motion Tools (smt) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sep.html">Secondary Perils Analysis using the OQ-MBTK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wkf.html">SSC workflow (wkf) module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fnm.html">Fault Network Modeling(fnm) a.k.a. Fermi</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">OpenQuake Model Building Toolkit Suite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="hmtk.html">Hazard Modeller Toolkit (hmtk) module</a></li>
+      <li class="breadcrumb-item active">openquake.hmtk package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/openquake.hmtk.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="openquake-hmtk-package">
+<h1>openquake.hmtk package<a class="headerlink" href="#openquake-hmtk-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.comparison.html">openquake.hmtk.comparison package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.comparison.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.comparison.html#openquake-hmtk-comparison-rate-grids-module">openquake.hmtk.comparison.rate_grids module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.comparison.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.faults.html">openquake.hmtk.faults package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.faults.mfd.html">openquake.hmtk.faults.mfd package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#openquake-hmtk-faults-mfd-anderson-luco-arbitrary-module">openquake.hmtk.faults.mfd.anderson_luco_arbitrary module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#openquake-hmtk-faults-mfd-anderson-luco-area-mmax-module">openquake.hmtk.faults.mfd.anderson_luco_area_mmax module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#openquake-hmtk-faults-mfd-base-module">openquake.hmtk.faults.mfd.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#openquake-hmtk-faults-mfd-characteristic-module">openquake.hmtk.faults.mfd.characteristic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#openquake-hmtk-faults-mfd-youngs-coppersmith-module">openquake.hmtk.faults.mfd.youngs_coppersmith module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.faults.mfd.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#openquake-hmtk-faults-active-fault-model-module">openquake.hmtk.faults.active_fault_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#openquake-hmtk-faults-fault-geometries-module">openquake.hmtk.faults.fault_geometries module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#openquake-hmtk-faults-fault-models-module">openquake.hmtk.faults.fault_models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#openquake-hmtk-faults-tectonic-regionalisation-module">openquake.hmtk.faults.tectonic_regionalisation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.faults.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.parsers.html">openquake.hmtk.parsers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.parsers.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html">openquake.hmtk.parsers.catalogue package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html#openquake-hmtk-parsers-catalogue-base-module">openquake.hmtk.parsers.catalogue.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html#openquake-hmtk-parsers-catalogue-csv-catalogue-parser-module">openquake.hmtk.parsers.catalogue.csv_catalogue_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html#openquake-hmtk-parsers-catalogue-gcmt-ndk-parser-module">openquake.hmtk.parsers.catalogue.gcmt_ndk_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.catalogue.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.parsers.faults.html">openquake.hmtk.parsers.faults package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.faults.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.faults.html#openquake-hmtk-parsers-faults-fault-yaml-parser-module">openquake.hmtk.parsers.faults.fault_yaml_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.faults.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.parsers.source_model.html">openquake.hmtk.parsers.source_model package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.source_model.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.source_model.html#openquake-hmtk-parsers-source-model-base-module">openquake.hmtk.parsers.source_model.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.source_model.html#openquake-hmtk-parsers-source-model-nrml04-parser-module">openquake.hmtk.parsers.source_model.nrml04_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.source_model.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.parsers.strain.html">openquake.hmtk.parsers.strain package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.strain.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.strain.html#openquake-hmtk-parsers-strain-strain-csv-parser-module">openquake.hmtk.parsers.strain.strain_csv_parser module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.parsers.strain.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.parsers.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.plotting.html">openquake.hmtk.plotting package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.plotting.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.plotting.faults.html">openquake.hmtk.plotting.faults package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.faults.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.faults.html#openquake-hmtk-plotting-faults-geology-mfd-plot-module">openquake.hmtk.plotting.faults.geology_mfd_plot module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.faults.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.html">openquake.hmtk.plotting.seismicity package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.completeness.html">openquake.hmtk.plotting.seismicity.completeness package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.completeness.html#submodules">Submodules</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.completeness.html#openquake-hmtk-plotting-seismicity-completeness-cumulative-rate-analysis-module">openquake.hmtk.plotting.seismicity.completeness.cumulative_rate_analysis module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.completeness.html#openquake-hmtk-plotting-seismicity-completeness-plot-stepp-1972-module">openquake.hmtk.plotting.seismicity.completeness.plot_stepp_1972 module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.completeness.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.max_magnitude.html">openquake.hmtk.plotting.seismicity.max_magnitude package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.max_magnitude.html#submodules">Submodules</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.max_magnitude.html#openquake-hmtk-plotting-seismicity-max-magnitude-cumulative-moment-module">openquake.hmtk.plotting.seismicity.max_magnitude.cumulative_moment module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.max_magnitude.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.occurrence.html">openquake.hmtk.plotting.seismicity.occurrence package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.occurrence.html#submodules">Submodules</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.occurrence.html#openquake-hmtk-plotting-seismicity-occurrence-recurrence-plot-module">openquake.hmtk.plotting.seismicity.occurrence.recurrence_plot module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.occurrence.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.html#openquake-hmtk-plotting-seismicity-catalogue-plots-module">openquake.hmtk.plotting.seismicity.catalogue_plots module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.plotting.seismicity.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.plotting.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.plotting.html#openquake-hmtk-plotting-beachball-module">openquake.hmtk.plotting.beachball module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.plotting.html#openquake-hmtk-plotting-plotting-utils-module">openquake.hmtk.plotting.plotting_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.plotting.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.seismicity.html">openquake.hmtk.seismicity package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.seismicity.completeness.html">openquake.hmtk.seismicity.completeness package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.completeness.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.completeness.html#openquake-hmtk-seismicity-completeness-base-module">openquake.hmtk.seismicity.completeness.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.completeness.html#openquake-hmtk-seismicity-completeness-comp-stepp-1971-module">openquake.hmtk.seismicity.completeness.comp_stepp_1971 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.completeness.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html">openquake.hmtk.seismicity.declusterer package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#openquake-hmtk-seismicity-declusterer-base-module">openquake.hmtk.seismicity.declusterer.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#openquake-hmtk-seismicity-declusterer-dec-afteran-module">openquake.hmtk.seismicity.declusterer.dec_afteran module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#openquake-hmtk-seismicity-declusterer-dec-gardner-knopoff-module">openquake.hmtk.seismicity.declusterer.dec_gardner_knopoff module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#openquake-hmtk-seismicity-declusterer-distance-time-windows-module">openquake.hmtk.seismicity.declusterer.distance_time_windows module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.declusterer.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html">openquake.hmtk.seismicity.max_magnitude package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#openquake-hmtk-seismicity-max-magnitude-base-module">openquake.hmtk.seismicity.max_magnitude.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#openquake-hmtk-seismicity-max-magnitude-cumulative-moment-release-module">openquake.hmtk.seismicity.max_magnitude.cumulative_moment_release module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#openquake-hmtk-seismicity-max-magnitude-kijko-nonparametric-gaussian-module">openquake.hmtk.seismicity.max_magnitude.kijko_nonparametric_gaussian module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#openquake-hmtk-seismicity-max-magnitude-kijko-sellevol-bayes-module">openquake.hmtk.seismicity.max_magnitude.kijko_sellevol_bayes module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#openquake-hmtk-seismicity-max-magnitude-kijko-sellevol-fixed-b-module">openquake.hmtk.seismicity.max_magnitude.kijko_sellevol_fixed_b module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.max_magnitude.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html">openquake.hmtk.seismicity.occurrence package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-aki-maximum-likelihood-module">openquake.hmtk.seismicity.occurrence.aki_maximum_likelihood module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-b-maximum-likelihood-module">openquake.hmtk.seismicity.occurrence.b_maximum_likelihood module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-base-module">openquake.hmtk.seismicity.occurrence.base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-kijko-smit-module">openquake.hmtk.seismicity.occurrence.kijko_smit module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-penalized-mle-module">openquake.hmtk.seismicity.occurrence.penalized_mle module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-utils-module">openquake.hmtk.seismicity.occurrence.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#openquake-hmtk-seismicity-occurrence-weichert-module">openquake.hmtk.seismicity.occurrence.weichert module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.occurrence.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html">openquake.hmtk.seismicity.smoothing package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.kernels.html">openquake.hmtk.seismicity.smoothing.kernels package</a><ul>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.kernels.html#submodules">Submodules</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.kernels.html#openquake-hmtk-seismicity-smoothing-kernels-base-module">openquake.hmtk.seismicity.smoothing.kernels.base module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.kernels.html#openquake-hmtk-seismicity-smoothing-kernels-isotropic-gaussian-module">openquake.hmtk.seismicity.smoothing.kernels.isotropic_gaussian module</a></li>
+<li class="toctree-l6"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.kernels.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html#openquake-hmtk-seismicity-smoothing-smoothed-seismicity-module">openquake.hmtk.seismicity.smoothing.smoothed_seismicity module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html#openquake-hmtk-seismicity-smoothing-utils-module">openquake.hmtk.seismicity.smoothing.utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.seismicity.smoothing.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#openquake-hmtk-seismicity-catalogue-module">openquake.hmtk.seismicity.catalogue module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#openquake-hmtk-seismicity-gcmt-catalogue-module">openquake.hmtk.seismicity.gcmt_catalogue module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#openquake-hmtk-seismicity-gcmt-utils-module">openquake.hmtk.seismicity.gcmt_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#openquake-hmtk-seismicity-selector-module">openquake.hmtk.seismicity.selector module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#openquake-hmtk-seismicity-utils-module">openquake.hmtk.seismicity.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.seismicity.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.sources.html">openquake.hmtk.sources package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-area-source-module">openquake.hmtk.sources.area_source module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-complex-fault-source-module">openquake.hmtk.sources.complex_fault_source module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-point-source-module">openquake.hmtk.sources.point_source module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-simple-fault-source-module">openquake.hmtk.sources.simple_fault_source module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-source-conversion-utils-module">openquake.hmtk.sources.source_conversion_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#openquake-hmtk-sources-source-model-module">openquake.hmtk.sources.source_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.sources.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="openquake.hmtk.strain.html">openquake.hmtk.strain package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="openquake.hmtk.strain.regionalisation.html">openquake.hmtk.strain.regionalisation package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.strain.regionalisation.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.strain.regionalisation.html#openquake-hmtk-strain-regionalisation-kreemer-regionalisation-module">openquake.hmtk.strain.regionalisation.kreemer_regionalisation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="openquake.hmtk.strain.regionalisation.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#openquake-hmtk-strain-geodetic-strain-module">openquake.hmtk.strain.geodetic_strain module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#openquake-hmtk-strain-shift-module">openquake.hmtk.strain.shift module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#openquake-hmtk-strain-strain-utils-module">openquake.hmtk.strain.strain_utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="openquake.hmtk.strain.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="openquake-hmtk-models-module">
+<h2>openquake.hmtk.models module<a class="headerlink" href="#openquake-hmtk-models-module" title="Link to this heading"></a></h2>
+</section>
+<section id="openquake-hmtk-registry-module">
+<h2>openquake.hmtk.registry module<a class="headerlink" href="#openquake-hmtk-registry-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="hmtk.html" class="btn btn-neutral float-left" title="Hazard Modeller Toolkit (hmtk) module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="openquake.hmtk.comparison.html" class="btn btn-neutral float-right" title="openquake.hmtk.comparison package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020-2022, GEM Hazard.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

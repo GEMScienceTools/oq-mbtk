@@ -1,0 +1,21 @@
+hmtk.tests.comparison package
+=============================
+
+Submodules
+----------
+
+hmtk.tests.comparison.rate\_grid\_test module
+---------------------------------------------
+
+.. automodule:: hmtk.tests.comparison.rate_grid_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.comparison
+   :members:
+   :show-inheritance:
+   :undoc-members:

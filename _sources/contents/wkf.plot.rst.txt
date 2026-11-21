@@ -1,0 +1,21 @@
+wkf.plot package
+================
+
+Submodules
+----------
+
+wkf.plot.completeness module
+----------------------------
+
+.. automodule:: wkf.plot.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: wkf.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:

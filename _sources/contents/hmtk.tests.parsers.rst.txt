@@ -1,0 +1,21 @@
+hmtk.tests.parsers package
+==========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.tests.parsers.catalogue
+   hmtk.tests.parsers.faults
+   hmtk.tests.parsers.source_models
+   hmtk.tests.parsers.strain
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.parsers
+   :members:
+   :show-inheritance:
+   :undoc-members:

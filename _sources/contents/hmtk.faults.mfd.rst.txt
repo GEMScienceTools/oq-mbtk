@@ -1,0 +1,53 @@
+hmtk.faults.mfd package
+=======================
+
+Submodules
+----------
+
+hmtk.faults.mfd.anderson\_luco\_arbitrary module
+------------------------------------------------
+
+.. automodule:: hmtk.faults.mfd.anderson_luco_arbitrary
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.mfd.anderson\_luco\_area\_mmax module
+-------------------------------------------------
+
+.. automodule:: hmtk.faults.mfd.anderson_luco_area_mmax
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.mfd.base module
+---------------------------
+
+.. automodule:: hmtk.faults.mfd.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.mfd.characteristic module
+-------------------------------------
+
+.. automodule:: hmtk.faults.mfd.characteristic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.mfd.youngs\_coppersmith module
+------------------------------------------
+
+.. automodule:: hmtk.faults.mfd.youngs_coppersmith
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.faults.mfd
+   :members:
+   :show-inheritance:
+   :undoc-members:

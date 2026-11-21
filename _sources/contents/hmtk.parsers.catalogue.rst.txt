@@ -1,0 +1,37 @@
+hmtk.parsers.catalogue package
+==============================
+
+Submodules
+----------
+
+hmtk.parsers.catalogue.base module
+----------------------------------
+
+.. automodule:: hmtk.parsers.catalogue.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.parsers.catalogue.csv\_catalogue\_parser module
+----------------------------------------------------
+
+.. automodule:: hmtk.parsers.catalogue.csv_catalogue_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.parsers.catalogue.gcmt\_ndk\_parser module
+-----------------------------------------------
+
+.. automodule:: hmtk.parsers.catalogue.gcmt_ndk_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.parsers.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:

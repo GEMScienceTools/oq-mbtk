@@ -1,0 +1,21 @@
+hmtk.plotting.seismicity.occurrence package
+===========================================
+
+Submodules
+----------
+
+hmtk.plotting.seismicity.occurrence.recurrence\_plot module
+-----------------------------------------------------------
+
+.. automodule:: hmtk.plotting.seismicity.occurrence.recurrence_plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting.seismicity.occurrence
+   :members:
+   :show-inheritance:
+   :undoc-members:

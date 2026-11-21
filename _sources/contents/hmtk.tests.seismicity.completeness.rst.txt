@@ -1,0 +1,21 @@
+hmtk.tests.seismicity.completeness package
+==========================================
+
+Submodules
+----------
+
+hmtk.tests.seismicity.completeness.comp\_stepp1971\_test module
+---------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.completeness.comp_stepp1971_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.seismicity.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:

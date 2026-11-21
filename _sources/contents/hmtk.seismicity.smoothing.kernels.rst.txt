@@ -1,0 +1,29 @@
+hmtk.seismicity.smoothing.kernels package
+=========================================
+
+Submodules
+----------
+
+hmtk.seismicity.smoothing.kernels.base module
+---------------------------------------------
+
+.. automodule:: hmtk.seismicity.smoothing.kernels.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.smoothing.kernels.isotropic\_gaussian module
+------------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.smoothing.kernels.isotropic_gaussian
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity.smoothing.kernels
+   :members:
+   :show-inheritance:
+   :undoc-members:

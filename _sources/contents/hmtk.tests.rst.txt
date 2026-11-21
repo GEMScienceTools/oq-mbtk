@@ -1,0 +1,34 @@
+hmtk.tests package
+==================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.tests.comparison
+   hmtk.tests.faults
+   hmtk.tests.parsers
+   hmtk.tests.seismicity
+   hmtk.tests.sources
+   hmtk.tests.strain
+
+Submodules
+----------
+
+hmtk.tests.registry\_test module
+--------------------------------
+
+.. automodule:: hmtk.tests.registry_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests
+   :members:
+   :show-inheritance:
+   :undoc-members:
