@@ -11,7 +11,7 @@ import pickle
 import configparser
 
 import matplotlib as mpl
-mpl.use('tkagg')
+#mpl.use('tkagg')
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
