@@ -27,6 +27,9 @@
 import pathlib
 import unittest
 import numpy as np
+import pandas as pd
+import tempfile
+import os
 from openquake.sub.get_profiles_from_slab2pt0 import (get_profiles,
                                                       get_bounding_box,
                                                       get_initial_traces,
@@ -193,11 +196,36 @@ class CreateProfilesFromSlab2pt0(unittest.TestCase):
         # get_profiles call
         # tmp_dir = tempfile.mkdtemp()
         # fname_fig = pathlib.Path(tmp_dir) / 'figure.png'
-        _ = get_profiles(strike_fname, depth_fname, spacing)
+        test = get_profiles(strike_fname, depth_fname, spacing)
+        
+        top_level = tempfile.mkdtemp()
+        profiles = tempfile.mkdtemp(dir=top_level)
+        
+        test.write_profiles(profiles)
+        
+        df1 = pd.read_csv(os.path.join(profiles,'cs_010.csv'), header=None, delim_whitespace=True)
+        assert len(df1) == 16
+        
+        df2 = pd.read_csv(HERE / 'data' / 'cam_cs_010.csv', header=None, delim_whitespace=True)
+        assert len(df2) == 16
+        pd.testing.assert_frame_equal(df1,df2, check_exact=False, atol=1e-3, rtol=0)
+
 
     def test_geojson_mariana(self):
 
         fname = HERE / 'data' / 'izu_slab2_css.geojson'
         fname_slab = HERE / 'data' / 'izu_slab2_dep_02.24.18.grd'
 
-        get_profiles_geojson(fname, fname_slab, spacing=10.)
+        test = get_profiles_geojson(fname, fname_slab, spacing=10.)
+        
+        top_level = tempfile.mkdtemp()
+        profiles = tempfile.mkdtemp(dir=top_level)
+
+        test.write_profiles(profiles)
+        
+        df1 = pd.read_csv(os.path.join(profiles,'cs_000.csv'), header=None, delim_whitespace=True)
+        df2 = pd.read_csv(HERE / 'data' / 'mar_cs_000.csv', header=None, delim_whitespace=True)
+        pd.testing.assert_frame_equal(df1,df2, check_exact=False, atol=1e-3, rtol=0)
+
+
+

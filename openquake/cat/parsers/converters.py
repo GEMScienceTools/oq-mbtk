@@ -243,3 +243,12 @@ class GCMTtoISFParser(object):
             setattr(event, 'tensor', gcmt.moment_tensor)
             isf_cat.events.append(event)
         return isf_cat
+        
+def hmtk_to_df(hmtk_cat):
+    """
+    Convert a hmtk catalogue object to a pandas dataframe
+    
+    :param hmtk_cat: a hmtk catalogue object 
+    """
+    df = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in hmtk_cat.data.items() ]))
+    return df
