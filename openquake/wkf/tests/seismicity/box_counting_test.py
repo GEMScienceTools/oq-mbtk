@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import unittest
 import subprocess
@@ -84,8 +85,8 @@ class BoxCountingTestCase(unittest.TestCase):
 
     def test_cli(self):
         fout = os.path.join(self.tmp, 'out')
-        cmd = ['python', CODE, self.fcat, self.fmap, self.fconf, str(H3RES),
-               fout, '-y', '2020', '-w', 'completeness']
+        cmd = [sys.executable, CODE, self.fcat, self.fmap, self.fconf,
+               str(H3RES), fout, '-y', '2020', '-w', 'completeness']
         subprocess.run(cmd, check=True)
         df = pd.read_csv(os.path.join(fout, 'box_counting_cat.csv'))
         self.assertEqual(list(df.columns), ['lon', 'lat', 'count'])
