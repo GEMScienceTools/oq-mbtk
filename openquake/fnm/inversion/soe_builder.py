@@ -885,6 +885,19 @@ def make_abs_mfd_eqns(
         [mfd_occ_rates.get(Mi, 0.0) for Mi in unique_mags], dtype=np.float64
     )
 
+    # Magnitudes of the (included) ruptures without a target rate: their
+    # rows ask for a zero rate with a large weight, which suppresses all
+    # the ruptures in the bin. This is usually a binning mismatch.
+    included_mags = np.unique(M[w > 0])
+    missing = [float(Mi) for Mi in included_mags if Mi not in mfd_occ_rates]
+    if missing:
+        logging.warning(
+            f"Target MFD ({region_name or 'global'}) has no rate for "
+            f"rupture magnitudes {missing}: these bins are constrained to a "
+            "zero rate. Check that the MFD bin centres match the rupture "
+            "magnitudes rounded to `mag_decimals`."
+        )
+
     # --- optional normalization (geometric mean), guard zeros ---
     if normalize:
         # only positive entries contribute to geometric mean
