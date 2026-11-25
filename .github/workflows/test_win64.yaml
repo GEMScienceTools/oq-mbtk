@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2025]
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
@@ -61,32 +61,17 @@ jobs:
           set PIP_DEFAULT_TIMEOUT=100
           python -m pip install -U pip
           #
-          if ($Env:BRANCH)
-          {
-            Write-Host "Install with workflow_dispatch"
-            Write-Host "Install OQ from ${env:BRANCH} and mbtk from branch ${{ github.ref_name }}"
-            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version ${env:BRANCH}"
-            cd oq-engine
-            python install.py devel --version ${env:BRANCH}
-            if ($LASTEXITCODE -ne 0) {
-              break
-            }
-            cd ..
+          # use the oq-engine branch given to a workflow_dispatch run, master otherwise
+          $OQ_REF = "master"
+          if ($Env:BRANCH) { $OQ_REF = $Env:BRANCH }
+          Write-Host "Install OQ from $OQ_REF and mbtk from branch ${{ github.ref_name }}"
+          git clone --depth 1 -b $OQ_REF https://github.com/gem/oq-engine.git
+          cd oq-engine
+          python install.py devel
+          if ($LASTEXITCODE -ne 0) {
+            break
           }
-          else
-          {
-            Write-Host "Install on on scheduled task"
-            Write-Host "Install OQ from master and mbtk from branch ${{ github.ref_name }}"
-            git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version master"
-            cd oq-engine
-            python install.py devel --version master
-            if ($LASTEXITCODE -ne 0) {
-              break
-            }
-            cd ..
-          }
+          cd ..
           C:\Users\runneradmin\openquake\Scripts\activate.ps1
           $pythonVersion = "${{ matrix.python-version }}"
           python -m pip install -r requirements-win64.txt
