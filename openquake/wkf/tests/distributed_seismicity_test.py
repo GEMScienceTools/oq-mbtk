@@ -141,9 +141,11 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
             shutil.copyfile(files[1], HERE / expc_dir / 'src_points_01.xml')
         files_e = sorted([f for f in expc_dir.glob('*01.xml')])
 
-        # Compare files
+        # Compare files (line-ending-insensitive; expected files use CRLF
+        # on Windows but the writer emits LF)
         for f1, f2 in zip(files, files_e):
-            assert filecmp.cmp(f1, f2, shallow=True)
+            with open(f1) as a, open(f2) as b:
+                assert a.read().splitlines() == b.read().splitlines()
 
 
     def test_two_point_srcs_files_two_faults(self):
