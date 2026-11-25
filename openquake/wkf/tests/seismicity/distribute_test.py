@@ -26,8 +26,10 @@
 # coding: utf-8
 
 import os
+import sys
 import tempfile
 import unittest
+from unittest import mock
 import numpy
 import pandas as pd
 import numpy as np
@@ -136,7 +138,8 @@ class RatesDistributeCLITestCase(unittest.TestCase):
     def test_cli_fraction_flat(self):
         """ --fraction-flat is parsed as a float and applied """
         argv = [DATA, self.conf, self.out_folder, '--fraction-flat', '0.1']
-        sap.run(distribute_cli, argv)
+        with mock.patch.object(sys, 'argv', ['distribute_seismicity'] + argv):
+            sap.run(distribute_cli, argv)
 
         res = pd.read_csv(os.path.join(self.out_folder, '00.csv'))
         expected = numpy.array([3.2607, 3.5118, 3.6698, 3.7855])
@@ -147,7 +150,8 @@ class RatesDistributeCLITestCase(unittest.TestCase):
         """ --eps-b and --eps-rate are parsed as floats and applied """
         argv = [DATA, self.conf, self.out_folder,
                 '--eps-b', '1.0', '--eps-rate', '1.0']
-        sap.run(distribute_cli, argv)
+        with mock.patch.object(sys, 'argv', ['distribute_seismicity'] + argv):
+            sap.run(distribute_cli, argv)
 
         res = pd.read_csv(os.path.join(self.out_folder, '00.csv'))
         expected = numpy.array([3.671158, 3.97219, 4.14828, 4.27322])
