@@ -45,13 +45,13 @@ jobs:
         if [ -z "$GITHUB_INPUT_REF" ]
          then
            echo "This is not a workflow_dispatch RUN, use master for OQ engine"
-           python install.py devel --version master
+           python install.py devel
            if [[ $EXIT_CODE -ne 0 ]]; then
                 break
            fi
          else
            echo "This is a workflow_dispatch RUN, use: $GITHUB_INPUT_REF for OQ engine"
-           python install.py devel --version ${GITHUB_INPUT_REF}
+           python install.py devel
            if [[ $EXIT_CODE -ne 0 ]]; then
                 break
            fi

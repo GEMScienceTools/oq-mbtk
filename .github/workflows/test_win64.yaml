@@ -66,9 +66,8 @@ jobs:
             Write-Host "Install with workflow_dispatch"
             Write-Host "Install OQ from ${env:BRANCH} and mbtk from branch ${{ github.ref_name }}"
             git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version ${env:BRANCH}"
             cd oq-engine
-            python install.py devel --version ${env:BRANCH}
+            python install.py devel
             if ($LASTEXITCODE -ne 0) {
               break
             }
@@ -79,9 +78,8 @@ jobs:
             Write-Host "Install on on scheduled task"
             Write-Host "Install OQ from master and mbtk from branch ${{ github.ref_name }}"
             git clone --depth 1 -b master https://github.com/gem/oq-engine.git
-            Write-Host "python install.py devel --version master"
             cd oq-engine
-            python install.py devel --version master
+            python install.py devel
             if ($LASTEXITCODE -ne 0) {
               break
             }
