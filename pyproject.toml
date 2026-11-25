@@ -18,7 +18,6 @@ authors = [
 ]
 maintainers = [
     { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
-    { name = "GEM Foundation", email = "hazard@globalquakemodel.org" },
 ]
 
 keywords = [
@@ -70,7 +69,7 @@ oqm = "openquake.mbi.__main__:oqm"
 [tool.setuptools.packages.find]
 namespaces = true
 where = ["."]
-include = ["openquake.*"]
+include = ["openquake*"]
 
 [tool.setuptools.exclude-package-data]
 "*" = [
