@@ -45,6 +45,11 @@ PERIODS = [PGA(), SA(0.025), SA(0.04), SA(0.05), SA(0.07), SA(0.1), SA(0.15),
            SA(4.0), SA(4.5), SA(5.0), SA(5.5), SA(6.0), SA(6.5), SA(7.0), SA(7.5),
            SA(8.0), SA(8.5), SA(9.0), SA(9.5), SA(10.0)]
 
+# Max R for attenuation curves interpolated to get spectra - this
+# ensures we are always within interp range up to about requested
+# distance of 2000 km
+SPECTRA_RMAX = 2000
+
 # Fltering params for plotting observations against GMPEs
 MAG_LIM = 0.25 # Mw
 DEP_LIM = 15 # km
@@ -143,6 +148,7 @@ def plot_trellis_util(config, output_directory, obs_data_fname):
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
+                                                         config.z1pt4,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          imt,
@@ -379,7 +385,8 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                                                            config.vs30,
                                                            config.z1pt0,
                                                            config.z2pt5,
-                                                           500, # Assume record dist < 500 km
+                                                           config.z1pt4,
+                                                           max(SPECTRA_RMAX, dist + 50), # Ensure r_vals covers requested dist (rup extent shrinks rrup)
                                                            1,   # Step of 1 km for site spacing
                                                            imt.string,
                                                            config.dist_type,
@@ -407,18 +414,25 @@ def plot_spectra_util(config, output_directory, obs_spectra_fname, obs_data_fnam
                         rs_ms.append(rs_min_sigma_dist)
                     
 
-                # Plot individual GMPEs
+                # Plot individual GMPEs. Drop periods where the GMM did not
+                # return a value (NaN placeholder from att_curves when the IMT
+                # is outside the GMM's coefficient table) so the line connects
+                # across the gap instead of leaving isolated points invisible.
                 if 'plot_lt_only' not in str(gmpe):
-                    ax.plot(periods,
-                            rs_50p,
+                    rs_50p = np.asarray(rs_50p)
+                    valid = ~np.isnan(rs_50p)
+                    ax.plot(periods[valid],
+                            rs_50p[valid],
                             color=col,
                             linewidth=2,
                             linestyle='-',
                             label=clean_gmm_label(gmpe),
                             zorder=1)
                     if config.nstd > 0:
-                        ax.plot(periods, rs_ps, color=col, linewidth=0.75, linestyle='-.')
-                        ax.plot(periods, rs_ms, color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods[valid], np.asarray(rs_ps)[valid],
+                                color=col, linewidth=0.75, linestyle='-.')
+                        ax.plot(periods[valid], np.asarray(rs_ms)[valid],
+                                color=col, linewidth=0.75, linestyle='-.')
                 
                 # Weight the predictions using logic tree weights
                 gmc_vals = spectra_data(gmpe,
@@ -545,6 +559,7 @@ def plot_ratios_util(config, output_directory):
                                  config.vs30,
                                  config.z1pt0,
                                  config.z2pt5,
+                                 config.z1pt4,
                                  config.maxR,
                                  1, # Step of 1 km for sites
                                  imt,
@@ -587,6 +602,7 @@ def plot_ratios_util(config, output_directory):
                                      config.vs30,
                                      config.z1pt0,
                                      config.z2pt5,
+                                     config.z1pt4,
                                      config.maxR,
                                      1, # Step of 1 km for sites
                                      imt,
@@ -716,6 +732,7 @@ def compute_matrix_gmpes(config, mtxs_type):
                                                          config.vs30,
                                                          config.z1pt0,
                                                          config.z2pt5,
+                                                         config.z1pt4,
                                                          config.maxR,
                                                          1, # Step of 1 km for site spacing
                                                          imt,

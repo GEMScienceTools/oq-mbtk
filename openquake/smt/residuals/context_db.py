@@ -61,7 +61,8 @@ class ContextDB:
                            'vs30measured',
                            'z1pt0',
                            'z2pt5',
-                           'backarc')
+                           'backarc',
+                           'region')
 
     def get_contexts(self, nodal_plane_index=1, imts=None,
                      component="Geometric"):

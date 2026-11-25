@@ -37,7 +37,7 @@ from openquake.hazardlib.mfd import TruncatedGRMFD
 from openquake.hazardlib.source.rupture import BaseRupture
 
 # typing
-from openquake.hazardlib.source import BaseSeismicSource
+from openquake.hazardlib.source.base import BaseSeismicSource
 
 from openquake.aft.rupture_distances import (
     calc_rupture_adjacence_dict_all_sources,

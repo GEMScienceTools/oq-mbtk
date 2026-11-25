@@ -26,6 +26,7 @@
 
 import os
 import random
+import tempfile
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -94,7 +95,7 @@ def get_agencies(df) -> list:
     return list(df["magAgency"].unique())
 
 
-def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
+def plot_time_ranges(df, agencies=None, fname=None, **kwargs):
     """
     Creates a plot showing the interval between the first and the last
     earthquake origin of the agencies included in the database.
@@ -106,6 +107,8 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
     :param fname:
         The name of the output file
     """
+    if fname is None:
+        fname = os.path.join(tempfile.gettempdir(), 'tmp.pdf')
     tmp = sorted(get_agencies(df), reverse=True)
     if not agencies:
         agencies = tmp
@@ -176,7 +179,7 @@ def plot_time_ranges(df, agencies=None, fname='/tmp/tmp.pdf', **kwargs):
 
 
 def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
-                   fname='/tmp/tmp.pdf', **kwargs):
+                   fname=None, **kwargs):
     """
     :param df:
         A :class:`pandas.DataFrame` instance
@@ -187,6 +190,8 @@ def plot_histogram(df, agencies=None, wdt=0.1, column="magMw",
     :param fname:
         The name of the output file
     """
+    if fname is None:
+        fname = os.path.join(tempfile.gettempdir(), 'tmp.pdf')
 
     df = df.astype({column: 'float32'})
 

@@ -74,6 +74,70 @@ from openquake.fnm.rupture_connections import (
 HERE = pathlib.Path(__file__).parent.absolute()
 
 
+class TestRuptureAggregation(unittest.TestCase):
+    def test_cached_components_match_subfault_calculation(self):
+        # Non-contiguous labels, unequal areas, partial ruptures, and two
+        # components on the same fault exercise the cache's indexing and sums.
+        from openquake.fnm.msr import area_to_mag
+        from openquake.fnm.inversion.utils import get_rupture_displacement
+
+        subs = pd.DataFrame({
+            'area': [1.0, 3.0, 2.0, 2.0],
+            'fid': ['a', 'a', 'b', 'b'],
+            'slip_azimuth': [359.0, 1.0, 90.0, 180.0],
+        }, index=[11, 23, 37, 49])
+        singles = pd.DataFrame({
+            'subfaults': [[11, 23], [37], [49]],
+            'fault': ['a', 'b', 'b'],
+        }, index=[10, 20, 30])
+        for rakes in ([179.0, -179.0, 35.0, -80.0],
+                      [0.0, 0.0, 180.0, 180.0],
+                      [45.0, 45.0, 45.0, 45.0],
+                      [135.0, 135.0, 135.0, 135.0],
+                      [10.05, 10.05, 10.05, 10.05]):
+            subs['rake'] = rakes
+            for msr in ('generic', 'Leonard2014_Interplate'):
+                for multi in ([], [[10, 20], [10, 20, 30], [20, 30]]):
+                    with self.subTest(rakes=rakes, msr=msr, multi=multi):
+                        result = make_rupture_df(
+                            singles, multi, subs, area_mag_msr=msr,
+                            mag_decimals=3,
+                        )
+                        for row in result.itertuples():
+                            selected = subs.loc[row.subfaults]
+                            areas = selected.area.to_numpy()
+                            fractions = areas / areas.sum()
+                            rake = weighted_angular_mean_degrees(
+                                selected.rake.to_numpy(), fractions
+                            )
+                            self.assertEqual(row.mean_rake, np.round(rake, 1))
+                            self.assertEqual(row.area, np.round(areas.sum(), 1))
+                            self.assertEqual(row.frac_area,
+                                             np.round(fractions, 4).tolist())
+                            mag = np.round(area_to_mag(
+                                areas.sum(), mstype=msr, rake=rake
+                            ), 3)
+                            self.assertEqual(row.mag, mag)
+                            self.assertEqual(row.displacement, np.round(
+                                get_rupture_displacement(mag, row.area), 3
+                            ))
+                            expected_faults = [singles.loc[r, 'fault']
+                                               for r in row.ruptures]
+                            self.assertEqual(row.faults, expected_faults)
+                            expected_fractions = [round(
+                                selected.loc[selected.fid == fid, 'area'].sum()
+                                / areas.sum(), 1
+                            ) for fid in expected_faults]
+                            self.assertEqual(row.fault_frac_area,
+                                             expected_fractions)
+                            self.assertEqual(row.slip_azimuth, [round(
+                                angular_mean_degrees(
+                                    subs.loc[singles.loc[r, 'subfaults'],
+                                             'slip_azimuth'].to_numpy()
+                                ), 1
+                            ) for r in row.ruptures])
+
+
 class Test3Faults(unittest.TestCase):
     def setUp(self):
         test_data_dir = HERE / 'data'

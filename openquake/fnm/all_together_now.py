@@ -73,7 +73,7 @@ default_settings = {
     'rupture_filtering_connection_distance_function': 'exponent',
     'rupture_filtering_connection_angle_function': 'cosine',
     'rupture_filtering_slip_azimuth_function': 'cosine',
-    'rupture_filtering_connection_distance_midpoint': None,
+    'rupture_filtering_connection_distance_midpoint': 10.0,
     'rupture_filtering_connection_angle_midpoint': 90.0,
     'rupture_filtering_slip_azimuth_midpoint': 90.0,
     'skip_bad_faults': False,
@@ -151,10 +151,6 @@ def build_fault_network(
     build_settings.update(kwargs)
 
     settings = build_settings
-    if settings["rupture_filtering_connection_distance_midpoint"] is None:
-        settings["rupture_filtering_connection_distance_midpoint"] = (
-            settings["max_jump_distance"] / 2.0
-        )
 
     fault_network = {}
 
@@ -282,7 +278,7 @@ def build_fault_network(
         )
 
     n_connections = fault_network['bin_dist_mat'].sum()
-    n_possible_connections = len(fault_network['dist_mat']) ** 2
+    n_possible_connections = fault_network['dist_mat'].shape[0] ** 2
 
     logging.info(
         f"\t{'{:,}'.format(n_connections)} "

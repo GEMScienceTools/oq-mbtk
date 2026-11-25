@@ -2,3 +2,7 @@ include README.md LICENSE
 
 recursive-include openquake/mbt *.ipynb
 include openquake/mbt/notebooks/catalogue/catalogue_pre_processing.ipynb
+
+# Hazard Modeller Toolkit data and test fixtures
+recursive-include openquake/hmtk *.md *.txt *.csv *.dat
+recursive-include openquake/hmtk *.toml *.xml *.out *.cc

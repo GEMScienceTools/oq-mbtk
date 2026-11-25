@@ -26,8 +26,7 @@ import re
 import toml
 import numpy as np
 import pandas as pd
-from scipy.integrate import trapezoid
-from scipy.stats import norm
+from scipy.stats import norm, wasserstein_distance
 
 from openquake.hazardlib import imt, valid, nrml, contexts
 from openquake.baselib.node import Node as N
@@ -112,12 +111,9 @@ def get_gmm_from_toml(key, config):
 
 def get_gmpe_str(gmpe):
     """
-    Return a simplified string representative of the given gmpe.
+    Return a single-line string representative of the given gmpe.
     """
-    if '_toml=' in str(gmpe):
-        return str(gmpe).split('_toml=')[1].replace(')','').replace('\n','; ')
-    else:
-        return gmpe
+    return str(gmpe).replace('\n', '; ')
 
 
 def get_mean_stds(rup_ctx, gsim, imt):
@@ -274,6 +270,9 @@ class Residuals(object):
             observed IMTs.
             See e.g., :class:`openquake.smt.sm_database.GroundMotionDatabase`
             for an example
+        :param normalise: If True, divide total, inter-event and intra-event
+                          residuals by their corresponding standard deviations.
+                          If False, return all residuals in natural-log units.
         :param stations: Bool which if set to True prevents an error being raised
                          if all obs values for given IMT are nans at the station,
                          which is forbidden for a single ground-motion record in
@@ -338,8 +337,8 @@ class Residuals(object):
                                 self.unique_indices[gmpe][imtx].append(
                                     np.array([0]))
                             else:
-                                # Inter event residuals per-site e.g. Chiou
-                                # & Youngs (2008; 2014) case
+                                # NaN dummy (empty-obs event) or per-record
+                                # inter-event values (heteroskedastic case)
                                 self.residuals[gmpe][imtx][res_type].extend(
                                     inter_ev)
                                 self.unique_indices[gmpe][imtx].append(
@@ -406,7 +405,8 @@ class Residuals(object):
 
     def calculate_residuals(self, context, normalise=True):
         """
-        Calculate the residual terms.
+        Calculate all residual terms in natural-log units, or standardised
+        by their corresponding sigma components when normalise is True.
         """
         # Calculate residual
         residual = {}
@@ -422,7 +422,10 @@ class Residuals(object):
                     continue
                 mean = context["Expected"][gmpe][imtx]["Mean"]
                 total_stddev = context["Expected"][gmpe][imtx]["Total"]
-                residual[gmpe][imtx]["Total"] = (obs - mean) / total_stddev
+                total_residual = obs - mean
+                if normalise:
+                    total_residual = total_residual / total_stddev
+                residual[gmpe][imtx]["Total"] = total_residual
                 if "Inter event" in self.residuals[gmpe][imtx].keys():
                     inter, intra = self._get_random_effects_residuals(
                         obs,
@@ -462,6 +465,10 @@ class Residuals(object):
         """
         # Get number of values (records for given event)
         nvals = len(mean)
+
+        # No retained observations for this event/imt so return empty arrays
+        if nvals == 0:
+            return np.array([]), np.array([])
 
         # Use mean tau/phi of given GMM (AY92 only considers homoskedastic sigma)
         tau = np.mean(inter)
@@ -821,7 +828,7 @@ class Residuals(object):
         return de_orig / de_corr
 
     ### Stochastic Area (Sunny et al. 2021) functions
-    def get_sto_wrt_imt(self):
+    def get_sto_wrt_imt(self, num_samples=1000):
         """
         Calculates the stochastic area values per GMPE for each IMT
         according to the Stochastic Area Ranking method of Sunny et
@@ -831,59 +838,48 @@ class Residuals(object):
         of Earthquake Ground Motion Models Using the Stochastic Area Metric,
         Seismol. Res. Lett. 93, 787–797, doi: 10.1785/0220210216
         """
+        # Midpoint quantiles give deterministic model samples
+        quantiles = norm.ppf((np.arange(num_samples) + 0.5) / num_samples)
+
         # Create store of values per gmm
         stoch_area_store = {gmpe: {} for gmpe in self.gmpe_list}
-        
+
         # Iterate over the GMMs
         for gmpe in self.gmpe_list:
             stoch_area_wrt_imt = {}
 
             # Iterate over the IMTs
             for imtx in self.imts:
-
                 # Stack values
-                obs = np.array([], dtype=float)
-                exp = np.array([], dtype=float)
-                std = np.array([], dtype=float)
+                observed, expected, sigmas = [], [], []
                 for context in self.contexts:
-                    obs = np.hstack([obs, np.log(context["Observations"][imtx])])
-                    exp = np.hstack([exp, context["Expected"][gmpe][imtx]["Mean"]])
-                    std = np.hstack([std, context["Expected"][gmpe][imtx]["Total"]])
+                    keep = context["Retained"][imtx]
+                    values = context["Observations"][imtx][keep]
+                    observed.append(np.log(values))
+                    model = context["Expected"][gmpe][imtx]
+                    expected.append(model["Mean"])
+                    sigmas.append(model["Total"])
+                obs = np.concatenate(observed)
+                exp = np.concatenate(expected)
+                std = np.concatenate(sigmas)
 
                 # Take only the finite obs
-                idx_f = np.isfinite(obs)
-                obs = obs[idx_f]
                 assert len(obs) == len(exp) == len(std)
+                idx_f = np.isfinite(obs)
+                obs, exp, std = obs[idx_f], exp[idx_f], std[idx_f]
 
-                # Get the ECDF for distribution from observations
-                x_ecdf, y_ecdf = self.get_cdf_data(list(obs), step_flag=True)
-                
-                # Get the CDF for distribution from gmm
-                x_cdf, y_cdf = self.get_cdf_data(list(exp))
+                # Get the model distribution including total aleatory sigma
+                model_samples = exp[:, None] + std[:, None] * quantiles
 
-                # Get approximately overlapping subsets of ECDF and CDF
-                ecdf_xvals = [np.nanmin(x_ecdf), np.nanmax(x_ecdf)]
-                cdf_xvals = [np.nanmin(x_cdf), np.nanmax(x_cdf)]
-                xval_min = np.max([ecdf_xvals[0], cdf_xvals[0]])
-                xval_max = np.min([ecdf_xvals[1], cdf_xvals[1]])
-                idx_ecdf = np.logical_and(x_ecdf<=xval_max, x_ecdf>=xval_min)
-                idx_cdf = np.logical_and(x_cdf<=xval_max, x_cdf>=xval_min)
-                x_ecdf, y_ecdf = x_ecdf[idx_ecdf], y_ecdf[idx_ecdf]
-                x_cdf, y_cdf = x_cdf[idx_cdf], y_cdf[idx_cdf]
-
-                # Get area under each curve's overlapping portions
-                area_obs = trapezoid(y_ecdf, x_ecdf)
-                area_gmm = trapezoid(y_cdf, x_cdf)
-
-                # Get absolute of difference in areas - eq 3 of paper
-                stoch_area = np.abs(area_gmm - area_obs)
+                # Integrate the absolute CDF difference over the full domain
+                stoch_area = wasserstein_distance(obs, model_samples.ravel())
 
                 # Store the stoch area per imt for given gmm
                 stoch_area_wrt_imt[imtx] = max(1E-09, stoch_area)
 
             # Store for given gmm
             stoch_area_store[gmpe] = stoch_area_wrt_imt
-        
+
         # Add to residuals object
         self.stoch_areas_wrt_imt = stoch_area_store
 

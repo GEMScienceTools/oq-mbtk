@@ -30,22 +30,6 @@ from openquake.smt.demos.demo_single_station_analysis import main as st_demo
 # Base path
 BASE = os.path.dirname(__file__)
 
-# Input files
-comparison_in = os.path.join(
-    BASE, '..', '..', 'demos', 'demo_input_files', 'demo_comparison.toml')
-residuals_flatfile_in = os.path.join(
-    BASE, '..', '..', 'demos', 'demo_input_files', 'demo_flatfile.csv')
-residuals_input_toml = os.path.join(
-    BASE, '..', '..', 'demos', 'demo_input_files', 'demo_residuals.toml')
-
-# Component definition
-residuals_hrz_comp = "Geometric"
-
-# Output paths
-comparison_out = os.path.join(BASE, 'outputs_demo_comparison')
-residuals_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
-stations_out = os.path.join(BASE, 'outputs_demo_station_analysis')
-
 
 @unittest.skip # Check locally only (running on remote takes a while)
 class DemosTestCase(unittest.TestCase):
@@ -55,15 +39,18 @@ class DemosTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         # Demo scripts
-        self.comparison_in = comparison_in
-        self.residuals_flatfile_in = residuals_flatfile_in
-        self.residuals_input_toml = residuals_input_toml
-        self.residuals_hrz_comp = residuals_hrz_comp
+        self.comparison_in = os.path.join(
+            BASE, '..', '..', 'demos', 'demo_input_files', 'demo_comparison.toml')
+        self.residuals_flatfile_in =  os.path.join(
+            BASE, '..', '..', 'demos', 'demo_input_files', 'demo_flatfile.csv')
+        self.residuals_input_toml = os.path.join(
+            BASE, '..', '..', 'demos', 'demo_input_files', 'demo_residuals.toml')
+        self.residuals_hrz_comp = "Geometric"
 
         # Demo output locations
-        self.comparison_out = comparison_out
-        self.residuals_out = residuals_out
-        self.stations_out = stations_out
+        self.comparison_out =  os.path.join(BASE, 'outputs_demo_comparison')
+        self.residuals_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
+        self.stations_out = os.path.join(BASE, 'outputs_demo_station_analysis')
 
     def test_comparison_demo(self):
         """

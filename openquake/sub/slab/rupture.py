@@ -3,6 +3,7 @@ Module :module:`openquake.sub.slab.rupture`
 """
 
 import os
+import sys
 import re
 import h5py
 import numpy as np
@@ -643,7 +644,9 @@ def calculate_ruptures(ini_fname, only_plt=False, ref_fdr=None, agr=None,
                     ax.plot(pnt[:, 0], pnt[:, 1], pnt[:, 2]*vsc, '-r')
         ax.invert_zaxis()
         ax.view_init(50, 55)
-        plt.show()
+        if 'pytest' not in sys.modules:
+            # Don't show plot in tests
+            plt.show()
 
     # The one created here describes the bottom of the slab
     lmsh = create_lower_surface_mesh(msh, slab_thickness)

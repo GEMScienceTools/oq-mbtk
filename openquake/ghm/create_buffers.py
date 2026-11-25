@@ -217,6 +217,9 @@ def process_model(indata):
 
             tmps = "Number of polygons processed: "
             print(f"{tmps} {i_poly+1:06d}/{len(tmp):06d}", end="\r")
+
+            if not isinstance(mpoly, (shapely.Polygon, shapely.MultiPolygon)):
+                continue
             lons = np.array(mpoly.exterior.coords.xy[0])
             lats = np.array(mpoly.exterior.coords.xy[1])
             lons = (lons + 180.0) % 360 - 180.0

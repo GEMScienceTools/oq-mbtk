@@ -9,7 +9,7 @@ import pickle
 from openquake.smt.residuals import gmpe_residuals as res
 from openquake.smt.residuals import residual_plotter as rspl
 from openquake.smt.residuals.parsers.esm_url_flatfile_parser import ESMFlatfileParserURL
-from openquake.smt.residuals.sm_database_visualiser import db_magnitude_distance, db_geographical_coverage
+from openquake.smt.residuals.sm_database_visualiser import db_mag_dist_vs30, db_geographical_coverage
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -21,16 +21,16 @@ BASE = os.path.abspath('')
 """USER INPUTS"""
 
 # Specify toml providing GMMs and intensity measure types to get residuals for
-demo_inputs = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
+INPUTS = os.path.join(BASE, 'demo_input_files', 'demo_residuals.toml')
 
 # Specify dataset
-demo_flatfile = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
+FLATFILE = os.path.join(BASE, 'demo_input_files', 'demo_flatfile.csv')
 
 # Specify horizontal component definition to use for observations
-demo_comp = 'Geometric'
+COMP = 'Geometric'
 
 # Specify output folder
-demo_out = os.path.join(BASE, 'outputs_demo_residual_analysis')
+OUT = os.path.join(BASE, 'outputs_demo_residual_analysis')
 
 
 def parse_into_metadata(flatfile, out_dir):
@@ -70,7 +70,7 @@ def get_residual_metadata(metadata_dir, gmms_imts, comp, out_dir):
     # Export magnitude distance plot and geographical coverage of eqs/stations
     mag_dist = os.path.join(out_dir, 'mag_dist.png')
     map_gmdb = os.path.join(out_dir, 'map_gmdb.png')
-    db_magnitude_distance(database, dist_type='repi', filename=mag_dist)
+    db_mag_dist_vs30(database, dist_type='repi', filename=mag_dist)
     db_geographical_coverage(database, filename=map_gmdb)
 
     return residuals
@@ -147,10 +147,10 @@ def calc_ranking_metrics(residuals, out_dir):
     rspl.sto_weights(residuals, fi_sto_weights)
 
 
-def main(flatfile=demo_flatfile,
-         gmms_imts=demo_inputs,
-         comp=demo_comp,
-         out_dir=demo_out):
+def main(flatfile=FLATFILE,
+         gmms_imts=INPUTS,
+         comp=COMP,
+         out_dir=OUT):
     """
     Run the demo residual analysis workflow.
     """

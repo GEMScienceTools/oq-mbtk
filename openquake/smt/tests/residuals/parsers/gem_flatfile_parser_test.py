@@ -47,8 +47,12 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         cls.GEM_flatfile_directory = os.path.join(
             BASE, "gem_flatfile_test_file.csv")
         cls.db_file = os.path.join(
-            BASE, "gem_conversion_test_metadata")       
-        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020"]
+            BASE, "gem_conversion_test_metadata")      
+        # ASK14 contains an aftershock term requiring
+        # is_aftershock and crjb in the rupture context 
+        # K20's ESHM20 requires the region parameter which can be
+        # added to the GEM flatfile with column named "k20_eshm20_region"
+        cls.gmpe_list = ["AbrahamsonEtAl2014", "KothaEtAl2020ESHM20"]
         cls.imts = ["PGA", "SA(1.0)"]
         cls.metadata_pth = os.path.join(cls.db_file, "metadatafile.pkl")
 
@@ -68,6 +72,13 @@ class GEMFlatfileParserTestCase(unittest.TestCase):
         
         # Record IDs should be equal to the specified target IDs
         self.assertListEqual([rec.id for rec in db], TARGET_IDS)
+
+        # Aftershock flag should be True only for the single record labelled
+        # 'aftershock' in the flatfile; all others parse to False.
+        aftershock_flags = [rec.event.is_aftershock for rec in db]
+        self.assertEqual(aftershock_flags, [False, True, False, False, False])
+        # crjb should be populated only for the aftershock record.
+        self.assertAlmostEqual(db.records[1].event.crjb, 3.0)
 
         # Also run an arbitrary residual analysis to check
         # the constructed db is functioning correctly

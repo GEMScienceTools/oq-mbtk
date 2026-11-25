@@ -84,40 +84,21 @@ def _get_lh_histogram_data(lh_values, bin_width=0.1):
     return vals.astype(float), bins
 
 
-def _get_magnitudes(residuals, gmpe, imt, res_type):
+def _get_eq_vals(residuals, gmpe, imt, res_type, param):
     """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
+    Return an array of ctx[attr] values equal in length to the number of
+    residuals for given parameter (an event-specific value e.g., mag, depth).
     """
-    magnitudes = np.array([])
+    values = np.array([])
     for i, ctx in enumerate(residuals.contexts):
         keep = ctx["Retained"][imt]
         if res_type == "Inter event":
             nval = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
         else:
-            nval = np.ones(len(ctx["Ctx"].repi))
-            nval = nval[keep]
-        magnitudes = np.hstack([magnitudes, ctx["Ctx"].mag * nval])
-    
-    return magnitudes
+            nval = np.ones(len(ctx["Ctx"].repi))[keep]
+        values = np.hstack([values, getattr(ctx["Ctx"], param) * nval])
 
-
-def _get_depths(residuals, gmpe, imt, res_type):
-    """
-    Returns an array of magnitudes equal in length to the number of
-    residuals.
-    """
-    depths = np.array([])
-    for i, ctx in enumerate(residuals.contexts):
-        keep = ctx["Retained"][imt]
-        if res_type == "Inter event":
-            nvals = np.ones(len(residuals.unique_indices[gmpe][imt][i]))
-        else:
-            nvals = np.ones(len(ctx["Ctx"].repi))
-            nvals = nvals[keep]
-        depths = np.hstack([depths, ctx["Ctx"].hypo_depth * nvals])
-    
-    return depths
+    return values
 
 
 def _get_vs30(residuals, imt):
@@ -155,9 +136,9 @@ def get_scatter_vals(var, residuals, gmpe, imt, res_type, distance_type):
     length of the given residuals.
     """
     if var == "magnitude":
-        return _get_magnitudes(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "mag")
     elif var == "depth":
-        return _get_depths(residuals, gmpe, imt, res_type)
+        return _get_eq_vals(residuals, gmpe, imt, res_type, "hypo_depth")
     elif var == "vs30":
         assert res_type != "Inter event", (
             "Inter-event residuals are not plotted against vs30")
@@ -287,13 +268,18 @@ def _nanlinregress(x, y):
     Calls scipy linregress only on finite numbers of x and y.
     """
     finite = np.isfinite(x) & np.isfinite(y)
-        
+
     if not finite.any():
         # Empty arrays passed to linreg raise ValueError
         # so force returning an object with nans
         return linregress([np.nan], [np.nan])
-    else:
-        return linregress(x[finite], y[finite])
+    xf, yf = x[finite], y[finite]
+    if len(xf) < 2 or np.min(xf) == np.max(xf):
+        # linregress raises on single-point or all-equal x (e.g. residuals
+        # for a single-event subset binned by magnitude). Return nan-filled
+        # result so plotters can still draw the points.
+        return linregress([np.nan], [np.nan])
+    return linregress(xf, yf)
 
 
 ### Utils for binning residuals w.r.t. a given GMM input variable
@@ -393,9 +379,25 @@ def get_binning_params(var_type, vals):
                 }
     val_bin = var_bins[var_type]
 
-    # Create bins and make last interval fill up to max var value
-    val_bins = np.arange(np.min(vals), np.max(vals), val_bin)
-    val_bins[len(val_bins) - 1] = np.max(vals)
+    vals = np.asarray(vals)
+    if len(vals) == 0:
+        # Nothing to bin; return empty structures so plotters produce
+        # a scatter without any binned mean/sigma overlay.
+        return {}, {}
+    vmin, vmax = float(np.min(vals)), float(np.max(vals))
+    if vmin == vmax:
+        # Single unique value (e.g. single-event dataset binned by magnitude).
+        # Emit a single degenerate bin spanning the value so the caller can
+        # still plot the point rather than crash.
+        pad = max(val_bin / 2.0, 1e-9)
+        val_bins = np.array([vmin - pad, vmax + pad])
+    else:
+        val_bins = np.arange(vmin, vmax, val_bin)
+        if len(val_bins) < 2:
+            # Range narrower than one bin width.
+            val_bins = np.array([vmin, vmax])
+        else:
+            val_bins[-1] = vmax
     bin_bounds = {}
     for idx, val_bin in enumerate(val_bins):
         if idx == len(val_bins) - 1:

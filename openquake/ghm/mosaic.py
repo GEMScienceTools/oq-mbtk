@@ -57,7 +57,7 @@ SUBSETS = {'GID_0': {
               'SDN': ['-21.00 20.00 -15.00 20.00 -10.00 20.00 -5.00 20.00 0.00 20.00 5.00 20.00 10.00 20.00 15.00 20.00 20.00 20.00 25.00 20.00 30.00 20.00 39.00 20.00 39.00 39.00 -21.00 39.00 -21.00 20.00'],
               'TCD': ['-21.00 20.00 -15.00 20.00 -10.00 20.00 -5.00 20.00 0.00 20.00 5.00 20.00 10.00 20.00 15.00 20.00 20.00 20.00 25.00 20.00 30.00 20.00 39.00 20.00 39.00 39.00 -21.00 39.00 -21.00 20.00'],
               },
-      'nea': {'RUS': ['75.00 20.00 180.00 20.00 180.00 88.00 88.00 88.00 88.00 79.00 75.00 78.00 75.00 20.00',
+      'nea': {'RUS': ['75.00 20.00 180.00 20.00 180.00 88.00 88.00 88.00 74.30 86.99 75.00 78.00 75.00 20.00',
                       '-180.00 20.00 -160.00 20.00 -160.00 88.00 -180.00 88.00 -180.00 20.00'],
               },
       'nwa': {'RUS': ['75.00 20.00 25.00 20.00 25.00 40.00 25.00 50.00 25.00 75.00 75.00 78.00 75.00 20.00'],
@@ -94,7 +94,7 @@ SUBSETS = {'GID_0': {
               },
       'pan': {'ATF': ['49.50 -50.10 71.00 -50.10 71.00 -45.60 49.50 -45.60 49.50 -50.10'],
               },
-      'par': {'RUS': ['40.84 82.61 40.76 76.57 87.17 79.39 87.17 87.49 40.84 82.61'],
+      'par': {'RUS': ['40.84 82.61 40.76 76.57 74.55 78.69 73.62 85.42 40.84 82.61'],
               },
       'sam': {'ARG': ['-68.24 -16.14 -46.16 -28.88 -62.45 -47.33 -63.45 -56.21 -68.94 -58.10 -79.10 -54.33 -68.24 -16.14'],
               'BES': ['-69.00 13.00 -69.00 11.00 -67.00 11.00 -67.00 13.00 -69.00 13.00'],
@@ -195,17 +195,10 @@ DATA = {'GID_0': {
        'cea': ['KAZ', 'KGZ', 'TJK', 'TKM', 'UZB'],
        'chn': ['CHN', 'Z02', 'Z03', 'Z08'],
        'gld': ['GRL'],
-       # for placing Turkey, Cyprus, North Cyprus in MIE
-       'mie': ['AFG', 'ARM', 'AZE', 'CYP', 'GEO',
+       'mie': ['AFG', 'ARM', 'AZE', 'GEO',
                'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
                'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
-               'SYR', 'TUR', 'ZNC'],
-       # for placing Turkey, Cyprus, North Cyprus in EUR
-       #'mie': ['AFG', 'ARM', 'AZE', 'GEO',
-       #        'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
-       #        'LBN', 'PAK', 'Z06', 'PSA', 'PSE',
-       #        'SYR' 'TUR'],
-       # for placing Turkey, Cyprus, North Cyprus in EUR
+               'SYR'],
        'eur': ['ALB', 'AND', 'AUT', 'BEL', 'BGR',
                'BIH', 'BLR', 'CHE', 'CZE', 'DEU',
                'DNK', 'ESP', 'EST', 'FIN', 'FRA',
@@ -234,14 +227,14 @@ DATA = {'GID_0': {
                'REU', 'GNQ', 'MYT', 'COM','BMU',
                'FLK', 'SGS', 'BVT', 'ATA', 'BRA',
                'OAT'],
-       'oin': ['MDV', 'CCK', 'CXR', 'MUS', 
-               'IOT', 'IND', 'ATF'], 
+       'oin': ['MDV', 'CCK', 'CXR', 'MUS',
+               'IOT', 'IND', 'ATF'],
         # KIR - Kiribati
         # COK - Cook Islands
         # NFK - Norfolk Island
-       'opa': ['KIR', 'PLW', 'FSM', 'PCN', 'COK', 
+       'opa': ['KIR', 'PLW', 'FSM', 'PCN', 'COK',
                'PYF', 'XCL','UMI', 'CRI', 'MNP', 'NFK'
-               'GUM', 'MHL', 'NRU', 'CHL', 'ECU', 
+               'GUM', 'MHL', 'NRU', 'CHL', 'ECU',
                'JPN', 'MEX', 'NZL', 'AUS', 'OPA'],
         # ASM - American Samoa
         # FJI - Fiji
@@ -257,7 +250,7 @@ DATA = {'GID_0': {
         # VUT - Vanuatu
         # WLF - Wallis and Fortuna
         # WSM - Samoa
-       'pac': ['ASM', 'FJI', 'KIR', 'NCL', 
+       'pac': ['ASM', 'FJI', 'KIR', 'NCL',
                'NIU', 'NRU', 'NZL', 'SLB', 'TKL',
                'TON', 'TUV', 'VUT', 'WLF', 'WSM'],
        'par': ['SJM', 'RUS'],
@@ -274,6 +267,7 @@ DATA = {'GID_0': {
                'KEN', 'MDG', 'MOZ', 'MWI', 'NAM',
                'RWA', 'SDN', 'SOM', 'SSD', 'TZA',
                'UGA', 'ZMB', 'ZWE', 'OAT'],
+       'tur': ['TUR', 'CYP', 'ZNC', 'XAD'],
        'twn': ['TWN'],
        'usa': ['USA', 'CAL'],
        'waf': ['AGO', 'BEN', 'BFA', 'BWA', 'CAF',

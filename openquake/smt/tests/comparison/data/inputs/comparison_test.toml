@@ -31,10 +31,10 @@ trt = 'active_crustal' # Either -999 to use provided aratio OR specify a trt str
 
 [euclidean_analysis] # Mags/depths for Sammons maps, matrix plots and clustering (can omit if unneeded)
 mag_spacing = 0.1
-mags_depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]] 
+mags_depths = [[5, 20], [6, 25], [7, 30]] # [[mag, depth], [mag, depth], [mag, depth]]
 gmpe_labels = ['CY14','CB14','BSSA14','KO2020']
 
-[models] # Specify GMMs 
+[models] # Specify GMMs
 
 [models.ChiouYoungs2014]
 lt_weight_gmc1 = 0.5

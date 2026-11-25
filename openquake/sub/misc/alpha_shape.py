@@ -55,7 +55,7 @@ def alpha_shape(xco, yco, alpha):
     #
     # loop over triangles:
     # ia, ib, ic = indices of corner points of the triangle
-    for ia, ib, ic in tri.vertices:
+    for ia, ib, ic in tri.simplices:
         pa = coords[ia]
         pb = coords[ib]
         pc = coords[ic]

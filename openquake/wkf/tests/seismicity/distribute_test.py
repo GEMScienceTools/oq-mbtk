@@ -32,7 +32,9 @@ import numpy
 import pandas as pd
 import numpy as np
 
+from openquake.baselib import sap
 from openquake.wkf.seismicity.distribute import _distribute_rates as distribute
+from openquake.mbi.wkf.distribute_seismicity import main as distribute_cli
 
 HERE = os.path.dirname(__file__)
 CWD = os.getcwd()
@@ -122,3 +124,32 @@ class RatesDistributeTestCase(unittest.TestCase):
         computed = res.agr.to_numpy()
         numpy.testing.assert_almost_equal(computed, expected, decimal=4)
         numpy.testing.assert_almost_equal(agr, 4.2, decimal=4)
+
+
+class RatesDistributeCLITestCase(unittest.TestCase):
+    """ Tests the command-line interface (argument parsing via sap) """
+
+    def setUp(self):
+        self.out_folder = tempfile.mkdtemp()
+        self.conf = os.path.join(DATA, 'conf.toml')
+
+    def test_cli_fraction_flat(self):
+        """ --fraction-flat is parsed as a float and applied """
+        argv = [DATA, self.conf, self.out_folder, '--fraction-flat', '0.1']
+        sap.run(distribute_cli, argv)
+
+        res = pd.read_csv(os.path.join(self.out_folder, '00.csv'))
+        expected = numpy.array([3.2607, 3.5118, 3.6698, 3.7855])
+        numpy.testing.assert_almost_equal(res.agr.to_numpy(), expected,
+                                          decimal=4)
+
+    def test_cli_eps(self):
+        """ --eps-b and --eps-rate are parsed as floats and applied """
+        argv = [DATA, self.conf, self.out_folder,
+                '--eps-b', '1.0', '--eps-rate', '1.0']
+        sap.run(distribute_cli, argv)
+
+        res = pd.read_csv(os.path.join(self.out_folder, '00.csv'))
+        expected = numpy.array([3.671158, 3.97219, 4.14828, 4.27322])
+        numpy.testing.assert_almost_equal(res.agr.to_numpy(), expected,
+                                          decimal=4)
