@@ -260,14 +260,11 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         folder_out = tempfile.mkdtemp(suffix='out', prefix=None, dir=tmpdir)
         folder_out = pathlib.Path(folder_out)
 
-        # Running the code that merges the sources 
-        cmd = "oqm wkf remove_buffer_around_faults "
-        cmd += f"{faults_fname} '{area_fnames}' {folder_out} 10.0 6.5"
-        out = subprocess.run(cmd, shell=True)
-
-        # Check if the execution was successful
-        msg = f'Execution was not successful {out}'
-        self.assertTrue(out.returncode == 0, msg)
+        # Run the command with one argument per path.
+        cmd = ['oqm', 'wkf', 'remove_buffer_around_faults',
+               str(faults_fname), str(area_fnames), str(folder_out),
+               '10.0', '6.5']
+        subprocess.run(cmd, check=True)
 
         print(f'Output stored in: {tmpdir}')
 
@@ -302,14 +299,11 @@ class ClipDSAroundFaultsTest(unittest.TestCase):
         folder_out = tempfile.mkdtemp(suffix='out', prefix=None, dir=tmpdir)
         folder_out = pathlib.Path(folder_out)
 
-        # Running the code that merges the sources 
-        cmd = "oqm wkf remove_buffer_around_faults "
-        cmd += f"{faults_fname} '{area_fnames}' {folder_out} 10.0 6.5"
-        out = subprocess.run(cmd, shell=True)
-
-        # Check if the execution was successful
-        msg = f'Execution was not successful {out}'
-        self.assertTrue(out.returncode == 0, msg)
+        # Run the command with one argument per path.
+        cmd = ['oqm', 'wkf', 'remove_buffer_around_faults',
+               str(faults_fname), str(area_fnames), str(folder_out),
+               '10.0', '6.5']
+        subprocess.run(cmd, check=True)
 
         print(f'Output stored in: {tmpdir}')
 
