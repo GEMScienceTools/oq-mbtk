@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from openquake.baselib import sap
-from openquake.wkf.h3.zones import discretize_zones_with_h3_grid
+from openquake.wkf.h3_zones import discretize_zones_with_h3_grid
 
 
 
