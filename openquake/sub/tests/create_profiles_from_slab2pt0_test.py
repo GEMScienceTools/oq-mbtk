@@ -110,7 +110,7 @@ class GetInitialProfiles(unittest.TestCase):
         slb.compute_profiles(spacing / 2)
 
         # set plot to True if pygmt installed
-        if PLOTTING and pygmt_available:
+        if pygmt_available:
 
             grid = False
 
@@ -166,7 +166,11 @@ class GetInitialProfiles(unittest.TestCase):
             fig.plot(x=[bb[0], bb[1], bb[1], bb[0], bb[0]],
                      y=[bb[2], bb[2], bb[3], bb[3], bb[2]], pen="blue")
 
-            fig.show()
+            if PLOTTING:
+                fig.show()
+            else:
+                # Still exercise GMT rendering on CI but don't open a viewer
+                fig.show(method='none')
 
 
 class CreateProfilesFromSlab2pt0(unittest.TestCase):
