@@ -33,8 +33,6 @@ from openquake.hazardlib.const import TRT
 from openquake.hazardlib.contexts import ContextMaker
 from openquake.hazardlib.calc.filters import magdepdist, MINMAG, MAXMAG
 from openquake.hazardlib.gsim.mgmpe.modifiable_gmpe import ModifiableGMPE
-from openquake.hazardlib.gsim.mgmpe.generic_gmpe_avgsa import (
-    GmpeIndirectAvgSA, GenericGmpeAvgSA)
 
 from openquake.smt.utils import make_rup, clean_gmm_label
 
@@ -332,28 +330,6 @@ def get_rup_pars(strike, dip, rake, aratio, trt):
     return strike_s, dip_s, aratio_s
 
 
-def build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe):
-    """
-    Build a GMPE which can be used to predict AvgSA using the
-    indirect approach. This function can build either the
-    GmpeIndirectAvgSA class (which requires t_low, t_high, and
-    the number of periods) OR GenericGmpeAvgSA (specify a list
-    of averaging periods).
-    """
-    check = list(kw_mgmpe.keys())
-    if check[0] != "gmpe" or len(check) > 1:
-        raise ValueError(
-            "Specification of an indirect approach AvgSA GMPE in combination "
-            "with additional ModifiableGMPE capabilities is not supported.")
-    gmm_base = list(kw_mgmpe['gmpe'].keys())[0]
-    for par in kw_mgmpe['gmpe'][gmm_base].keys():
-        avgsa[par] = kw_mgmpe['gmpe'][gmm_base][par]
-    if "GmpeIndirectAvgSA" in gmpe:
-        return GmpeIndirectAvgSA(gmpe_name=gmm_base, **avgsa)
-    else:
-        return GenericGmpeAvgSA(gmpe_name=gmm_base, **avgsa)
-
-
 def construct_gsim_dict(inputs):
     """
     Build a dictionary of the arguments for a GMM.
@@ -481,10 +457,6 @@ def build_mgmpe(gmpe):
                 for imt, gmpe_str in cgmpe_dict.items()
             }
 
-        elif key in ["GmpeIndirectAvgSA", "GenericGmpeAvgSA"]:
-            idx_params.append(idx)
-            avgsa = ast.literal_eval(val)
-
     # Add the non-gmpe kwargs
     for idx_p, param in enumerate(params):
         if idx_p > 1 and idx_p not in idx_params:
@@ -581,7 +553,7 @@ def build_mgmpe(gmpe):
         except:
             raise ValueError("If using the CEUS2020SiteTerm the user must also specify a "
                              "ref vs30 to be used for the non-linear scaling component.")
-        kw_mgmpe['ceus2020_site_term'] = {"ref_vs30": ref_vs30, 'wimp': None}
+        kw_mgmpe['ceus2020_site_term'] = {"ref_vs30": ref_vs30, 'wimp': 0.0}
 
     # CB14 basin term
     if 'CB14BasinTerm' in gmpe:
@@ -594,10 +566,6 @@ def build_mgmpe(gmpe):
     # Conditional GMPE(s)
     if 'conditional_gmpe' in gmpe:
         kw_mgmpe['conditional_gmpe'] = cgmpes
-        
-    # Indirect approach AvgSA GMPE
-    if "GmpeIndirectAvgSA" in gmpe or "GenericGmpeAvgSA" in gmpe:
-        return build_indirect_avgsa_gmpe(gmpe, avgsa, kw_mgmpe)
 
     return ModifiableGMPE(**kw_mgmpe)
 
