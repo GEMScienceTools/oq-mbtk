@@ -168,6 +168,9 @@ class GetInitialProfiles(unittest.TestCase):
 
             if PLOTTING:
                 fig.show()
+            else:
+                # Still exercise GMT rendering on CI but don't open a viewer
+                fig.show(method='none')
 
 
 class CreateProfilesFromSlab2pt0(unittest.TestCase):
