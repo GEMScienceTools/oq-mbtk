@@ -166,10 +166,8 @@ class GetInitialProfiles(unittest.TestCase):
             fig.plot(x=[bb[0], bb[1], bb[1], bb[0], bb[0]],
                      y=[bb[2], bb[2], bb[3], bb[3], bb[2]], pen="blue")
 
-            fig.show()
-            if PLOTTING is False:
-                # On the CI close it immediately
-                fig.close()
+            if PLOTTING:
+                fig.show()
 
 
 class CreateProfilesFromSlab2pt0(unittest.TestCase):
