@@ -1,0 +1,31 @@
+hmtk.plotting.seismicity package
+================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.plotting.seismicity.completeness
+   hmtk.plotting.seismicity.max_magnitude
+   hmtk.plotting.seismicity.occurrence
+
+Submodules
+----------
+
+hmtk.plotting.seismicity.catalogue\_plots module
+------------------------------------------------
+
+.. automodule:: hmtk.plotting.seismicity.catalogue_plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting.seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,37 @@
+hmtk.tests.seismicity.declusterer package
+=========================================
+
+Submodules
+----------
+
+hmtk.tests.seismicity.declusterer.dec\_afteran\_test module
+-----------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.declusterer.dec_afteran_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.declusterer.dec\_gardner\_knopoff\_test module
+--------------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.declusterer.dec_gardner_knopoff_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.declusterer.distance\_time\_windows\_test module
+----------------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.declusterer.distance_time_windows_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.seismicity.declusterer
+   :members:
+   :show-inheritance:
+   :undoc-members:

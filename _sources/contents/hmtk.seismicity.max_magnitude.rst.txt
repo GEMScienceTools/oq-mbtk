@@ -1,0 +1,53 @@
+hmtk.seismicity.max\_magnitude package
+======================================
+
+Submodules
+----------
+
+hmtk.seismicity.max\_magnitude.base module
+------------------------------------------
+
+.. automodule:: hmtk.seismicity.max_magnitude.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.max\_magnitude.cumulative\_moment\_release module
+-----------------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.max_magnitude.cumulative_moment_release
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.max\_magnitude.kijko\_nonparametric\_gaussian module
+--------------------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.max_magnitude.kijko_nonparametric_gaussian
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.max\_magnitude.kijko\_sellevol\_bayes module
+------------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.max_magnitude.kijko_sellevol_bayes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.max\_magnitude.kijko\_sellevol\_fixed\_b module
+---------------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.max_magnitude.kijko_sellevol_fixed_b
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity.max_magnitude
+   :members:
+   :show-inheritance:
+   :undoc-members:

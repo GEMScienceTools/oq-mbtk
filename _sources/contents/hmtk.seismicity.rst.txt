@@ -1,0 +1,65 @@
+hmtk.seismicity package
+=======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.seismicity.completeness
+   hmtk.seismicity.declusterer
+   hmtk.seismicity.max_magnitude
+   hmtk.seismicity.occurrence
+   hmtk.seismicity.smoothing
+
+Submodules
+----------
+
+hmtk.seismicity.catalogue module
+--------------------------------
+
+.. automodule:: hmtk.seismicity.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.gcmt\_catalogue module
+--------------------------------------
+
+.. automodule:: hmtk.seismicity.gcmt_catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.gcmt\_utils module
+----------------------------------
+
+.. automodule:: hmtk.seismicity.gcmt_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.selector module
+-------------------------------
+
+.. automodule:: hmtk.seismicity.selector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.utils module
+----------------------------
+
+.. automodule:: hmtk.seismicity.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:

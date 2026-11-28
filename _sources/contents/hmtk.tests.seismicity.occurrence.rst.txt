@@ -1,0 +1,61 @@
+hmtk.tests.seismicity.occurrence package
+========================================
+
+Submodules
+----------
+
+hmtk.tests.seismicity.occurrence.aki\_maximum\_likelihood\_test module
+----------------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.aki_maximum_likelihood_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.occurrence.b\_maximum\_likelihood\_test module
+--------------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.b_maximum_likelihood_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.occurrence.kijko\_smit\_test module
+---------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.kijko_smit_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.occurrence.penalized\_mle\_test module
+------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.penalized_mle_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.occurrence.utils\_test module
+---------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.utils_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.occurrence.weichert\_test module
+------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence.weichert_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.seismicity.occurrence
+   :members:
+   :show-inheritance:
+   :undoc-members:

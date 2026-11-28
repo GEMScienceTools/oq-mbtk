@@ -1,0 +1,29 @@
+hmtk.parsers.source\_model package
+==================================
+
+Submodules
+----------
+
+hmtk.parsers.source\_model.base module
+--------------------------------------
+
+.. automodule:: hmtk.parsers.source_model.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.parsers.source\_model.nrml04\_parser module
+------------------------------------------------
+
+.. automodule:: hmtk.parsers.source_model.nrml04_parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.parsers.source_model
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,61 @@
+hmtk.sources package
+====================
+
+Submodules
+----------
+
+hmtk.sources.area\_source module
+--------------------------------
+
+.. automodule:: hmtk.sources.area_source
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.sources.complex\_fault\_source module
+------------------------------------------
+
+.. automodule:: hmtk.sources.complex_fault_source
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.sources.point\_source module
+---------------------------------
+
+.. automodule:: hmtk.sources.point_source
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.sources.simple\_fault\_source module
+-----------------------------------------
+
+.. automodule:: hmtk.sources.simple_fault_source
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.sources.source\_conversion\_utils module
+---------------------------------------------
+
+.. automodule:: hmtk.sources.source_conversion_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.sources.source\_model module
+---------------------------------
+
+.. automodule:: hmtk.sources.source_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.sources
+   :members:
+   :show-inheritance:
+   :undoc-members:

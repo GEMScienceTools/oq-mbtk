@@ -1,0 +1,29 @@
+hmtk.tests.parsers.catalogue package
+====================================
+
+Submodules
+----------
+
+hmtk.tests.parsers.catalogue.csv\_catalogue\_parser\_test module
+----------------------------------------------------------------
+
+.. automodule:: hmtk.tests.parsers.catalogue.csv_catalogue_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.parsers.catalogue.gcmt\_catalogue\_parser\_test module
+-----------------------------------------------------------------
+
+.. automodule:: hmtk.tests.parsers.catalogue.gcmt_catalogue_parser_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.parsers.catalogue
+   :members:
+   :show-inheritance:
+   :undoc-members:

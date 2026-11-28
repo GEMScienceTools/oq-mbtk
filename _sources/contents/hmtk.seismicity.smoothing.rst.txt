@@ -1,0 +1,37 @@
+hmtk.seismicity.smoothing package
+=================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.seismicity.smoothing.kernels
+
+Submodules
+----------
+
+hmtk.seismicity.smoothing.smoothed\_seismicity module
+-----------------------------------------------------
+
+.. automodule:: hmtk.seismicity.smoothing.smoothed_seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.smoothing.utils module
+--------------------------------------
+
+.. automodule:: hmtk.seismicity.smoothing.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity.smoothing
+   :members:
+   :show-inheritance:
+   :undoc-members:

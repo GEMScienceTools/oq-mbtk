@@ -1,0 +1,45 @@
+hmtk.tests.strain package
+=========================
+
+Submodules
+----------
+
+hmtk.tests.strain.test\_geodetic\_strain module
+-----------------------------------------------
+
+.. automodule:: hmtk.tests.strain.test_geodetic_strain
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.strain.test\_kreemer\_regionalisation module
+-------------------------------------------------------
+
+.. automodule:: hmtk.tests.strain.test_kreemer_regionalisation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.strain.test\_shift\_calculator module
+------------------------------------------------
+
+.. automodule:: hmtk.tests.strain.test_shift_calculator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.strain.test\_strain\_utilities module
+------------------------------------------------
+
+.. automodule:: hmtk.tests.strain.test_strain_utilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.strain
+   :members:
+   :show-inheritance:
+   :undoc-members:

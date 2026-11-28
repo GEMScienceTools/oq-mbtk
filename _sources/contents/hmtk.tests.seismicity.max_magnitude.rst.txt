@@ -1,0 +1,21 @@
+hmtk.tests.seismicity.max\_magnitude package
+============================================
+
+Submodules
+----------
+
+hmtk.tests.seismicity.max\_magnitude.test\_maximum\_magnitude module
+--------------------------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.max_magnitude.test_maximum_magnitude
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.seismicity.max_magnitude
+   :members:
+   :show-inheritance:
+   :undoc-members:

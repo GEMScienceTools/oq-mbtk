@@ -1,0 +1,65 @@
+hmtk.tests.seismicity package
+=============================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.tests.seismicity.completeness
+   hmtk.tests.seismicity.declusterer
+   hmtk.tests.seismicity.max_magnitude
+   hmtk.tests.seismicity.occurrence
+   hmtk.tests.seismicity.smoothing
+
+Submodules
+----------
+
+hmtk.tests.seismicity.catalogue\_test module
+--------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.catalogue_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.gcmt\_catalogue\_test module
+--------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.gcmt_catalogue_test
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.test\_seismicity\_utils module
+----------------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.test_seismicity_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.test\_selector module
+-------------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.test_selector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.tests.seismicity.test\_utils module
+----------------------------------------
+
+.. automodule:: hmtk.tests.seismicity.test_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.tests.seismicity
+   :members:
+   :show-inheritance:
+   :undoc-members:

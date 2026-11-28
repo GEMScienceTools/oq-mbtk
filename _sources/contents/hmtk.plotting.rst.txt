@@ -1,0 +1,38 @@
+hmtk.plotting package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.plotting.faults
+   hmtk.plotting.seismicity
+
+Submodules
+----------
+
+hmtk.plotting.beachball module
+------------------------------
+
+.. automodule:: hmtk.plotting.beachball
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.plotting.plotting\_utils module
+------------------------------------
+
+.. automodule:: hmtk.plotting.plotting_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting
+   :members:
+   :show-inheritance:
+   :undoc-members:

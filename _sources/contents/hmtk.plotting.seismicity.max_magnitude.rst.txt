@@ -1,0 +1,21 @@
+hmtk.plotting.seismicity.max\_magnitude package
+===============================================
+
+Submodules
+----------
+
+hmtk.plotting.seismicity.max\_magnitude.cumulative\_moment module
+-----------------------------------------------------------------
+
+.. automodule:: hmtk.plotting.seismicity.max_magnitude.cumulative_moment
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting.seismicity.max_magnitude
+   :members:
+   :show-inheritance:
+   :undoc-members:

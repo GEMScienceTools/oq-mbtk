@@ -1,0 +1,10 @@
+bin package
+===========
+
+Module contents
+---------------
+
+.. automodule:: bin
+   :members:
+   :show-inheritance:
+   :undoc-members:

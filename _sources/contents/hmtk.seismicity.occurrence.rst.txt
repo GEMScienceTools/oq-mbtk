@@ -1,0 +1,69 @@
+hmtk.seismicity.occurrence package
+==================================
+
+Submodules
+----------
+
+hmtk.seismicity.occurrence.aki\_maximum\_likelihood module
+----------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.aki_maximum_likelihood
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.b\_maximum\_likelihood module
+--------------------------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.b_maximum_likelihood
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.base module
+--------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.kijko\_smit module
+---------------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.kijko_smit
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.penalized\_mle module
+------------------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.penalized_mle
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.utils module
+---------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.occurrence.weichert module
+------------------------------------------
+
+.. automodule:: hmtk.seismicity.occurrence.weichert
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity.occurrence
+   :members:
+   :show-inheritance:
+   :undoc-members:

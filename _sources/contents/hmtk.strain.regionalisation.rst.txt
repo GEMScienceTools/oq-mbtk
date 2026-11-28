@@ -1,0 +1,21 @@
+hmtk.strain.regionalisation package
+===================================
+
+Submodules
+----------
+
+hmtk.strain.regionalisation.kreemer\_regionalisation module
+-----------------------------------------------------------
+
+.. automodule:: hmtk.strain.regionalisation.kreemer_regionalisation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.strain.regionalisation
+   :members:
+   :show-inheritance:
+   :undoc-members:

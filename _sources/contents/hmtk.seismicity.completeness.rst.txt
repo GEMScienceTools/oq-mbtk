@@ -1,0 +1,29 @@
+hmtk.seismicity.completeness package
+====================================
+
+Submodules
+----------
+
+hmtk.seismicity.completeness.base module
+----------------------------------------
+
+.. automodule:: hmtk.seismicity.completeness.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.seismicity.completeness.comp\_stepp\_1971 module
+-----------------------------------------------------
+
+.. automodule:: hmtk.seismicity.completeness.comp_stepp_1971
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.seismicity.completeness
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,21 @@
+hmtk.plotting.faults package
+============================
+
+Submodules
+----------
+
+hmtk.plotting.faults.geology\_mfd\_plot module
+----------------------------------------------
+
+.. automodule:: hmtk.plotting.faults.geology_mfd_plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.plotting.faults
+   :members:
+   :show-inheritance:
+   :undoc-members:

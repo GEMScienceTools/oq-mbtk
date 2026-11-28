@@ -1,0 +1,45 @@
+hmtk.strain package
+===================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.strain.regionalisation
+
+Submodules
+----------
+
+hmtk.strain.geodetic\_strain module
+-----------------------------------
+
+.. automodule:: hmtk.strain.geodetic_strain
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.strain.shift module
+------------------------
+
+.. automodule:: hmtk.strain.shift
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.strain.strain\_utils module
+--------------------------------
+
+.. automodule:: hmtk.strain.strain_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.strain
+   :members:
+   :show-inheritance:
+   :undoc-members:

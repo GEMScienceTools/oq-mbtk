@@ -1,0 +1,53 @@
+hmtk.faults package
+===================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   hmtk.faults.mfd
+
+Submodules
+----------
+
+hmtk.faults.active\_fault\_model module
+---------------------------------------
+
+.. automodule:: hmtk.faults.active_fault_model
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.fault\_geometries module
+------------------------------------
+
+.. automodule:: hmtk.faults.fault_geometries
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.fault\_models module
+--------------------------------
+
+.. automodule:: hmtk.faults.fault_models
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+hmtk.faults.tectonic\_regionalisation module
+--------------------------------------------
+
+.. automodule:: hmtk.faults.tectonic_regionalisation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: hmtk.faults
+   :members:
+   :show-inheritance:
+   :undoc-members:
